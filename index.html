@@ -1,0 +1,3063 @@
+<!doctype html>
+<html lang="id">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#10233f" />
+  <title>LINKED — Peer Learning</title>
+  <style>
+    :root {
+      --navy: #10233f;
+      --navy2: #19365b;
+      --blue: #3f72e5;
+      --blue-soft: #edf3ff;
+      --cyan: #5bd6d1;
+      --ink: #1b2940;
+      --muted: #758198;
+      --line: #e6ebf2;
+      --bg: #f6f8fc;
+      --white: #fff;
+      --green: #168567;
+      --green-soft: #e6f7f1;
+      --amber: #a76a12;
+      --amber-soft: #fff3df;
+      --red: #b84153;
+      --red-soft: #fff0f1;
+      --shadow: 0 10px 30px rgba(19, 41, 75, .06);
+      --radius: 18px
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--ink)
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit
+    }
+
+    button {
+      cursor: pointer
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none
+    }
+
+    .app {
+      display: flex;
+      min-height: 100vh
+    }
+
+    .sidebar {
+      position: fixed;
+      inset: 0 auto 0 0;
+      width: 252px;
+      background: var(--navy);
+      color: #dce8fb;
+      padding: 25px 16px;
+      display: flex;
+      flex-direction: column;
+      z-index: 10
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 0 12px 29px
+    }
+
+    .brand-mark {
+      width: 39px;
+      height: 39px;
+      border-radius: 13px;
+      background: linear-gradient(145deg, #65e1d7, #56a5f5);
+      display: grid;
+      place-items: center;
+      color: #10233f;
+      font-weight: 900;
+      font-size: 18px;
+      box-shadow: 0 8px 20px #07172d55
+    }
+
+    .brand-name {
+      font-size: 21px;
+      font-weight: 850;
+      letter-spacing: .08em;
+      color: #fff
+    }
+
+    .brand-sub {
+      font-size: 10px;
+      letter-spacing: .09em;
+      color: #9db5d5;
+      margin-top: 3px
+    }
+
+    .nav-label {
+      padding: 13px 13px 9px;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .16em;
+      color: #7591b7;
+      text-transform: uppercase
+    }
+
+    .nav {
+      display: grid;
+      gap: 5px
+    }
+
+    .nav-btn {
+      height: 45px;
+      border: 0;
+      background: transparent;
+      border-radius: 12px;
+      color: #b7c7de;
+      text-align: left;
+      padding: 0 13px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 600;
+      font-size: 13px;
+      transition: .15s
+    }
+
+    .nav-btn svg {
+      width: 18px;
+      height: 18px;
+      opacity: .85
+    }
+
+    .nav-btn:hover {
+      background: #ffffff0c;
+      color: white
+    }
+
+    .nav-btn.active {
+      background: #2c4770;
+      color: white;
+      box-shadow: inset 3px 0 #62d8d0
+    }
+
+    .nav-count {
+      margin-left: auto;
+      border-radius: 7px;
+      padding: 2px 7px;
+      font-size: 10px;
+      background: #314f79;
+      color: #e8f3ff
+    }
+
+    .sidebar-bottom {
+      margin-top: auto
+    }
+
+    .pilot-card {
+      margin: 20px 5px 12px;
+      padding: 15px;
+      border: 1px solid #2c4567;
+      border-radius: 14px;
+      background: #142b4c
+    }
+
+    .pilot-card .pilot-title {
+      font-size: 11px;
+      font-weight: 800;
+      color: white;
+      margin-bottom: 6px
+    }
+
+    .pilot-card p {
+      font-size: 10px;
+      line-height: 1.65;
+      color: #a9bdd8;
+      margin: 0 0 10px
+    }
+
+    .pilot-pill {
+      font-size: 9px;
+      display: inline-flex;
+      gap: 5px;
+      align-items: center;
+      color: #83e3d7;
+      background: #1a4660;
+      padding: 5px 8px;
+      border-radius: 7px;
+      font-weight: 800
+    }
+
+    .user-mini {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 15px 8px 0;
+      border-top: 1px solid #29405f
+    }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      flex: none;
+      font-size: 12px;
+      font-weight: 800;
+      color: #264776;
+      background: #dce9ff
+    }
+
+    .avatar.teal {
+      background: #d7f6f0;
+      color: #126a61
+    }
+
+    .avatar.pink {
+      background: #fae0ed;
+      color: #9b3765
+    }
+
+    .avatar.gold {
+      background: #ffebc7;
+      color: #956017
+    }
+
+    .avatar.violet {
+      background: #e8e0ff;
+      color: #6543a6
+    }
+
+    .mini-info {
+      min-width: 0
+    }
+
+    .mini-name {
+      font-weight: 700;
+      color: white;
+      font-size: 12px
+    }
+
+    .mini-role {
+      font-size: 10px;
+      color: #92a9c9;
+      margin-top: 3px
+    }
+
+    .main {
+      width: calc(100% - 252px);
+      margin-left: 252px;
+      min-width: 0
+    }
+
+    .topbar {
+      height: 78px;
+      background: #ffffffd9;
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 34px;
+      position: sticky;
+      top: 0;
+      z-index: 5
+    }
+
+    .crumb {
+      font-size: 12px;
+      color: var(--muted)
+    }
+
+    .crumb strong {
+      color: var(--ink);
+      font-weight: 800
+    }
+
+    .top-right {
+      display: flex;
+      align-items: center;
+      gap: 14px
+    }
+
+    .demo-tag {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 10px;
+      border-radius: 9px;
+      color: #5b6a80;
+      background: #f0f3f8;
+      font-weight: 700;
+      font-size: 10px
+    }
+
+    .demo-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #e5a23c
+    }
+
+    .mode-switch {
+      border: 1px solid var(--line);
+      background: white;
+      border-radius: 10px;
+      padding: 9px 12px;
+      color: #42536e;
+      font-weight: 700;
+      font-size: 11px
+    }
+
+    .icon-btn {
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      background: white;
+      width: 36px;
+      height: 36px;
+      border-radius: 11px;
+      color: #65758e
+    }
+
+    .top-avatar {
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #dce9ff;
+      color: #2455a0;
+      font-size: 11px;
+      font-weight: 900
+    }
+
+    .content {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 32px 34px 54px
+    }
+
+    .page-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 22px;
+      margin-bottom: 25px
+    }
+
+    .eyebrow {
+      color: var(--blue);
+      font-weight: 850;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+      font-size: 10px;
+      margin-bottom: 9px
+    }
+
+    .page-head h1 {
+      font-size: 27px;
+      letter-spacing: -.045em;
+      margin: 0;
+      color: #162842;
+      font-weight: 850
+    }
+
+    .page-head p {
+      font-size: 13px;
+      color: var(--muted);
+      margin: 9px 0 0;
+      line-height: 1.65;
+      max-width: 650px
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 11px;
+      padding: 11px 15px;
+      font-size: 12px;
+      font-weight: 800;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      transition: transform .15s, box-shadow .15s
+    }
+
+    .btn:hover {
+      transform: translateY(-1px)
+    }
+
+    .btn-primary {
+      background: var(--blue);
+      color: white;
+      box-shadow: 0 8px 18px #3f72e524
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 11px 24px #3f72e538
+    }
+
+    .btn-dark {
+      background: var(--navy);
+      color: white
+    }
+
+    .btn-ghost {
+      background: white;
+      color: #4d5d77;
+      border: 1px solid var(--line)
+    }
+
+    .btn-soft {
+      background: var(--blue-soft);
+      color: #315fbe
+    }
+
+    .btn-danger {
+      background: var(--red-soft);
+      color: var(--red)
+    }
+
+    .btn-sm {
+      padding: 8px 11px;
+      font-size: 10px;
+      border-radius: 9px
+    }
+
+    .btn-block {
+      width: 100%
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      border-radius: 23px;
+      background: linear-gradient(115deg, #142e52 0%, #1d4572 62%, #327b97 100%);
+      padding: 31px 31px 29px;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 208px;
+      gap: 24px;
+      box-shadow: var(--shadow);
+      margin-bottom: 23px
+    }
+
+    .hero:before {
+      content: "";
+      position: absolute;
+      width: 310px;
+      height: 310px;
+      right: 135px;
+      top: -180px;
+      border-radius: 50%;
+      border: 1px solid #ffffff14;
+      box-shadow: 0 0 0 36px #ffffff08, 0 0 0 76px #ffffff06
+    }
+
+    .hero:after {
+      content: "";
+      position: absolute;
+      width: 170px;
+      height: 170px;
+      right: -27px;
+      bottom: -103px;
+      border-radius: 50%;
+      background: #5bd6d122
+    }
+
+    .hero-copy {
+      position: relative;
+      z-index: 1;
+      max-width: 540px
+    }
+
+    .hero-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: #ffffff15;
+      border: 1px solid #ffffff18;
+      padding: 6px 9px;
+      border-radius: 8px;
+      color: #c7e5fa;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .08em
+    }
+
+    .hero h2 {
+      font-size: 27px;
+      line-height: 1.18;
+      letter-spacing: -.04em;
+      margin: 16px 0 10px;
+      max-width: 460px
+    }
+
+    .hero p {
+      color: #cad8e9;
+      line-height: 1.65;
+      font-size: 12px;
+      margin: 0 0 19px;
+      max-width: 420px
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 9px;
+      flex-wrap: wrap
+    }
+
+    .hero .btn-primary {
+      background: #66dfd4;
+      color: #0b3344;
+      box-shadow: none
+    }
+
+    .hero .btn-ghost {
+      background: #ffffff12;
+      border-color: #ffffff2b;
+      color: white
+    }
+
+    .hero-art {
+      position: relative;
+      z-index: 1;
+      width: 210px;
+      height: 160px;
+      flex: none
+    }
+
+    .orbit {
+      position: absolute;
+      width: 142px;
+      height: 142px;
+      border: 1px solid #b6e3ff40;
+      border-radius: 50%;
+      top: 10px;
+      left: 24px
+    }
+
+    .orbit:before,
+    .orbit:after {
+      content: "";
+      position: absolute;
+      border: 1px dashed #b6e3ff30;
+      border-radius: 50%;
+      inset: 14px
+    }
+
+    .orbit:after {
+      inset: 29px
+    }
+
+    .book-illus {
+      position: absolute;
+      top: 34px;
+      left: 51px;
+      width: 88px;
+      height: 90px;
+      transform: rotate(-8deg)
+    }
+
+    .book-page {
+      position: absolute;
+      inset: 0;
+      background: #f9fcff;
+      border-radius: 9px 13px 13px 9px;
+      box-shadow: 7px 8px 0 #0b234d50;
+      clip-path: polygon(0 0, 100% 8%, 100% 100%, 0 91%)
+    }
+
+    .book-spine {
+      position: absolute;
+      left: 9px;
+      top: 5px;
+      bottom: 7px;
+      width: 2px;
+      background: #b6d4ec
+    }
+
+    .book-line {
+      position: absolute;
+      left: 22px;
+      height: 4px;
+      background: #c4d8ec;
+      border-radius: 8px;
+      width: 43px
+    }
+
+    .book-line.a {
+      top: 24px
+    }
+
+    .book-line.b {
+      top: 36px;
+      width: 50px
+    }
+
+    .book-line.c {
+      top: 48px;
+      width: 37px
+    }
+
+    .book-line.d {
+      top: 60px;
+      width: 44px
+    }
+
+    .floating-check {
+      position: absolute;
+      top: 20px;
+      right: 18px;
+      width: 39px;
+      height: 39px;
+      background: #63dfd3;
+      border-radius: 13px;
+      display: grid;
+      place-items: center;
+      color: #113753;
+      box-shadow: 0 8px 22px #031c3a55;
+      transform: rotate(10deg)
+    }
+
+    .floating-star {
+      position: absolute;
+      bottom: 19px;
+      left: 19px;
+      color: #ffd98a;
+      font-size: 24px
+    }
+
+    .floating-dot {
+      position: absolute;
+      right: 24px;
+      bottom: 23px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #f8bd68;
+      box-shadow: 0 0 0 8px #f8bd6817
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 25px
+    }
+
+    .stat-card {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 17px 18px;
+      box-shadow: 0 5px 18px #213c5b04
+    }
+
+    .stat-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px
+    }
+
+    .stat-icon {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 11px;
+      background: var(--blue-soft);
+      color: var(--blue)
+    }
+
+    .stat-icon.green {
+      background: var(--green-soft);
+      color: var(--green)
+    }
+
+    .stat-icon.amber {
+      background: var(--amber-soft);
+      color: var(--amber)
+    }
+
+    .stat-icon.purple {
+      background: #f2eaff;
+      color: #8453c5
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 650
+    }
+
+    .stat-number {
+      font-size: 26px;
+      letter-spacing: -.05em;
+      font-weight: 850;
+      color: #1a2b45
+    }
+
+    .stat-note {
+      font-size: 10px;
+      color: #8a95a8;
+      margin-top: 6px
+    }
+
+    .section {
+      margin-top: 25px
+    }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px
+    }
+
+    .section-head h3 {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: -.025em;
+      color: #1b2d47
+    }
+
+    .section-head p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 11px
+    }
+
+    .text-link {
+      border: 0;
+      background: transparent;
+      color: var(--blue);
+      font-weight: 800;
+      font-size: 11px
+    }
+
+    .dash-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.55fr) minmax(280px, 1fr);
+      gap: 17px
+    }
+
+    .panel {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      padding: 19px;
+      box-shadow: 0 5px 20px #24456a05;
+      min-width: 0
+    }
+
+    .course-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      border: 1px solid #edf0f6;
+      border-radius: 13px;
+      padding: 13px;
+      margin-bottom: 10px
+    }
+
+    .course-item:last-child {
+      margin-bottom: 0
+    }
+
+    .course-cover {
+      width: 49px;
+      height: 51px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      flex: none;
+      color: #295bb4;
+      background: linear-gradient(145deg, #e1efff, #b9d9ff)
+    }
+
+    .course-cover.teal {
+      background: linear-gradient(145deg, #d9fbf2, #a8e9dc);
+      color: #147665
+    }
+
+    .course-cover.purple {
+      background: linear-gradient(145deg, #f0e8ff, #d9c9ff);
+      color: #6c4bb2
+    }
+
+    .course-body {
+      flex: 1;
+      min-width: 0
+    }
+
+    .course-title {
+      font-size: 12px;
+      font-weight: 800;
+      color: #263853;
+      margin-bottom: 5px
+    }
+
+    .course-meta {
+      font-size: 10px;
+      color: var(--muted)
+    }
+
+    .progress-row {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-top: 11px
+    }
+
+    .progress {
+      height: 6px;
+      border-radius: 99px;
+      background: #ecf0f6;
+      overflow: hidden;
+      flex: 1
+    }
+
+    .progress span {
+      display: block;
+      height: 100%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, #4377ea, #55c8dc)
+    }
+
+    .progress-num {
+      font-size: 10px;
+      font-weight: 800;
+      color: #60718c;
+      white-space: nowrap
+    }
+
+    .mentor-mini-list {
+      display: grid;
+      gap: 10px
+    }
+
+    .mentor-mini {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 10px 0;
+      border-bottom: 1px solid #edf0f5
+    }
+
+    .mentor-mini:last-child {
+      border-bottom: 0;
+      padding-bottom: 0
+    }
+
+    .mentor-avatar {
+      width: 43px;
+      height: 43px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      font-weight: 850;
+      font-size: 12px;
+      flex: none;
+      background: #dbe8ff;
+      color: #315ca0
+    }
+
+    .mentor-avatar.green {
+      background: #d7f5e9;
+      color: #167257
+    }
+
+    .mentor-avatar.pink {
+      background: #ffe4ed;
+      color: #a84467
+    }
+
+    .mentor-avatar.gold {
+      background: #fff0ce;
+      color: #9b6b1d
+    }
+
+    .mentor-avatar.purple {
+      background: #ece3ff;
+      color: #7655ae
+    }
+
+    .mentor-mini-main {
+      flex: 1;
+      min-width: 0
+    }
+
+    .mentor-mini-name {
+      font-size: 11px;
+      font-weight: 800;
+      color: #263853;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-wrap: wrap
+    }
+
+    .mentor-mini-meta {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 4px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap
+    }
+
+    .rating {
+      font-size: 10px;
+      color: #a96d11;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-weight: 800
+    }
+
+    .verified {
+      font-size: 9px;
+      color: #168567;
+      background: #e5f7ef;
+      padding: 4px 6px;
+      border-radius: 6px;
+      font-weight: 850;
+      white-space: nowrap
+    }
+
+    .chips {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap
+    }
+
+    .chip {
+      font-size: 10px;
+      color: #50617c;
+      background: #f0f3f8;
+      padding: 6px 8px;
+      border-radius: 7px;
+      font-weight: 700
+    }
+
+    .chip.blue {
+      background: #edf3ff;
+      color: #3b63b5
+    }
+
+    .chip.green {
+      background: #e5f7ef;
+      color: #177759
+    }
+
+    .chip.amber {
+      background: #fff2dc;
+      color: #996317
+    }
+
+    .empty {
+      border: 1px dashed #d7deea;
+      border-radius: 14px;
+      padding: 26px 18px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.7
+    }
+
+    .empty strong {
+      display: block;
+      color: #344761;
+      margin-bottom: 5px
+    }
+
+    .filterbar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      background: white;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      margin-bottom: 17px
+    }
+
+    .field-search {
+      flex: 1;
+      min-width: 190px;
+      position: relative
+    }
+
+    .field-search input {
+      padding-left: 37px
+    }
+
+    .field-search svg {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #8591a5
+    }
+
+    .input,
+    .select,
+    .textarea {
+      width: 100%;
+      border: 1px solid #dfe5ee;
+      background: white;
+      color: #2a3b54;
+      border-radius: 10px;
+      padding: 11px 12px;
+      font-size: 12px;
+      outline: none;
+      transition: border .15s, box-shadow .15s
+    }
+
+    .input:focus,
+    .select:focus,
+    .textarea:focus {
+      border-color: #8babf8;
+      box-shadow: 0 0 0 3px #3f72e512
+    }
+
+    .input::placeholder,
+    .textarea::placeholder {
+      color: #9ba6b7
+    }
+
+    .filterbar .select {
+      width: auto;
+      min-width: 144px;
+      padding: 10px 12px
+    }
+
+    .check-filter {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 11px;
+      color: #5e6d84;
+      font-weight: 700;
+      white-space: nowrap
+    }
+
+    .check-filter input {
+      accent-color: var(--blue)
+    }
+
+    .result-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 7px 2px 13px;
+      color: var(--muted);
+      font-size: 11px
+    }
+
+    .mentor-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 15px
+    }
+
+    .mentor-card {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      padding: 18px;
+      box-shadow: 0 5px 20px #24456a04;
+      transition: transform .16s, box-shadow .16s;
+      min-width: 0;
+      display: flex;
+      flex-direction: column
+    }
+
+    .mentor-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow)
+    }
+
+    .mentor-card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 14px
+    }
+
+    .mentor-card .mentor-avatar {
+      width: 51px;
+      height: 51px;
+      border-radius: 16px;
+      font-size: 14px
+    }
+
+    .mentor-title {
+      font-size: 14px;
+      font-weight: 850;
+      margin: 0 0 5px;
+      color: #1d304a
+    }
+
+    .mentor-sub {
+      font-size: 10px;
+      color: var(--muted);
+      line-height: 1.5
+    }
+
+    .mentor-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin: 13px 0
+    }
+
+    .mentor-tags span {
+      background: #f3f6fa;
+      color: #52627b;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 6px 7px;
+      border-radius: 7px
+    }
+
+    .mentor-details {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      background: #f8fafd;
+      border-radius: 11px;
+      padding: 11px;
+      margin: 3px 0 14px
+    }
+
+    .detail-small {
+      font-size: 9px;
+      color: var(--muted);
+      margin-bottom: 4px
+    }
+
+    .detail-value {
+      font-size: 10px;
+      font-weight: 800;
+      color: #344760
+    }
+
+    .mentor-card-bottom {
+      margin-top: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px
+    }
+
+    .mentor-card-bottom .btn {
+      flex: 1
+    }
+
+    .mentor-card-bottom .icon-btn {
+      flex: none
+    }
+
+    .page-tabs {
+      display: flex;
+      gap: 7px;
+      padding: 5px;
+      background: #edf1f7;
+      border-radius: 11px;
+      width: max-content;
+      margin-bottom: 17px
+    }
+
+    .tab-btn {
+      border: 0;
+      background: transparent;
+      color: #758199;
+      padding: 9px 13px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 800
+    }
+
+    .tab-btn.active {
+      background: white;
+      color: #264c91;
+      box-shadow: 0 2px 7px #1c37550b
+    }
+
+    .list-card {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      padding: 17px;
+      margin-bottom: 11px;
+      display: flex;
+      align-items: flex-start;
+      gap: 13px
+    }
+
+    .list-card-body {
+      flex: 1;
+      min-width: 0
+    }
+
+    .list-title {
+      font-size: 13px;
+      font-weight: 850;
+      color: #21344e;
+      margin: 0 0 6px
+    }
+
+    .list-meta {
+      font-size: 10px;
+      color: var(--muted);
+      line-height: 1.65
+    }
+
+    .list-actions {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      flex-wrap: wrap;
+      margin-top: 11px
+    }
+
+    .status {
+      font-size: 9px;
+      font-weight: 850;
+      padding: 5px 8px;
+      border-radius: 7px;
+      display: inline-block;
+      text-transform: uppercase;
+      letter-spacing: .06em
+    }
+
+    .status.pending {
+      background: var(--amber-soft);
+      color: var(--amber)
+    }
+
+    .status.confirmed {
+      background: var(--green-soft);
+      color: var(--green)
+    }
+
+    .status.rejected,
+    .status.cancelled {
+      background: var(--red-soft);
+      color: var(--red)
+    }
+
+    .status.completed {
+      background: var(--blue-soft);
+      color: #315fbe
+    }
+
+    .status.reviewed {
+      background: #edeafa;
+      color: #6b58ad
+    }
+
+    .request-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(260px, .8fr);
+      gap: 17px
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 13px
+    }
+
+    .form-group {
+      display: grid;
+      gap: 7px
+    }
+
+    .form-group.full {
+      grid-column: 1/-1
+    }
+
+    .form-group label {
+      font-size: 10px;
+      font-weight: 850;
+      color: #596980
+    }
+
+    .form-hint {
+      font-size: 9px;
+      color: #9aa5b5;
+      margin-top: -3px;
+      line-height: 1.5
+    }
+
+    .textarea {
+      min-height: 86px;
+      resize: vertical
+    }
+
+    .radio-row {
+      display: flex;
+      gap: 8px
+    }
+
+    .radio-option {
+      flex: 1;
+      position: relative
+    }
+
+    .radio-option input {
+      position: absolute;
+      opacity: 0
+    }
+
+    .radio-option span {
+      display: block;
+      text-align: center;
+      border: 1px solid #dfe5ee;
+      border-radius: 10px;
+      padding: 12px 7px;
+      font-size: 11px;
+      font-weight: 800;
+      color: #64738a
+    }
+
+    .radio-option input:checked+span {
+      border-color: #85a7f7;
+      background: #edf3ff;
+      color: #315fbe;
+      box-shadow: 0 0 0 2px #3f72e50c
+    }
+
+    .steps {
+      display: grid;
+      gap: 13px
+    }
+
+    .step {
+      display: flex;
+      gap: 11px;
+      align-items: flex-start
+    }
+
+    .step-num {
+      width: 26px;
+      height: 26px;
+      border-radius: 9px;
+      background: #edf3ff;
+      color: #315fbe;
+      font-size: 10px;
+      font-weight: 850;
+      display: grid;
+      place-items: center;
+      flex: none
+    }
+
+    .step-title {
+      font-size: 11px;
+      font-weight: 850;
+      color: #354761;
+      margin: 2px 0 4px
+    }
+
+    .step-text {
+      font-size: 10px;
+      color: var(--muted);
+      line-height: 1.55
+    }
+
+    .module-list {
+      display: grid;
+      gap: 9px
+    }
+
+    .module-row {
+      display: flex;
+      gap: 11px;
+      align-items: center;
+      border: 1px solid #edf0f6;
+      border-radius: 12px;
+      padding: 12px
+    }
+
+    .module-check {
+      width: 24px;
+      height: 24px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      border: 1px solid #d3dbe8;
+      color: transparent;
+      background: white;
+      flex: none
+    }
+
+    .module-check.done {
+      background: #dff7ed;
+      border-color: #bfead8;
+      color: #168567
+    }
+
+    .module-title {
+      font-size: 11px;
+      font-weight: 800;
+      color: #334761
+    }
+
+    .module-sub {
+      font-size: 9px;
+      color: var(--muted);
+      margin-top: 4px
+    }
+
+    .module-info {
+      flex: 1
+    }
+
+    .module-lock {
+      font-size: 9px;
+      color: #8591a5
+    }
+
+    .review-stars {
+      display: flex;
+      gap: 5px
+    }
+
+    .star-btn {
+      border: 0;
+      background: transparent;
+      color: #d7dce5;
+      font-size: 22px;
+      padding: 0 2px
+    }
+
+    .star-btn.active {
+      color: #f0b94d
+    }
+
+    .notice {
+      border-radius: 12px;
+      padding: 13px 14px;
+      background: #f2f6ff;
+      color: #516789;
+      font-size: 10px;
+      line-height: 1.65;
+      border: 1px solid #e1eafd
+    }
+
+    .notice strong {
+      color: #315c9c
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--line);
+      margin: 16px 0
+    }
+
+    .timeline {
+      display: grid;
+      gap: 0
+    }
+
+    .timeline-item {
+      display: flex;
+      gap: 12px;
+      padding: 0 0 16px;
+      position: relative
+    }
+
+    .timeline-item:not(:last-child):before {
+      content: "";
+      position: absolute;
+      left: 11px;
+      top: 25px;
+      bottom: 0;
+      width: 1px;
+      background: #dfe6f2
+    }
+
+    .timeline-dot {
+      width: 23px;
+      height: 23px;
+      border-radius: 8px;
+      background: #eaf2ff;
+      color: #3c6ad0;
+      display: grid;
+      place-items: center;
+      z-index: 1;
+      flex: none
+    }
+
+    .timeline-title {
+      font-size: 11px;
+      font-weight: 800;
+      color: #354862
+    }
+
+    .timeline-text {
+      font-size: 10px;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-top: 4px
+    }
+
+    .opportunity-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px
+    }
+
+    .opportunity-card {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      padding: 18px
+    }
+
+    .opp-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: #edf3ff;
+      color: #416cce;
+      margin-bottom: 14px
+    }
+
+    .opportunity-card h4 {
+      font-size: 13px;
+      margin: 0 0 7px
+    }
+
+    .opportunity-card p {
+      font-size: 10px;
+      line-height: 1.65;
+      color: var(--muted);
+      margin: 0 0 13px
+    }
+
+    .coming-soon {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 12px 13px;
+      border-radius: 12px;
+      background: #f4f6fa;
+      color: #7a879b;
+      font-size: 10px;
+      margin-top: 16px
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: #0d2039a8;
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 30
+    }
+
+    .modal-backdrop.open {
+      display: flex
+    }
+
+    .modal {
+      background: white;
+      border-radius: 20px;
+      width: min(650px, 100%);
+      max-height: 92vh;
+      overflow: auto;
+      box-shadow: 0 24px 90px #06132655
+    }
+
+    .modal.wide {
+      width: min(780px, 100%)
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 15px;
+      padding: 22px 24px 15px;
+      border-bottom: 1px solid var(--line)
+    }
+
+    .modal-header h2 {
+      font-size: 19px;
+      letter-spacing: -.03em;
+      margin: 0;
+      color: #20334e
+    }
+
+    .modal-header p {
+      font-size: 10px;
+      color: var(--muted);
+      margin: 6px 0 0;
+      line-height: 1.6
+    }
+
+    .modal-close {
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: white;
+      width: 32px;
+      height: 32px;
+      font-size: 18px;
+      color: #748098
+    }
+
+    .modal-body {
+      padding: 21px 24px 24px
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 20px
+    }
+
+    .profile-head {
+      display: flex;
+      gap: 14px;
+      align-items: center
+    }
+
+    .profile-head .mentor-avatar {
+      width: 63px;
+      height: 63px;
+      border-radius: 18px;
+      font-size: 17px
+    }
+
+    .profile-name {
+      font-size: 18px;
+      font-weight: 900;
+      margin-bottom: 5px
+    }
+
+    .profile-role {
+      font-size: 11px;
+      color: var(--muted)
+    }
+
+    .profile-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 9px;
+      margin: 19px 0
+    }
+
+    .profile-metric {
+      border-radius: 12px;
+      background: #f7f9fc;
+      padding: 13px
+    }
+
+    .profile-metric strong {
+      display: block;
+      font-size: 17px;
+      color: #233c61
+    }
+
+    .profile-metric span {
+      font-size: 9px;
+      color: var(--muted);
+      display: block;
+      margin-top: 4px
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 22px;
+      right: 22px;
+      z-index: 60;
+      background: #132b4c;
+      color: white;
+      padding: 13px 16px;
+      border-radius: 12px;
+      box-shadow: 0 12px 35px #0b203b35;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      transform: translateY(12px);
+      opacity: 0;
+      pointer-events: none;
+      transition: .2s
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1
+    }
+
+    .toast-mark {
+      width: 20px;
+      height: 20px;
+      border-radius: 7px;
+      background: #5bd6d1;
+      color: #123852;
+      display: grid;
+      place-items: center;
+      font-size: 12px
+    }
+
+    .mobile-menu {
+      display: none
+    }
+
+    .small-label {
+      font-size: 9px;
+      letter-spacing: .11em;
+      text-transform: uppercase;
+      color: #8b98ad;
+      font-weight: 850
+    }
+
+    .footer-note {
+      font-size: 9px;
+      color: #9aa5b5;
+      line-height: 1.6;
+      margin-top: 19px
+    }
+
+    .number-badge {
+      display: inline-grid;
+      place-items: center;
+      min-width: 20px;
+      height: 20px;
+      border-radius: 7px;
+      background: #edf3ff;
+      color: #3b65be;
+      font-size: 9px;
+      font-weight: 850;
+      padding: 0 5px
+    }
+
+    .inline-link {
+      border: 0;
+      background: transparent;
+      color: #3f72e5;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 0
+    }
+
+    .hidden {
+      display: none !important
+    }
+
+    @media(max-width:1180px) {
+      .mentor-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr))
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr))
+      }
+
+      .hero-art {
+        width: 170px;
+        transform: scale(.9);
+        transform-origin: center right
+      }
+
+      .content {
+        padding-left: 25px;
+        padding-right: 25px
+      }
+
+      .topbar {
+        padding: 0 25px
+      }
+    }
+
+    @media(max-width:850px) {
+      .sidebar {
+        width: 72px;
+        padding: 20px 9px
+      }
+
+      .brand {
+        padding: 0 7px 25px
+      }
+
+      .brand-name,
+      .brand-sub,
+      .nav-label,
+      .nav-btn .nav-text,
+      .nav-count,
+      .pilot-card,
+      .user-mini .mini-info {
+        display: none
+      }
+
+      .brand-mark {
+        width: 42px;
+        height: 42px
+      }
+
+      .nav-btn {
+        justify-content: center;
+        padding: 0
+      }
+
+      .nav-btn svg {
+        width: 20px;
+        height: 20px
+      }
+
+      .user-mini {
+        justify-content: center;
+        padding: 15px 0 0
+      }
+
+      .user-mini .avatar {
+        width: 38px;
+        height: 38px
+      }
+
+      .main {
+        width: calc(100% - 72px);
+        margin-left: 72px
+      }
+
+      .dash-grid,
+      .request-layout {
+        grid-template-columns: 1fr
+      }
+
+      .hero-art {
+        display: none
+      }
+
+      .topbar {
+        padding: 0 18px
+      }
+
+      .content {
+        padding: 24px 18px 42px
+      }
+
+      .crumb {
+        font-size: 10px
+      }
+
+      .demo-tag {
+        display: none
+      }
+    }
+
+    @media(max-width:580px) {
+      .topbar {
+        height: 65px
+      }
+
+      .content {
+        padding: 20px 13px 35px
+      }
+
+      .page-head {
+        display: block
+      }
+
+      .page-head .btn {
+        margin-top: 15px
+      }
+
+      .page-head h1 {
+        font-size: 24px
+      }
+
+      .hero {
+        padding: 23px 20px;
+        min-height: 0
+      }
+
+      .hero h2 {
+        font-size: 23px
+      }
+
+      .hero p {
+        font-size: 11px
+      }
+
+      .stats-grid {
+        gap: 9px
+      }
+
+      .stat-card {
+        padding: 14px
+      }
+
+      .stat-number {
+        font-size: 23px
+      }
+
+      .mentor-grid,
+      .opportunity-grid {
+        grid-template-columns: 1fr
+      }
+
+      .filterbar .select {
+        flex: 1;
+        min-width: 120px
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr
+      }
+
+      .form-group.full {
+        grid-column: auto
+      }
+
+      .list-card {
+        padding: 13px
+      }
+
+      .list-card>.mentor-avatar {
+        width: 38px;
+        height: 38px
+      }
+
+      .modal-backdrop {
+        padding: 9px
+      }
+
+      .modal-header,
+      .modal-body {
+        padding-left: 17px;
+        padding-right: 17px
+      }
+
+      .mode-switch {
+        padding: 8px;
+        font-size: 10px
+      }
+
+      .top-right {
+        gap: 7px
+      }
+
+      .icon-btn {
+        width: 33px;
+        height: 33px
+      }
+
+      .page-tabs {
+        max-width: 100%;
+        overflow: auto
+      }
+
+      .tab-btn {
+        white-space: nowrap;
+        padding: 9px 10px
+      }
+
+      .profile-metrics {
+        gap: 6px
+      }
+
+      .profile-metric {
+        padding: 10px
+      }
+
+      .profile-metric strong {
+        font-size: 15px
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">L</div>
+        <div>
+          <div class="brand-name">LINKED</div>
+          <div class="brand-sub">PEER LEARNING PLATFORM</div>
+        </div>
+      </div>
+      <div class="nav-label">Workspace</div>
+      <nav class="nav" id="main-nav">
+        <button class="nav-btn active" data-page="overview"><svg
+            viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="1.8">
+            <rect x="3" y="3" width="7" height="8" rx="2" />
+            <rect x="14" y="3" width="7" height="5" rx="2" />
+            <rect x="14" y="12" width="7" height="9" rx="2" />
+            <rect x="3" y="15" width="7" height="6" rx="2" />
+          </svg><span class="nav-text">Overview</span></button>
+        <button class="nav-btn" data-page="mentors"><svg viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="1.8">
+            <circle cx="10" cy="8" r="4" />
+            <path d="M3 20c.5-4 3-6 7-6s6.5 2 7 6" />
+            <circle cx="18" cy="8" r="2.5" />
+            <path d="M18 13c2 0 3.3 1.1 3.8 3" />
+          </svg><span class="nav-text">Find a mentor</span></button>
+        <button class="nav-btn" data-page="learning"><svg viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="1.8">
+            <path
+              d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21z" />
+            <path d="M4 5.5v13A2.5 2.5 0 0 1 6.5 16H20" />
+            <path d="M8 7h7M8 10h8" />
+          </svg><span class="nav-text">My learning</span></button>
+        <button class="nav-btn" data-page="requests"><svg viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="1.8">
+            <path
+              d="M8 3h8l4 4v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" />
+            <path d="M16 3v5h4M8 13h8M8 17h5" />
+          </svg><span class="nav-text">Learning requests</span><span
+            class="nav-count" id="request-nav-count">2</span></button>
+        <button class="nav-btn" data-page="mentor-tools"><svg
+            viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="1.8">
+            <path d="M12 3 4 7v5c0 4.8 3.2 7.8 8 9 4.8-1.2 8-4.2 8-9V7z" />
+            <path d="m9 12 2 2 4-4" />
+          </svg><span class="nav-text">Mentor workspace</span></button>
+        <div class="nav-label" style="margin-top:13px">Explore</div>
+        <button class="nav-btn" data-page="opportunities"><svg
+            viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="1.8">
+            <path d="M4 19V5M4 19h17" />
+            <path d="m7 15 4-4 3 2 6-7" />
+            <path d="M16 6h4v4" />
+          </svg><span class="nav-text">Opportunities</span></button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="pilot-card">
+          <div class="pilot-title">LINKED Campus Pilot</div>
+          <p>Temukan teman belajar, terstruktur dari sesi pertama hingga
+            progresmu.</p><span class="pilot-pill">● &nbsp; PROTOTYPE V1</span>
+        </div>
+        <div class="user-mini">
+          <div class="avatar" id="sidebar-avatar">NP</div>
+          <div class="mini-info">
+            <div class="mini-name" id="sidebar-name">Jayren Stanley</div>
+            <div class="mini-role" id="sidebar-role">Learner mode</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <div class="crumb">LINKED <span
+            style="margin:0 7px;color:#c3ccda">/</span> <strong
+            id="breadcrumb">Overview</strong></div>
+        <div class="top-right">
+          <div class="demo-tag"><span class="demo-dot"></span> Demo data · Local
+            prototype</div><button class="mode-switch" id="mode-switch">Switch
+            to Mentor ↗</button><button class="icon-btn" id="help-btn"
+            title="Tentang prototype"><svg width="16" height="16"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="1.8">
+              <circle cx="12" cy="12" r="9" />
+              <path
+                d="M9.6 9a2.5 2.5 0 1 1 4.6 1.3c-.9 1.1-2.2 1.1-2.2 2.7M12 17h.01" />
+            </svg></button>
+          <div class="top-avatar" id="top-avatar">NP</div>
+        </div>
+      </header>
+      <div class="content" id="page-content"></div>
+    </main>
+  </div>
+  <div class="modal-backdrop" id="modal-backdrop" role="dialog"
+    aria-modal="true">
+    <div class="modal" id="modal"></div>
+  </div>
+  <div class="toast" id="toast"><span class="toast-mark">✓</span><span
+      id="toast-text">Done</span></div>
+  <script>
+    const STORAGE_KEY = 'linked_mvp_state_v1';
+    const mentorsSeed = [{
+        id: 'm1',
+        name: 'Jayren Stanley',
+        initials: 'JS',
+        color: '',
+        major: 'Business Mathematics · 2024',
+        subjects: ['Statistics', 'Probability', 'Data Analysis'],
+        topics: ['Hypothesis Testing', 'Probability Distribution',
+          'Descriptive Statistics', 'Sampling'
+        ],
+        experience: '18 sesi selesai',
+        rating: 4.9,
+        reviews: 12,
+        verified: true,
+        mode: ['Offline', 'Online'],
+        availability: 'Senin–Kamis · 16.00–20.00',
+        bio: 'Saya senang menjelaskan konsep statistik dari intuisi dan contoh sederhana sebelum masuk ke rumus. Cocok untuk diskusi tugas maupun belajar bertahap.',
+        history: '18 sesi mentoring',
+        hours: '26 jam',
+        sample: true
+      },
+      {
+        id: 'm2',
+        name: 'Evelyn Tamstil',
+        initials: 'ET',
+        color: 'green',
+        major: 'Business Mathematics · 2024',
+        subjects: ['Calculus', 'Mathematics', 'Physics'],
+        topics: ['Integral', 'Derivatives', 'Differential Equations',
+          'Limits'],
+        experience: '24 sesi selesai',
+        rating: 4.8,
+        reviews: 17,
+        verified: true,
+        mode: ['Offline', 'Online'],
+        availability: 'Selasa & Jumat · 15.00–19.00',
+        bio: 'Membantu learner memahami langkah penyelesaian soal matematika dengan runut, termasuk alasan di balik setiap tahap.',
+        history: '24 sesi mentoring',
+        hours: '34 jam',
+        sample: true
+      },
+      {
+        id: 'm3',
+        name: 'Jazzel Chandra',
+        initials: 'JC',
+        color: 'pink',
+        major: 'Artificial Intelligence & Robotics · 2024',
+        subjects: ['Python', 'Programming', 'Data Analysis'],
+        topics: ['Python Basics', 'Pandas', 'Data Visualization',
+          'Debugging'],
+        experience: '9 sesi selesai',
+        rating: 4.9,
+        reviews: 6,
+        verified: true,
+        mode: ['Online'],
+        availability: 'Rabu–Sabtu · 19.00–21.00',
+        bio: 'Fokus pada praktik coding, membaca error, dan membangun kebiasaan debugging. Sesi menggunakan contoh program kecil.',
+        history: '9 sesi mentoring',
+        hours: '14 jam',
+        sample: true
+      },
+      {
+        id: 'm4',
+        name: 'Jessica Lim',
+        initials: 'JL',
+        color: 'gold',
+        major: 'Applied Physics · 2023',
+        subjects: ['Physics', 'Mathematics'],
+        topics: ['Mechanics', 'Electricity', 'Waves', 'Problem Solving'],
+        experience: '15 sesi selesai',
+        rating: 4.7,
+        reviews: 10,
+        verified: true,
+        mode: ['Offline'],
+        availability: 'Senin & Rabu · 13.00–17.00',
+        bio: 'Saya membantu menghubungkan teori fisika dengan diagram, ilustrasi, dan latihan soal secara bertahap.',
+        history: '15 sesi mentoring',
+        hours: '21 jam',
+        sample: true
+      },
+      {
+        id: 'm5',
+        name: 'Melati Sari',
+        initials: 'MS',
+        color: 'purple',
+        major: 'Business · 2024',
+        subjects: ['Academic Writing', 'Presentation', 'Research'],
+        topics: ['Essay Structure', 'Research Question',
+          'Presentation Skills', 'Referencing'
+        ],
+        experience: '4 sesi selesai',
+        rating: 5.0,
+        reviews: 3,
+        verified: false,
+        mode: ['Online', 'Offline'],
+        availability: 'Kamis–Minggu · by request',
+        bio: 'Saya membantu menyusun argumen, membuat struktur tulisan akademik, dan menyampaikan ide dengan lebih jelas.',
+        history: '4 sesi mentoring',
+        hours: '6 jam',
+        sample: true
+      },
+      {
+        id: 'm6',
+        name: 'Dimas Prakoso',
+        initials: 'DP',
+        color: 'teal',
+        major: 'Information Systems · 2023',
+        subjects: ['Excel', 'Data Analysis', 'Business'],
+        topics: ['Pivot Table', 'Dashboard Basics', 'Data Cleaning',
+          'Excel Formulas'
+        ],
+        experience: '11 sesi selesai',
+        rating: 4.8,
+        reviews: 8,
+        verified: true,
+        mode: ['Online', 'Offline'],
+        availability: 'Selasa–Kamis · 18.00–21.00',
+        bio: 'Belajar analisis data dimulai dari kebutuhan kasus, merapikan data, lalu membuat ringkasan dan visualisasi sederhana.',
+        history: '11 sesi mentoring',
+        hours: '17 jam',
+        sample: true
+      }
+    ];
+    const initialState = {
+      role: 'learner',
+      user: {
+        name: 'Radhillan Akmam',
+        initials: 'RA',
+        major: 'Business Mathematics · 2024'
+      },
+      mentors: mentorsSeed,
+      requests: [{
+        id: 'req-demo-1',
+        learner: 'Andi Kurniawan',
+        learnerInitials: 'AK',
+        mentorId: 'm1',
+        subject: 'Statistics',
+        topic: 'Hypothesis Testing',
+        objective: 'Saya ingin memahami cara menentukan rejection region untuk latihan ujian.',
+        type: 'Single Session',
+        week: 'Week 5',
+        date: '2026-10-16',
+        time: '16:30',
+        duration: '90 menit',
+        mode: 'Offline',
+        location: 'Area belajar kampus',
+        notes: 'Boleh mulai dari contoh soal sederhana.',
+        status: 'pending',
+        createdAt: '2026-10-13T08:30:00',
+        demo: true
+      }, {
+        id: 'req-demo-2',
+        learner: 'Salsa Amelia',
+        learnerInitials: 'SA',
+        mentorId: 'm1',
+        subject: 'Statistics',
+        topic: 'Probability Distribution',
+        objective: 'Membutuhkan review materi sebelum kuis.',
+        type: 'Single Session',
+        week: 'Week 3',
+        date: '2026-10-15',
+        time: '18:00',
+        duration: '60 menit',
+        mode: 'Online',
+        location: 'Google Meet',
+        notes: 'Fokus pada distribusi normal.',
+        status: 'confirmed',
+        createdAt: '2026-10-12T08:30:00',
+        demo: true
+      }],
+      courses: [{
+        id: 'c1',
+        title: 'Statistics Fundamentals',
+        subject: 'Statistics',
+        mentorId: 'm1',
+        mentorName: 'Jayren Stanley',
+        type: 'Full Course',
+        doneModules: [0, 1, 2],
+        modules: [{
+          title: 'Descriptive Statistics',
+          sub: 'Mean, median, variance',
+          kind: 'Konsep dasar'
+        }, {
+          title: 'Probability',
+          sub: 'Aturan dan kejadian',
+          kind: 'Materi + latihan'
+        }, {
+          title: 'Probability Distribution',
+          sub: 'Discrete dan continuous distribution',
+          kind: 'Materi + latihan'
+        }, {
+          title: 'Sampling',
+          sub: 'Populasi, sampel, standard error',
+          kind: 'Modul pembelajaran'
+        }, {
+          title: 'Hypothesis Testing',
+          sub: 'Null hypothesis dan rejection region',
+          kind: 'Latihan soal'
+        }, {
+          title: 'Review & Assessment',
+          sub: 'Ringkasan dan evaluasi pemahaman',
+          kind: 'Evaluasi'
+        }]
+      }],
+      sessions: [{
+        id: 's1',
+        title: 'Review Probability',
+        mentorId: 'm1',
+        mentorName: 'Jayren Stanley',
+        date: '2026-10-16',
+        time: '18:00',
+        mode: 'Online',
+        status: 'confirmed',
+        courseId: 'c1',
+        topic: 'Probability Distribution',
+        summary: ''
+      }],
+      reviews: [],
+      toastTimer: null
+    };
+    let state = loadState(),
+      page = 'overview',
+      mentorFilters = {
+        query: '',
+        subject: 'all',
+        mode: 'all',
+        verified: false
+      },
+      requestType = 'Single Session',
+      selectedRating = 5,
+      reviewRequestId = null;
+
+    function loadState() {
+      try {
+        let x = localStorage.getItem(STORAGE_KEY);
+        if (x) {
+          let p = JSON.parse(x);
+          return {
+            ...initialState,
+            ...p,
+            mentors: p.mentors || mentorsSeed
+          }
+        }
+      } catch (e) {}
+      return structuredClone(initialState)
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function esc(x = '') {
+      return String(x).replace(/[&<>"']/g, c => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      } [c]))
+    }
+
+    function icon(name, size = 18) {
+      const paths = {
+        search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
+        calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>',
+        book: '<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21z"/><path d="M4 5.5v13A2.5 2.5 0 0 1 6.5 16H20"/>',
+        clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+        star: '<path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9z"/>',
+        arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+        plus: '<path d="M12 5v14M5 12h14"/>',
+        check: '<path d="m5 12 4 4L19 6"/>',
+        bookOpen: '<path d="M3 4.5A2.5 2.5 0 0 1 5.5 2H20v17H5.5A2.5 2.5 0 0 0 3 21z"/><path d="M3 4.5v14A2.5 2.5 0 0 1 5.5 16H20M8 6h7M8 10h7"/>',
+        video: '<rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3"/>',
+        pin: '<path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/>',
+        users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.4-3.7 2.6-5.5 6.5-5.5s6.1 1.8 6.5 5.5"/><path d="M16 5.5a3 3 0 0 1 0 5.7M17 15c2.5.4 4 2 4.5 4"/>'
+      };
+      return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${paths[name]||paths.arrow}</svg>`
+    }
+
+    function initials(name = '') {
+      return name.split(/\s+/).slice(0, 2).map(x => x[0] || '').join('')
+        .toUpperCase()
+    }
+
+    function getMentor(id) {
+      return state.mentors.find(m => m.id === id) || state.mentors[0]
+    }
+
+    function statusLabel(status) {
+      return {
+        pending: 'Menunggu',
+        confirmed: 'Dikonfirmasi',
+        rejected: 'Ditolak',
+        cancelled: 'Dibatalkan',
+        completed: 'Selesai',
+        reviewed: 'Sudah diulas'
+      } [status] || status
+    }
+
+    function statusHtml(status) {
+      return `<span class="status ${esc(status)}">${statusLabel(status)}</span>`
+    }
+
+    function go(p) {
+      page = p;
+      document.querySelectorAll('.nav-btn[data-page]').forEach(b => b.classList
+        .toggle('active', b.dataset.page === p));
+      render()
+    }
+    document.getElementById('main-nav').addEventListener('click', e => {
+      const b = e.target.closest('[data-page]');
+      if (b) go(b.dataset.page)
+    });
+    document.getElementById('mode-switch').addEventListener('click', () => {
+      state.role = state.role === 'learner' ? 'mentor' : 'learner';
+      saveState();
+      updateUserUi();
+      go(state.role === 'learner' ? 'overview' : 'overview');
+      showToast(state.role === 'mentor' ? 'Mode Mentor aktif' :
+        'Mode Learner aktif')
+    });
+    document.getElementById('help-btn').addEventListener('click', showAbout);
+
+    function displayUser() {
+      return state.role === 'mentor' ? getMentor('m1') : state.user
+    }
+
+    function updateUserUi() {
+      const role = state.role,
+        u = displayUser();
+      document.getElementById('mode-switch').textContent = role === 'learner' ?
+        'Switch to Mentor ↗' : 'Switch to Learner ↗';
+      document.getElementById('sidebar-role').textContent = role === 'learner' ?
+        'Learner mode' : 'Mentor mode';
+      document.getElementById('sidebar-name').textContent = u.name;
+      document.getElementById('sidebar-avatar').textContent = u.initials;
+      document.getElementById('top-avatar').textContent = u.initials;
+      document.getElementById('request-nav-count').textContent = state.requests
+        .filter(r => r.status === 'pending').length
+    }
+
+    function render() {
+      updateUserUi();
+      const names = {
+        overview: 'Overview',
+        mentors: 'Find a mentor',
+        learning: 'My learning',
+        requests: 'Learning requests',
+        'mentor-tools': 'Mentor workspace',
+        opportunities: 'Opportunities'
+      };
+      document.getElementById('breadcrumb').textContent = names[page] ||
+        'Overview';
+      const el = document.getElementById('page-content');
+      const renderers = {
+        overview: renderOverview,
+        mentors: renderMentors,
+        learning: renderLearning,
+        requests: renderRequests,
+        'mentor-tools': renderMentorTools,
+        opportunities: renderOpportunities
+      };
+      el.innerHTML = (renderers[page] || renderOverview)();
+      wirePage();
+    }
+
+    function renderOverview() {
+      const isMentor = state.role === 'mentor';
+      const activeUser = displayUser();
+      const course = state.courses[0],
+        done = course ? course.doneModules.length : 0,
+        total = course ? course.modules.length : 0;
+      if (isMentor) {
+        const pending = state.requests.filter(r => r.status === 'pending')
+          .length,
+          active = state.requests.filter(r => r.status === 'confirmed').length,
+          completed = state.requests.filter(r => r.status === 'completed' || r
+            .status === 'reviewed').length;
+        return `<div class="page-head"><div><div class="eyebrow">MENTOR DASHBOARD</div><h1>Halo, ${esc(activeUser.name.split(' ')[0])} 👋</h1><p>Kelola permintaan belajar, jadwal, dan kontribusimu di ekosistem LINKED</p></div><button class="btn btn-primary" data-action="edit-profile">Edit profil mentor ${icon('arrow',15)}</button></div>
+<div class="hero"><div class="hero-copy"><span class="hero-kicker">${icon('users',13)} TEACH WHAT YOU KNOW. LEARN WHAT YOU NEED.</span><h2>Bagikan yang kamu tahu.<br>Bangun sesuatu bersama</h2><p>Setiap sesi yang terstruktur membantu mahasiswa belajar dan membantu kamu berkembang sebagai mentor</p><div class="hero-actions"><button class="btn btn-primary" data-page-jump="requests">Lihat learning request ${icon('arrow',15)}</button><button class="btn btn-ghost" data-page-jump="mentor-tools">Kelola profil</button></div></div><div class="hero-art"><div class="orbit"></div><div class="book-illus"><div class="book-page"></div><div class="book-spine"></div><div class="book-line a"></div><div class="book-line b"></div><div class="book-line c"></div><div class="book-line d"></div></div><div class="floating-check">${icon('check',21)}</div><div class="floating-star">✦</div><div class="floating-dot"></div></div></div>
+<div class="stats-grid"><div class="stat-card"><div class="stat-top"><span class="stat-label">Request menunggu</span><span class="stat-icon amber">${icon('clock',17)}</span></div><div class="stat-number">${pending}</div><div class="stat-note">Perlu ditinjau</div></div><div class="stat-card"><div class="stat-top"><span class="stat-label">Sesi terkonfirmasi</span><span class="stat-icon green">${icon('calendar',17)}</span></div><div class="stat-number">${active}</div><div class="stat-note">Jadwal yang disepakati</div></div><div class="stat-card"><div class="stat-top"><span class="stat-label">Sesi selesai</span><span class="stat-icon">${icon('check',17)}</span></div><div class="stat-number">${getMentor('m1').experience.split(' ')[0]}</div><div class="stat-note">Termasuk data demonstrasi</div></div><div class="stat-card"><div class="stat-top"><span class="stat-label">Rating profil</span><span class="stat-icon purple">${icon('star',17)}</span></div><div class="stat-number">${getMentor('m1').rating.toFixed(1)} <span style="font-size:12px;color:#9ba6b7">/ 5</span></div><div class="stat-note">Rating contoh pada prototype</div></div></div>
+<div class="dash-grid"><section class="panel"><div class="section-head"><div><h3>Request terbaru</h3><p>Tanggapi permintaan agar jadwal belajar lebih jelas.</p></div><button class="text-link" data-page-jump="requests">Lihat semua →</button></div>${state.requests.filter(r=>r.status==='pending').length?state.requests.filter(r=>r.status==='pending').slice(0,3).map(requestRow).join(''):`<div class="empty"><strong>Belum ada request baru</strong>Permintaan yang masuk akan muncul di sini.</div>`}</section><section class="panel"><div class="section-head"><div><h3>Checklist mentor</h3><p>Informasi yang membantu learner memilihmu.</p></div></div><div class="timeline"><div class="timeline-item"><div class="timeline-dot">${icon('check',13)}</div><div><div class="timeline-title">Isi profil dan topik</div><div class="timeline-text">Jelaskan materi yang dapat kamu ajarkan secara spesifik.</div></div></div><div class="timeline-item"><div class="timeline-dot">2</div><div><div class="timeline-title">Lengkapi verifikasi</div><div class="timeline-text">Status verifikasi demo tidak menggantikan pemeriksaan nyata.</div></div></div><div class="timeline-item"><div class="timeline-dot">3</div><div><div class="timeline-title">Catat sesi dengan konsisten</div><div class="timeline-text">Session summary membantu learner melanjutkan pembelajaran.</div></div></div></div><button class="btn btn-ghost btn-block" data-page-jump="mentor-tools">Buka mentor workspace</button></section></div>`
+      }
+      return `<div class="page-head"><div><div class="eyebrow">YOUR CAMPUS LEARNING SPACE</div><h1>Ekosistem Pembelajaran Terstruktur bagi Mahasiswa <span style="font-size:22px">✦</span></h1><p>Temukan mahasiswa yang bisa membantumu memahami topik tertentu dengan tujuan, jadwal, dan progres yang lebih jelas</p></div><button class="btn btn-primary" data-page-jump="mentors">${icon('search',15)} Cari mentor</button></div>
+<div class="hero"><div class="hero-copy"><span class="hero-kicker">${icon('bookOpen',13)} TEACH WHAT YOU KNOW. LEARN WHAT YOU NEED.</span><h2>Satu langkah kecil hari ini,<br>lebih paham esok hari</h2><p>Pilih mentor berdasarkan kebutuhanmu, semua keputusan di tanganmu!</p><div class="hero-actions"><button class="btn btn-primary" data-page-jump="mentors">Temukan Mentor ${icon('arrow',15)}</button><button class="btn btn-ghost" data-action="request-general">Buat Learning Request</button></div></div><div class="hero-art"><div class="orbit"></div><div class="book-illus"><div class="book-page"></div><div class="book-spine"></div><div class="book-line a"></div><div class="book-line b"></div><div class="book-line c"></div><div class="book-line d"></div></div><div class="floating-check">${icon('check',21)}</div><div class="floating-star">✦</div><div class="floating-dot"></div></div></div>
+<div class="stats-grid"><div class="stat-card"><div class="stat-top"><span class="stat-label">Learning journey aktif</span><span class="stat-icon">${icon('bookOpen',17)}</span></div><div class="stat-number">${state.courses.length}</div><div class="stat-note">Full Course yang sedang kamu ikuti</div></div><div class="stat-card"><div class="stat-top"><span class="stat-label">Request menunggu</span><span class="stat-icon amber">${icon('clock',17)}</span></div><div class="stat-number">${state.requests.filter(r=>r.status==='pending').length}</div><div class="stat-note">Menunggu konfirmasi mentor</div></div><div class="stat-card"><div class="stat-top"><span class="stat-label">Topik diselesaikan</span><span class="stat-icon green">${icon('check',17)}</span></div><div class="stat-number">${state.courses.reduce((a,c)=>a+c.doneModules.length,0)}</div><div class="stat-note">Berdasarkan checklist modul demo</div></div><div class="stat-card"><div class="stat-top"><span class="stat-label">Mentor tersedia</span><span class="stat-icon purple">${icon('users',17)}</span></div><div class="stat-number">${state.mentors.length}</div><div class="stat-note">Profil contoh untuk uji coba</div></div></div>
+<div class="dash-grid"><section class="panel"><div class="section-head"><div><h3>Lanjutkan belajarmu</h3><p>Progres Full Course yang dapat kamu pantau.</p></div><button class="text-link" data-page-jump="learning">My learning →</button></div>${course?`<div class="course-item"><div class="course-cover">${icon('bookOpen',23)}</div><div class="course-body"><div class="course-title">${esc(course.title)}</div><div class="course-meta">${esc(course.mentorName)} · ${total} modul</div><div class="progress-row"><div class="progress"><span style="width:${Math.round(done/total*100)}%"></span></div><div class="progress-num">${done}/${total} selesai</div></div></div><button class="btn btn-soft btn-sm" data-action="open-course" data-id="${course.id}">Buka</button></div>`:''}<div class="notice" style="margin-top:13px"><strong>Kenapa progress tracking?</strong> Agar kamu tahu topik yang sudah dipelajari, yang masih berjalan, dan langkah belajar selanjutnya. BUKAN hanya mengandalkan ingatan setelah sesi</div></section><section class="panel"><div class="section-head"><div><h3>Mentor yang bisa kamu kenali</h3><p>Bandingkan informasi sebelum memilih.</p></div><button class="text-link" data-page-jump="mentors">Jelajahi →</button></div><div class="mentor-mini-list">${state.mentors.slice(0,3).map(mentorMini).join('')}</div></section></div>
+<section class="section"><div class="section-head"><div><h3>Agenda pembelajaran</h3><p>Jadwal dan permintaan yang sedang berjalan.</p></div><button class="text-link" data-page-jump="requests">Lihat request →</button></div>${renderUpcomingCompact()}</section>
+<div class="footer-note">PROTOTYPE</div>`
+    }
+
+    function mentorMini(m) {
+      return `<div class="mentor-mini"><div class="mentor-avatar ${m.color||''}">${esc(m.initials)}</div><div class="mentor-mini-main"><div class="mentor-mini-name">${esc(m.name)} ${m.verified?'<span class="verified">✓ Verified*</span>':''}</div><div class="mentor-mini-meta">${esc(m.subjects.slice(0,2).join(' · '))}</div></div><span class="rating">★ ${m.rating.toFixed(1)}</span><button class="inline-link" data-action="mentor-detail" data-id="${m.id}">Lihat</button></div>`
+    }
+
+    function renderUpcomingCompact() {
+      const reqs = state.requests.filter(r => r.status === 'confirmed').slice(0,
+        2);
+      if (!reqs.length)
+      return `<div class="empty"><strong>Belum ada jadwal terkonfirmasi</strong>Pilih mentor dan kirim request untuk mulai mengatur sesi.</div>`;
+      return `<div class="dash-grid">${reqs.map(r=>`<div class="list-card"><div class="step-num">${icon('calendar',15)}</div><div class="list-card-body"><div class="list-title">${esc(r.topic)} · ${esc(r.mentorId?getMentor(r.mentorId).name:'Mentor')}</div><div class="list-meta">${formatDate(r.date)} · ${esc(r.time)} · ${esc(r.duration)} · ${esc(r.mode)}</div><div class="list-actions">${statusHtml(r.status)} <button class="inline-link" data-page-jump="requests">Lihat detail →</button></div></div></div>`).join('')}</div>`
+    }
+
+    function renderMentors() {
+      const filt = state.mentors.filter(m => {
+        const q = mentorFilters.query.toLowerCase();
+        let hay = [m.name, m.major, ...m.subjects, ...m.topics].join(' ')
+          .toLowerCase();
+        return (!q || hay.includes(q)) && (mentorFilters.subject ===
+          'all' || m.subjects.includes(mentorFilters.subject)) && (
+          mentorFilters.mode === 'all' || m.mode.includes(mentorFilters
+            .mode)) && (!mentorFilters.verified || m.verified)
+      });
+      const subjects = [...new Set(state.mentors.flatMap(m => m.subjects))]
+        .sort();
+      return `<div class="page-head"><div><div class="eyebrow">MENTOR DIRECTORY</div><h1>Temukan mentor yang sesuai</h1><p>Gunakan informasi profil untuk membandingkan kompetensi, topik, jadwal, dan pengalaman. Kamu tetap memilih mentor sendiri</p></div><button class="btn btn-primary" data-action="request-general">+ Buat learning request</button></div><div class="notice" style="margin-bottom:16px"><strong>Student chooses the mentor.</strong> LINKED menyediakan informasi yang kamu perlukan untuk menentukan pilihan, bukan memilihkan mentor secara otomatis</div><div class="filterbar"><div class="field-search">${icon('search',17)}<input class="input" id="mentor-query" placeholder="Cari nama, mata kuliah, atau topik..." value="${esc(mentorFilters.query)}" /></div><select class="select" id="mentor-subject"><option value="all">Semua mata kuliah</option>${subjects.map(s=>`<option ${mentorFilters.subject===s?'selected':''}>${esc(s)}</option>`).join('')}</select><select class="select" id="mentor-mode"><option value="all">Semua mode</option><option ${mentorFilters.mode==='Online'?'selected':''}>Online</option><option ${mentorFilters.mode==='Offline'?'selected':''}>Offline</option></select><label class="check-filter"><input type="checkbox" id="mentor-verified" ${mentorFilters.verified?'checked':''}/> Terverifikasi saja</label></div><div class="result-meta"><span>Menampilkan <strong>${filt.length} mentor</strong> · data demo</span><span>Urut berdasarkan pilihan filter</span></div><div class="mentor-grid">${filt.length?filt.map(mentorCard).join(''):`<div class="empty" style="grid-column:1/-1"><strong>Belum ada mentor yang cocok</strong>Coba ubah kata kunci atau longgarkan filter pilihanmu.</div>`}</div><div class="footer-note">*Badge verifikasi pada profil contoh hanya untuk memperlihatkan rancangan UI, bukan klaim verifikasi mahasiswa nyata. Dalam versi produksi, badge hanya diberikan setelah SOP verifikasi dijalankan.</div>`
+    }
+
+    function mentorCard(m) {
+      return `<article class="mentor-card"><div class="mentor-card-top"><div class="mentor-avatar ${m.color||''}">${esc(m.initials)}</div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">${m.verified?'<span class="verified">✓ Verified*</span>':'<span class="chip amber">Belum terverifikasi</span>'}<span class="rating">★ ${m.rating.toFixed(1)} <span style="font-weight:500;color:#9ba6b7">(${m.reviews})</span></span></div></div><h3 class="mentor-title">${esc(m.name)}</h3><div class="mentor-sub">${esc(m.major)}</div><div class="mentor-tags">${m.subjects.slice(0,3).map(s=>`<span>${esc(s)}</span>`).join('')}</div><div class="mentor-sub" style="min-height:31px">${esc(m.bio.slice(0,92))}${m.bio.length>92?'…':''}</div><div class="mentor-details"><div><div class="detail-small">Pengalaman</div><div class="detail-value">${esc(m.experience)}</div></div><div><div class="detail-small">Mode belajar</div><div class="detail-value">${esc(m.mode.join(' / '))}</div></div></div><div class="mentor-card-bottom"><button class="btn btn-ghost btn-sm" data-action="mentor-detail" data-id="${m.id}">Lihat profil</button><button class="btn btn-primary btn-sm" data-action="request-mentor" data-id="${m.id}">Request sesi ${icon('arrow',13)}</button></div></article>`
+    }
+
+    function modulesFor(subject, topic) {
+      const key = (subject || '').toLowerCase();
+      if (key.includes('stat')) return [{
+        title: 'Dasar dan tujuan belajar',
+        sub: topic + ' · konsep utama',
+        kind: 'Materi'
+      }, {
+        title: 'Konsep inti',
+        sub: 'Definisi dan contoh',
+        kind: 'Materi + latihan'
+      }, {
+        title: 'Contoh soal bertahap',
+        sub: 'Penerapan pada kasus sederhana',
+        kind: 'Latihan'
+      }, {
+        title: 'Latihan mandiri',
+        sub: 'Kerjakan soal tanpa bantuan',
+        kind: 'Tugas'
+      }, {
+        title: 'Pembahasan dan evaluasi',
+        sub: 'Koreksi jawaban dan miskonsepsi',
+        kind: 'Review'
+      }, {
+        title: 'Review akhir',
+        sub: 'Rangkuman serta next steps',
+        kind: 'Evaluasi'
+      }];
+      if (key.includes('calculus') || key.includes('math')) return [{
+        title: 'Konsep dan notasi',
+        sub: topic + ' · prasyarat',
+        kind: 'Materi'
+      }, {
+        title: 'Contoh dasar',
+        sub: 'Satu konsep dalam satu contoh',
+        kind: 'Materi + latihan'
+      }, {
+        title: 'Strategi penyelesaian',
+        sub: 'Memilih langkah dan rumus',
+        kind: 'Latihan'
+      }, {
+        title: 'Problem set',
+        sub: 'Latihan bertahap',
+        kind: 'Tugas'
+      }, {
+        title: 'Aplikasi kasus',
+        sub: 'Penerapan dalam soal',
+        kind: 'Praktik'
+      }, {
+        title: 'Review akhir',
+        sub: 'Rangkuman dan assessment',
+        kind: 'Evaluasi'
+      }];
+      if (key.includes('python') || key.includes('program')) return [{
+        title: 'Konsep dan sintaks dasar',
+        sub: topic + ' · prasyarat',
+        kind: 'Materi'
+      }, {
+        title: 'Membaca kode',
+        sub: 'Memahami input, proses, output',
+        kind: 'Praktik'
+      }, {
+        title: 'Contoh dan debugging',
+        sub: 'Menemukan penyebab error',
+        kind: 'Latihan'
+      }, {
+        title: 'Mini exercise',
+        sub: 'Implementasi bertahap',
+        kind: 'Tugas'
+      }, {
+        title: 'Mini project',
+        sub: 'Menerapkan topik pada masalah',
+        kind: 'Praktik'
+      }, {
+        title: 'Code review',
+        sub: 'Refleksi dan next steps',
+        kind: 'Evaluasi'
+      }];
+      return [{
+        title: 'Tujuan dan konsep inti',
+        sub: topic + ' · dasar',
+        kind: 'Materi'
+      }, {
+        title: 'Contoh terarah',
+        sub: 'Penerapan konsep pada kasus',
+        kind: 'Materi + latihan'
+      }, {
+        title: 'Latihan terpandu',
+        sub: 'Menerapkan langkah satu per satu',
+        kind: 'Latihan'
+      }, {
+        title: 'Tugas mandiri',
+        sub: 'Latihan di luar sesi',
+        kind: 'Tugas'
+      }, {
+        title: 'Pembahasan',
+        sub: 'Review hasil dan pertanyaan',
+        kind: 'Review'
+      }, {
+        title: 'Evaluasi akhir',
+        sub: 'Rangkuman dan langkah lanjutan',
+        kind: 'Evaluasi'
+      }]
+    }
+
+    function renderLearning() {
+      const courses = state.courses;
+      const reqs = state.requests.filter(r => ['pending', 'confirmed',
+        'completed', 'reviewed'
+      ].includes(r.status));
+      return `<div class="page-head"><div><div class="eyebrow">MY LEARNING</div><h1>Ruang belajarmu</h1><p>Pantau course, catatan sesi, status request, dan langkah belajar selanjutnya dari satu tempat</p></div><button class="btn btn-primary" data-page-jump="mentors">${icon('plus',15)} Mulai belajar</button></div><div class="page-tabs"><button class="tab-btn active" data-learning-tab="courses">Full Course</button><button class="tab-btn" data-learning-tab="requests">Single Session & Request</button></div><div id="learning-tab-content">${renderLearningCourses()}</div>`
+    }
+
+    function renderLearningCourses() {
+      if (!state.courses.length)
+      return `<div class="empty"><strong>Belum ada Full Course</strong>Kamu dapat mencari mentor dan meminta sesi belajar.</div>`;
+      return `<div class="dash-grid"><div>${state.courses.map(c=>{const m=getMentor(c.mentorId),pct=Math.round(c.doneModules.length/c.modules.length*100);return `<div class="panel" style="margin-bottom:13px"><div style="display:flex;gap:14px;align-items:flex-start"><div class="course-cover teal">${icon('bookOpen',24)}</div><div style="flex:1"><div class="chips"><span class="chip blue">FULL COURSE</span><span class="chip">${c.doneModules.length}/${c.modules.length} modul</span></div><h3 style="font-size:15px;margin:9px 0 5px">${esc(c.title)}</h3><div class="list-meta">Mentor: ${esc(c.mentorName)} · ${esc(c.subject)}</div><div class="progress-row" style="margin-top:14px"><div class="progress"><span style="width:${pct}%"></span></div><div class="progress-num">${pct}%</div></div></div></div><div class="divider"></div><div class="section-head"><div><h3 style="font-size:12px">Learning modules</h3><p>Centang topik setelah selesai dipelajari.</p></div></div><div class="module-list">${c.modules.map((mod,i)=>`<div class="module-row"><button class="module-check ${c.doneModules.includes(i)?'done':''}" data-action="toggle-module" data-course="${c.id}" data-index="${i}">${c.doneModules.includes(i)?icon('check',14):''}</button><div class="module-info"><div class="module-title">${i+1}. ${esc(mod.title)}</div><div class="module-sub">${esc(mod.sub)} · ${esc(mod.kind)}</div></div><span class="module-lock">${c.doneModules.includes(i)?'Selesai':'Belum'}</span></div>`).join('')}</div><div class="notice" style="margin-top:15px">Progress ini diperbarui oleh learner secara manual untuk prototype. Pada versi lanjut, perubahan modul akan tersimpan di database dan dapat diselaraskan dengan catatan sesi mentor.</div></div>`}).join('')}</div><aside class="panel"><div class="section-head"><div><h3>Learning journey</h3><p>Contoh alur full course.</p></div></div><div class="timeline"><div class="timeline-item"><div class="timeline-dot">1</div><div><div class="timeline-title">Tentukan tujuan</div><div class="timeline-text">Pahami target yang ingin dicapai di akhir course.</div></div></div><div class="timeline-item"><div class="timeline-dot">2</div><div><div class="timeline-title">Pelajari modul</div><div class="timeline-text">Ikuti urutan topik dan kerjakan latihan yang disiapkan mentor.</div></div></div><div class="timeline-item"><div class="timeline-dot">3</div><div><div class="timeline-title">Catat progres</div><div class="timeline-text">Tandai topik selesai dan tulis pertanyaan lanjutan.</div></div></div><div class="timeline-item"><div class="timeline-dot">4</div><div><div class="timeline-title">Review hasil belajar</div><div class="timeline-text">Gunakan catatan sesi untuk merencanakan langkah selanjutnya.</div></div></div></div></aside></div>`
+    }
+
+    function renderLearningRequests() {
+      const arr = state.requests.filter(r => ['pending', 'confirmed',
+        'completed', 'reviewed', 'rejected', 'cancelled'
+      ].includes(r.status));
+      return arr.length ? arr.map(r => requestRow(r, {
+          learnerView: true
+        })).join('') :
+        `<div class="empty"><strong>Belum ada request</strong>Pilih mentor untuk mengajukan sesi pertama.</div>`
+    }
+
+    function renderRequests() {
+      const isMentor = state.role === 'mentor';
+      const filter = isMentor ? state.requests : state.requests;
+      return `<div class="page-head"><div><div class="eyebrow">LEARNING REQUESTS</div><h1>${isMentor?'Kelola permintaan belajar':'Request dan jadwalmu'}</h1><p>${isMentor?'Tinjau kebutuhan learner dan konfirmasi jadwal yang bisa kamu penuhi':'Ikuti status permintaan, konfirmasi jadwal, dan catat feedback setelah sesi selesai'}</p></div>${!isMentor?`<button class="btn btn-primary" data-page-jump="mentors">+ Request mentor</button>`:''}</div><div class="page-tabs"><button class="tab-btn active" data-request-tab="${isMentor?'incoming':'sent'}">${isMentor?'Masuk':'Request saya'}</button><button class="tab-btn" data-request-tab="confirmed">Dikonfirmasi</button><button class="tab-btn" data-request-tab="completed">Selesai</button><button class="tab-btn" data-request-tab="all">Semua</button></div><div id="request-list">${renderRequestTab(isMentor?'incoming':'sent')}</div><div class="footer-note">Request pada prototype disimpan di browser ini. Pada produk multi-user, learner dan mentor harus memiliki akun serta izin akses data yang terpisah.</div>`
+    }
+
+    function renderRequestTab(tab) {
+      let arr = state.requests;
+      if (tab === 'incoming') arr = arr.filter(r => r.status === 'pending');
+      else if (tab === 'sent') arr = arr.filter(r => r.learner === state.user
+        .name || r.demo);
+      else if (tab === 'confirmed') arr = arr.filter(r => r.status ===
+        'confirmed');
+      else if (tab === 'completed') arr = arr.filter(r => ['completed',
+        'reviewed'
+      ].includes(r.status));
+      return arr.length ? arr.map(r => requestRow(r, {
+          mentorView: state.role === 'mentor'
+        })).join('') :
+        `<div class="empty"><strong>Belum ada request di kategori ini</strong>${tab==='incoming'?'Request yang menunggu konfirmasi akan muncul di sini.':'Saat alur belajar berjalan, statusnya akan tercatat di halaman ini.'}</div>`
+    }
+
+    function requestRow(r, opts = {}) {
+      const m = getMentor(r.mentorId);
+      let actions = '';
+      if (opts.mentorView && r.status === 'pending') actions =
+        `<button class="btn btn-primary btn-sm" data-action="accept-request" data-id="${r.id}">Terima request</button><button class="btn btn-danger btn-sm" data-action="reject-request" data-id="${r.id}">Tolak</button>`;
+      else if (opts.mentorView && r.status === 'confirmed' && r.type ===
+        'Full Course') actions =
+        `<button class="btn btn-soft btn-sm" data-action="open-request-course" data-id="${r.id}">Kelola learning plan</button>`;
+      else if (opts.mentorView && r.status === 'confirmed') actions =
+        `<button class="btn btn-soft btn-sm" data-action="complete-request" data-id="${r.id}">Tandai sesi selesai</button>`;
+      else if (!opts.mentorView && r.status === 'confirmed' && r.type ===
+        'Full Course') actions =
+        `<button class="btn btn-soft btn-sm" data-action="open-request-course" data-id="${r.id}">Lihat learning plan</button>`;
+      else if (r.status === 'completed' && !state.reviews.some(v => v
+          .requestId === r.id)) actions =
+        `<button class="btn btn-soft btn-sm" data-action="leave-review" data-id="${r.id}">Beri ulasan</button>`;
+      else if (r.status === 'pending' && !opts.mentorView) actions =
+        `<button class="btn btn-ghost btn-sm" data-action="cancel-request" data-id="${r.id}">Batalkan</button>`;
+      else if (r.status === 'confirmed') actions =
+        `<button class="btn btn-ghost btn-sm" data-action="session-notes" data-id="${r.id}">Catatan sesi</button>`;
+      return `<div class="list-card"><div class="mentor-avatar ${m.color||''}">${opts.mentorView?esc(r.learnerInitials||initials(r.learner)):esc(m.initials)}</div><div class="list-card-body"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap"><h3 class="list-title">${esc(r.topic)} <span style="font-weight:500;color:#8290a3">· ${esc(r.subject)}</span></h3>${statusHtml(r.status)}</div><div class="list-meta">${opts.mentorView?`Learner: ${esc(r.learner)}`:`Mentor: ${esc(m.name)}`}<br>${esc(r.type)} · ${formatDate(r.date)} pukul ${esc(r.time)} · ${esc(r.duration)}<br>${esc(r.mode)}${r.location?' · '+esc(r.location):''}<br><span style="color:#536681">Tujuan:</span> ${esc(r.objective)}</div><div class="list-actions">${actions}</div></div></div>`
+    }
+
+    function renderMentorTools() {
+      const m = getMentor('m1');
+      return `<div class="page-head"><div><div class="eyebrow">MENTOR WORKSPACE</div><h1>Profil & perangkat mentoring</h1><p>Kelola informasi yang dibutuhkan learner untuk mengambil keputusan dan simpan catatan dari sesi yang kamu jalankan</p></div><span class="chip blue">Prototype</span></div><div class="dash-grid"><div><section class="panel"><div class="section-head"><div><h3>Profil mentor</h3><p>Informasi profil contoh yang tampil pada direktori</p></div><button class="btn btn-ghost btn-sm" data-action="edit-profile">Edit</button></div><div class="profile-head"><div class="mentor-avatar">NP</div><div><div class="profile-name">Jayren Stanley</div><div class="profile-role">Business Mathematics · 2024</div><div class="chips" style="margin-top:8px"><span class="verified">✓ Verified* (demo)</span><span class="rating">★ 4.9</span></div></div></div><div class="profile-metrics"><div class="profile-metric"><strong>18</strong><span>Sesi selesai*</span></div><div class="profile-metric"><strong>12</strong><span>Review*</span></div><div class="profile-metric"><strong>26 jam</strong><span>Teaching time*</span></div></div><div class="divider"></div><div class="form-group"><label>Subject & expertise</label><div class="chips">${m.subjects.map(s=>`<span class="chip blue">${esc(s)}</span>`).join('')}</div></div><div class="form-group" style="margin-top:14px"><label>Topik yang dapat diajarkan</label><div class="chips">${m.topics.map(s=>`<span class="chip">${esc(s)}</span>`).join('')}</div></div><div class="form-group" style="margin-top:14px"><label>Ketersediaan</label><div class="list-meta">${esc(m.availability)}</div></div><div class="form-group" style="margin-top:14px"><label>Mode belajar</label><div class="chips">${m.mode.map(s=>`<span class="chip">${esc(s)}</span>`).join('')}</div></div><div class="footer-note">*Angka adalah data contoh. Profil belum tersambung ke akun pribadi atau database bersama.</div></section><section class="panel" style="margin-top:15px"><div class="section-head"><div><h3>Learning module builder</h3><p>Untuk prototype, kelola urutan topik dan catatan secara sederhana.</p></div></div><div class="notice"><strong>Prinsip modul:</strong> Full Course perlu memiliki learning objective, topik per sesi, materi/latihan, serta ringkasan setelah sesi. Jangan membuat modul terlalu panjang sebelum kebutuhan learner tervalidasi.</div><button class="btn btn-primary" style="margin-top:14px" data-action="open-course" data-id="c1">Buka contoh modul</button></section></div><aside><section class="panel"><div class="section-head"><div><h3>Verifikasi mentor</h3><p>Contoh prosedur sederhana.</p></div></div><div class="timeline"><div class="timeline-item"><div class="timeline-dot">1</div><div><div class="timeline-title">Pendaftaran & identitas</div><div class="timeline-text">Periksa status mahasiswa dan informasi profil.</div></div></div><div class="timeline-item"><div class="timeline-dot">2</div><div><div class="timeline-title">Bukti kompetensi</div><div class="timeline-text">Tinjau nilai, portofolio, atau bukti relevan untuk subject.</div></div></div><div class="timeline-item"><div class="timeline-dot">3</div><div><div class="timeline-title">Teaching demo singkat</div><div class="timeline-text">Nilai kejelasan penjelasan dan komunikasi secara manual.</div></div></div><div class="timeline-item"><div class="timeline-dot">4</div><div><div class="timeline-title">Trial & review</div><div class="timeline-text">Evaluasi reliability serta feedback setelah sesi awal.</div></div></div></div><div class="notice"><strong>Catatan:</strong> Badge di prototype bukan verifikasi nyata. Dalam pilot, peninjauan harus dilakukan operator yang ditunjuk dan didokumentasikan.</div></section><section class="panel" style="margin-top:15px"><div class="section-head"><div><h3>Operasional yang belum aktif</h3></div></div><div class="chips"><span class="chip amber">Pembayaran</span><span class="chip amber">Reward</span><span class="chip amber">Notifikasi email</span><span class="chip amber">Admin verification</span></div><div class="footer-note">Ditunda agar MVP berfokus pada alur Find → Select → Request → Schedule → Learn → Track → Review.</div></section></aside></div>`
+    }
+
+    function renderOpportunities() {
+      return `<div class="page-head"><div><div class="eyebrow">STUDENT DEVELOPMENT</div><h1>Kesempatan untuk berkembang</h1><p>Area ini direncanakan untuk informasi seminar, workshop, kompetisi, serta kegiatan pengembangan skill yang dapat difilter berdasarkan kategori</p></div><span class="chip amber">Tahap berikutnya</span></div><div class="notice" style="margin-bottom:18px"><strong>Belum aktif di MVP.</strong> Agar fokus pengembangan tidak melebar, papan kesempatan belum terhubung ke sumber acara nyata. Jangan memakai informasi acara contoh untuk keputusan pendaftaran.</div><div class="opportunity-grid"><div class="opportunity-card"><div class="opp-icon">${icon('bookOpen',20)}</div><h4>Workshop & bootcamp</h4><p>Informasi pengembangan skill, pelatihan singkat, dan kelas praktik.</p><span class="chip">Direncanakan</span></div><div class="opportunity-card"><div class="opp-icon" style="background:#e6f7f1;color:#188367">${icon('users',20)}</div><h4>Kompetisi & komunitas</h4><p>Kesempatan menerapkan materi, bekerja dalam tim, dan membangun portofolio.</p><span class="chip">Direncanakan</span></div><div class="opportunity-card"><div class="opp-icon" style="background:#fff2df;color:#a16a19">${icon('arrow',20)}</div><h4>Career & academic events</h4><p>Seminar, career event, dan kegiatan yang dikelola kampus atau mitra.</p><span class="chip">Direncanakan</span></div></div><div class="coming-soon">${icon('clock',15)} Prioritas setelah core workflow, reputasi mentor, dan progres belajar diuji dengan pengguna.</div>`
+    }
+
+    function wirePage() {
+      document.querySelectorAll('[data-page-jump]').forEach(b => b
+        .addEventListener('click', () => go(b.dataset.pageJump)));
+      document.querySelectorAll('[data-action]').forEach(b => b
+        .addEventListener('click', () => handleAction(b.dataset.action, b
+          .dataset.id, b.dataset)));
+      if (page === 'mentors') {
+        const q = document.getElementById('mentor-query');
+        q.addEventListener('input', () => {
+          mentorFilters.query = q.value;
+          const pos = q.selectionStart;
+          render();
+          const inp = document.getElementById('mentor-query');
+          inp.focus();
+          inp.setSelectionRange(pos, pos)
+        });
+        document.getElementById('mentor-subject').addEventListener('change',
+          e => {
+            mentorFilters.subject = e.target.value;
+            render()
+          });
+        document.getElementById('mentor-mode').addEventListener('change', e => {
+          mentorFilters.mode = e.target.value;
+          render()
+        });
+        document.getElementById('mentor-verified').addEventListener('change',
+          e => {
+            mentorFilters.verified = e.target.checked;
+            render()
+          })
+      }
+      document.querySelectorAll('[data-learning-tab]').forEach(b => b
+        .addEventListener('click', () => {
+          document.querySelectorAll('[data-learning-tab]').forEach(x => x
+            .classList.toggle('active', x === b));
+          document.getElementById('learning-tab-content').innerHTML = b
+            .dataset.learningTab === 'courses' ? renderLearningCourses() :
+            renderLearningRequests();
+          document.querySelectorAll('#learning-tab-content [data-action]')
+            .forEach(x => x.addEventListener('click', () => handleAction(x
+              .dataset.action, x.dataset.id, x.dataset)));
+        }));
+      document.querySelectorAll('[data-request-tab]').forEach(b => b
+        .addEventListener('click', () => {
+          document.querySelectorAll('[data-request-tab]').forEach(x => x
+            .classList.toggle('active', x === b));
+          document.getElementById('request-list').innerHTML =
+            renderRequestTab(b.dataset.requestTab);
+          document.querySelectorAll('#request-list [data-action]').forEach(
+            x => x.addEventListener('click', () => handleAction(x.dataset
+              .action, x.dataset.id, x.dataset)));
+        }));
+    }
+
+    function handleAction(action, id, data = {}) {
+      if (action === 'mentor-detail') return openMentor(id);
+      if (action === 'request-mentor') return openRequestForm(id);
+      if (action === 'request-general') return openRequestForm(null);
+      if (action === 'open-course') return openCourse(id);
+      if (action === 'open-request-course') {
+        const c = state.courses.find(c => c.requestId === id);
+        if (c) return openCourse(c.id);
+        showToast('Learning plan belum tersedia');
+        return
+      }
+      if (action === 'toggle-module') {
+        const c = state.courses.find(c => c.id === data.course);
+        if (!c) return;
+        const i = Number(data.index),
+          pos = c.doneModules.indexOf(i);
+        if (pos >= 0) c.doneModules.splice(pos, 1);
+        else c.doneModules.push(i);
+        saveState();
+        render();
+        showToast('Progress modul diperbarui');
+        return
+      }
+      if (action === 'accept-request') {
+        const r = state.requests.find(r => r.id === id);
+        if (r) {
+          r.status = 'confirmed';
+          if (r.type === 'Full Course' && !state.courses.some(c => c
+              .requestId === r.id)) {
+            const modules = modulesFor(r.subject, r.topic);
+            state.courses.push({
+              id: 'c-' + Date.now(),
+              requestId: r.id,
+              title: r.subject + ' Learning Path',
+              subject: r.subject,
+              mentorId: r.mentorId,
+              mentorName: getMentor(r.mentorId).name,
+              type: 'Full Course',
+              doneModules: [],
+              modules
+            });
+          }
+          saveState();
+          render();
+          showToast(r.type === 'Full Course' ?
+            'Request diterima · learning plan dibuat' : 'Request dikonfirmasi'
+            )
+        }
+        return
+      }
+      if (action === 'reject-request') {
+        const r = state.requests.find(r => r.id === id);
+        if (r) {
+          r.status = 'rejected';
+          saveState();
+          render();
+          showToast('Request ditolak')
+        }
+        return
+      }
+      if (action === 'cancel-request') {
+        const r = state.requests.find(r => r.id === id);
+        if (r) {
+          r.status = 'cancelled';
+          saveState();
+          render();
+          showToast('Request dibatalkan')
+        }
+        return
+      }
+      if (action === 'complete-request') {
+        const r = state.requests.find(r => r.id === id);
+        if (r) {
+          r.status = 'completed';
+          if (!r.summary) r.summary =
+            'Sesi selesai. Tambahkan poin yang telah dipahami dan latihan lanjutan.';
+          saveState();
+          render();
+          showToast('Sesi ditandai selesai')
+        }
+        return
+      }
+      if (action === 'leave-review') return openReview(id);
+      if (action === 'session-notes') return openSessionNotes(id);
+      if (action === 'edit-profile') return openEditProfile();
+    }
+
+    function openModal(html, wide = false) {
+      const back = document.getElementById('modal-backdrop'),
+        m = document.getElementById('modal');
+      m.className = 'modal' + (wide ? ' wide' : '');
+      m.innerHTML = html;
+      back.classList.add('open');
+      back.onclick = e => {
+        if (e.target === back) closeModal()
+      };
+      m.querySelectorAll('[data-close-modal]').forEach(b => b.addEventListener(
+        'click', closeModal));
+    }
+
+    function closeModal() {
+      document.getElementById('modal-backdrop').classList.remove('open')
+    }
+
+    function openMentor(id) {
+      const m = getMentor(id);
+      openModal(
+        `<div class="modal-header"><div><div class="eyebrow">MENTOR PROFILE</div><h2>Kenali mentor sebelum memilih</h2><p>Informasi profil untuk mendukung keputusan learner.</p></div><button class="modal-close" data-close-modal>×</button></div><div class="modal-body"><div class="profile-head"><div class="mentor-avatar ${m.color||''}">${esc(m.initials)}</div><div><div class="profile-name">${esc(m.name)}</div><div class="profile-role">${esc(m.major)}</div><div class="chips" style="margin-top:8px">${m.verified?'<span class="verified">✓ Verified* (demo)</span>':'<span class="chip amber">Belum terverifikasi</span>'}<span class="rating">★ ${m.rating.toFixed(1)} (${m.reviews} ulasan contoh)</span></div></div></div><div class="profile-metrics"><div class="profile-metric"><strong>${esc(m.experience.split(' ')[0])}</strong><span>Sesi selesai*</span></div><div class="profile-metric"><strong>${esc(m.mode.join(' / '))}</strong><span>Mode pembelajaran</span></div><div class="profile-metric"><strong>${m.topics.length}</strong><span>Topik ditawarkan</span></div></div><div class="form-group"><label>Tentang mentor</label><p style="font-size:12px;color:#687891;line-height:1.8;margin:0">${esc(m.bio)}</p></div><div class="form-group" style="margin-top:15px"><label>Subject expertise</label><div class="chips">${m.subjects.map(s=>`<span class="chip blue">${esc(s)}</span>`).join('')}</div></div><div class="form-group" style="margin-top:15px"><label>Topik yang dapat diajarkan</label><div class="chips">${m.topics.map(s=>`<span class="chip">${esc(s)}</span>`).join('')}</div></div><div class="form-group" style="margin-top:15px"><label>Ketersediaan yang disampaikan</label><div class="list-meta">${esc(m.availability)}</div></div><div class="form-group" style="margin-top:15px"><label>Ulasan</label><div class="notice">Ulasan di profil ini merupakan data demonstrasi, bukan testimoni pengguna nyata. Di produk yang sesungguhnya, ulasan hanya dapat dibuat setelah sesi tercatat selesai.</div></div><div class="modal-actions"><button class="btn btn-ghost" data-close-modal>Tutup</button><button class="btn btn-primary" id="modal-request">Buat learning request ${icon('arrow',14)}</button></div></div>`,
+        true);
+      document.getElementById('modal-request').addEventListener('click', () =>
+        openRequestForm(id));
+    }
+
+    function openRequestForm(mentorId) {
+      if (state.role !== 'learner') {
+        showToast('Ganti ke mode Learner untuk membuat request');
+        return
+      }
+      const m = mentorId ? getMentor(mentorId) : null;
+      requestType = 'Single Session';
+      openModal(
+        `<div class="modal-header"><div><div class="eyebrow">LEARNING REQUEST</div><h2>Jelaskan kebutuhan belajarmu</h2><p>Request yang spesifik membantu mentor menyiapkan sesi yang lebih relevan.</p></div><button class="modal-close" data-close-modal>×</button></div><div class="modal-body"><form id="request-form"><div class="form-grid"><div class="form-group full"><label>Mentor pilihan</label><select class="select" name="mentorId" required>${m?`<option value="${m.id}">${esc(m.name)} · ${esc(m.subjects.join(', '))}</option>`:`<option value="">Pilih mentor</option>`+state.mentors.map(x=>`<option value="${x.id}">${esc(x.name)} · ${esc(x.subjects.join(', '))}</option>`).join('')}</select><div class="form-hint">Pemilihan dilakukan oleh learner, bukan sistem otomatis.</div></div><div class="form-group"><label>Subject</label><select class="select" name="subject" required>${(m?m.subjects:[...new Set(state.mentors.flatMap(x=>x.subjects))].sort()).map(s=>`<option>${esc(s)}</option>`).join('')}</select></div><div class="form-group"><label>Topik spesifik</label><input class="input" name="topic" required placeholder="Contoh: Hypothesis Testing"/></div><div class="form-group full"><label>Jenis pembelajaran</label><div class="radio-row"><label class="radio-option"><input type="radio" name="type" value="Single Session" checked/><span>Single Session<br><small style="font-size:9px;font-weight:500">Satu kebutuhan spesifik</small></span></label><label class="radio-option"><input type="radio" name="type" value="Full Course"/><span>Full Course<br><small style="font-size:9px;font-weight:500">Beberapa sesi terstruktur</small></span></label></div></div><div class="form-group full"><label>Tujuan belajar</label><textarea class="textarea" name="objective" required placeholder="Apa yang ingin kamu pahami setelah sesi?" rows="3"></textarea></div><div class="form-group"><label>Tanggal pilihan</label><input class="input" name="date" type="date" min="${localIsoDate(0)}" value="${localIsoDate(3)}" required/></div><div class="form-group"><label>Waktu pilihan</label><input class="input" name="time" type="time" value="16:00" required/></div><div class="form-group"><label>Durasi</label><select class="select" name="duration"><option>60 menit</option><option selected>90 menit</option><option>120 menit</option></select></div><div class="form-group"><label>Mode</label><select class="select" name="mode"><option>Offline</option><option>Online</option></select></div><div class="form-group full"><label>Lokasi / link pertemuan</label><input class="input" name="location" placeholder="Contoh: area belajar kampus atau Google Meet" value="Area belajar kampus"/></div><div class="form-group full"><label>Catatan tambahan</label><textarea class="textarea" name="notes" rows="2" placeholder="Tingkat pemahaman saat ini, materi yang sudah dicoba, atau kebutuhan khusus."></textarea></div><div class="form-group full" id="course-week-group" style="display:none"><label>Perkiraan struktur Full Course</label><div class="notice">Untuk prototype, Full Course dibuat sebagai request. Rencana sesi dan modul dapat disepakati bersama mentor setelah request diterima.</div></div></div><div class="modal-actions"><button type="button" class="btn btn-ghost" data-close-modal>Batal</button><button class="btn btn-primary" type="submit">Kirim learning request ${icon('arrow',14)}</button></div></form></div>`,
+        true);
+      const form = document.getElementById('request-form');
+      form.querySelectorAll('input[name="type"]').forEach(r => r
+        .addEventListener('change', () => {
+          document.getElementById('course-week-group').style.display = form
+            .querySelector('input[name="type"]:checked').value ===
+            'Full Course' ? 'block' : 'none'
+        }));
+      form.elements.mentorId.addEventListener('change', () => {
+        const sel = getMentor(form.elements.mentorId.value);
+        form.elements.subject.innerHTML = sel.subjects.map(s =>
+          `<option>${esc(s)}</option>`).join('')
+      });
+      form.addEventListener('submit', e => {
+        e.preventDefault();
+        const fd = new FormData(form);
+        const mentor = getMentor(fd.get('mentorId'));
+        const req = {
+          id: 'req-' + Date.now(),
+          learner: state.user.name,
+          learnerInitials: state.user.initials,
+          mentorId: mentor.id,
+          subject: fd.get('subject'),
+          topic: fd.get('topic').trim(),
+          objective: fd.get('objective').trim(),
+          type: fd.get('type'),
+          week: fd.get('type') === 'Full Course' ?
+            'Learning plan to be agreed' : 'Specific topic',
+          date: fd.get('date'),
+          time: fd.get('time'),
+          duration: fd.get('duration'),
+          mode: fd.get('mode'),
+          location: fd.get('location').trim(),
+          notes: fd.get('notes').trim(),
+          status: 'pending',
+          createdAt: new Date().toISOString(),
+          demo: false
+        };
+        state.requests.unshift(req);
+        saveState();
+        closeModal();
+        go('requests');
+        showToast('Learning request berhasil dikirim');
+      });
+    }
+
+    function openCourse(id) {
+      const c = state.courses.find(x => x.id === id) || state.courses[0];
+      if (!c) return;
+      openModal(
+        `<div class="modal-header"><div><div class="eyebrow">LEARNING MODULE</div><h2>${esc(c.title)}</h2><p>${esc(c.mentorName)} · ${c.modules.length} modul · Full Course demo</p></div><button class="modal-close" data-close-modal>×</button></div><div class="modal-body"><div class="progress-row" style="margin-bottom:18px"><div class="progress"><span style="width:${Math.round(c.doneModules.length/c.modules.length*100)}%"></span></div><div class="progress-num">${c.doneModules.length}/${c.modules.length} selesai</div></div><div class="module-list">${c.modules.map((m,i)=>`<div class="module-row"><button class="module-check ${c.doneModules.includes(i)?'done':''}" data-modal-module="${i}">${c.doneModules.includes(i)?icon('check',14):''}</button><div class="module-info"><div class="module-title">Week ${i+1} · ${esc(m.title)}</div><div class="module-sub">${esc(m.sub)}</div></div><span class="module-lock">${c.doneModules.includes(i)?'Selesai':'Belum'}</span></div>`).join('')}</div><div class="notice" style="margin-top:16px">Tandai modul selesai setelah kamu benar-benar mempelajari topiknya. Progress dalam demo disimpan di browser ini.</div><div class="modal-actions"><button class="btn btn-primary" data-close-modal>Selesai</button></div></div>`,
+        true);
+      document.querySelectorAll('[data-modal-module]').forEach(b => b
+        .addEventListener('click', () => {
+          const i = Number(b.dataset.modalModule),
+            at = c.doneModules.indexOf(i);
+          if (at >= 0) c.doneModules.splice(at, 1);
+          else c.doneModules.push(i);
+          saveState();
+          openCourse(id)
+        }));
+    }
+
+    function openReview(id) {
+      const r = state.requests.find(x => x.id === id);
+      if (!r) return;
+      selectedRating = 5;
+      reviewRequestId = id;
+      openModal(
+        `<div class="modal-header"><div><div class="eyebrow">LEARNER FEEDBACK</div><h2>Bagaimana sesi belajarnya?</h2><p>Ulasan hanya diberikan setelah sesi selesai dan membantu learner lain mengambil keputusan.</p></div><button class="modal-close" data-close-modal>×</button></div><div class="modal-body"><div class="list-title">${esc(r.topic)} · ${esc(getMentor(r.mentorId).name)}</div><div class="review-stars" style="margin:15px 0 19px">${[1,2,3,4,5].map(n=>`<button type="button" class="star-btn ${n<=selectedRating?'active':''}" data-star="${n}">★</button>`).join('')}</div><form id="review-form"><div class="form-group"><label>Ulasan</label><textarea class="textarea" name="comment" required placeholder="Apa yang membantu? Adakah hal yang bisa diperbaiki?" rows="4"></textarea></div><div class="modal-actions"><button type="button" class="btn btn-ghost" data-close-modal>Batal</button><button class="btn btn-primary" type="submit">Kirim ulasan</button></div></form></div>`
+        );
+      document.querySelectorAll('[data-star]').forEach(b => b.addEventListener(
+        'click', () => {
+          selectedRating = Number(b.dataset.star);
+          document.querySelectorAll('[data-star]').forEach(x => x.classList
+            .toggle('active', Number(x.dataset.star) <= selectedRating))
+        }));
+      document.getElementById('review-form').addEventListener('submit', e => {
+        e.preventDefault();
+        const comment = new FormData(e.target).get('comment').trim();
+        state.reviews.push({
+          id: 'rev-' + Date.now(),
+          requestId: id,
+          rating: selectedRating,
+          comment,
+          createdAt: new Date().toISOString()
+        });
+        r.status = 'reviewed';
+        const m = getMentor(r.mentorId);
+        m.reviews += 1;
+        m.rating = Number(((m.rating * (m.reviews - 1) + selectedRating) / m
+          .reviews).toFixed(1));
+        saveState();
+        closeModal();
+        render();
+        showToast('Terima kasih atas feedback-mu');
+      });
+    }
+
+    function openSessionNotes(id) {
+      const r = state.requests.find(x => x.id === id);
+      if (!r) return;
+      openModal(
+        `<div class="modal-header"><div><div class="eyebrow">SESSION RECORD</div><h2>Catatan sesi</h2><p>${esc(r.topic)} · ${formatDate(r.date)}</p></div><button class="modal-close" data-close-modal>×</button></div><div class="modal-body"><form id="notes-form"><div class="form-group"><label>Ringkasan sesi / materi yang dibahas</label><textarea class="textarea" name="summary" rows="4" placeholder="Konsep utama, contoh yang dibahas, dan hal yang sudah dipahami...">${esc(r.summary||'')}</textarea></div><div class="form-group" style="margin-top:14px"><label>Langkah belajar berikutnya</label><textarea class="textarea" name="next" rows="3" placeholder="Latihan atau materi lanjutan...">${esc(r.next||'')}</textarea></div><div class="modal-actions"><button type="button" class="btn btn-ghost" data-close-modal>Tutup</button><button class="btn btn-primary" type="submit">Simpan catatan</button></div></form></div>`
+        );
+      document.getElementById('notes-form').addEventListener('submit', e => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        r.summary = fd.get('summary').trim();
+        r.next = fd.get('next').trim();
+        saveState();
+        closeModal();
+        showToast('Catatan sesi disimpan');
+      });
+    }
+
+    function openEditProfile() {
+      const m = getMentor('m1');
+      openModal(
+        `<div class="modal-header"><div><div class="eyebrow">MENTOR SETTINGS</div><h2>Edit profil mentor</h2><p>Perubahan hanya disimpan di browser pada prototype ini.</p></div><button class="modal-close" data-close-modal>×</button></div><div class="modal-body"><form id="profile-form"><div class="form-grid"><div class="form-group full"><label>Nama</label><input class="input" name="name" value="${esc(m.name)}" required></div><div class="form-group full"><label>Program studi / angkatan</label><input class="input" name="major" value="${esc(m.major)}" required></div><div class="form-group full"><label>Subject (pisahkan dengan koma)</label><input class="input" name="subjects" value="${esc(m.subjects.join(', '))}" required></div><div class="form-group full"><label>Topik (pisahkan dengan koma)</label><input class="input" name="topics" value="${esc(m.topics.join(', '))}" required></div><div class="form-group full"><label>Tentang saya</label><textarea class="textarea" name="bio" rows="3" required>${esc(m.bio)}</textarea></div><div class="form-group"><label>Ketersediaan</label><input class="input" name="availability" value="${esc(m.availability)}" required></div><div class="form-group"><label>Mode pembelajaran</label><select class="select" name="mode"><option ${m.mode.includes('Online')?'selected':''}>Online</option><option ${m.mode.includes('Offline')?'selected':''}>Offline</option></select></div></div><div class="notice" style="margin-top:14px">Untuk aplikasi produksi, satu akun dapat menjadi learner maupun mentor. Profil asli harus terikat pada akun terautentikasi, bukan ke profil demo ini.</div><div class="modal-actions"><button type="button" class="btn btn-ghost" data-close-modal>Batal</button><button type="submit" class="btn btn-primary">Simpan perubahan</button></div></form></div>`
+        );
+      document.getElementById('profile-form').addEventListener('submit', e => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        m.name = fd.get('name').trim();
+        m.initials = initials(m.name);
+        m.major = fd.get('major').trim();
+        m.subjects = fd.get('subjects').split(',').map(s => s.trim())
+          .filter(Boolean);
+        m.topics = fd.get('topics').split(',').map(s => s.trim()).filter(
+          Boolean);
+        m.bio = fd.get('bio').trim();
+        m.availability = fd.get('availability').trim();
+        m.mode = [fd.get('mode')];
+        saveState();
+        closeModal();
+        updateUserUi();
+        render();
+        showToast('Profil mentor diperbarui');
+      });
+    }
+
+    function showAbout() {
+      openModal(
+        `<div class="modal-header"><div><div class="eyebrow">ABOUT THIS BUILD</div><h2>LINKED · Prototype V1</h2><p>Teach What You Know. Learn What You Need.</p></div><button class="modal-close" data-close-modal>×</button></div><div class="modal-body"><div class="notice"><strong>Mode demo:</strong> aplikasi berjalan di browser dan menyimpan perubahan pada localStorage perangkat ini. Profil, rating, jadwal, dan ulasan yang sudah ada adalah data contoh.</div><div class="divider"></div><div class="steps"><div class="step"><div class="step-num">1</div><div><div class="step-title">Coba sebagai learner</div><div class="step-text">Cari mentor, buka profil, buat request, kemudian lihat statusnya di Learning requests.</div></div></div><div class="step"><div class="step-num">2</div><div><div class="step-title">Ganti ke mode mentor</div><div class="step-text">Gunakan tombol di pojok kanan atas untuk menerima/menolak request, menandai sesi selesai, dan menulis catatan.</div></div></div><div class="step"><div class="step-num">3</div><div><div class="step-title">Coba learning progress</div><div class="step-text">Buka My learning dan tandai modul sebagai selesai. Perubahan akan tersimpan selama data browser tidak dihapus.</div></div></div></div><div class="divider"></div><div class="small-label">Belum termasuk</div><p class="list-meta" style="line-height:1.9">Login aman, database multi-user, email notification, payment gateway, moderator/admin console, real mentor verification, dan data acara live. File supabase_schema.sql disertakan sebagai dasar tahap integrasi berikutnya.</p><div class="modal-actions"><button class="btn btn-primary" data-close-modal>Mulai eksplorasi</button></div></div>`
+        );
+    }
+
+    function localIsoDate(offset = 0) {
+      const d = new Date();
+      d.setHours(12, 0, 0, 0);
+      d.setDate(d.getDate() + offset);
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+    }
+
+    function formatDate(s) {
+      if (!s) return 'Tanggal belum ditentukan';
+      const d = new Date(s + 'T12:00:00');
+      return d.toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+      })
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      document.getElementById('toast-text').textContent = msg;
+      t.classList.add('show');
+      clearTimeout(state.toastTimer);
+      state.toastTimer = setTimeout(() => t.classList.remove('show'), 2600)
+    }
+    // The demo learner is distinct from the seeded mentor to avoid self-booking.
+    render();
+  </script>
+</body>
+
+</html>
