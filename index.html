@@ -46,7 +46,7 @@
     body {
       margin: 0;
       min-height: 100%;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: "Satoshi", "Avenir Next", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: var(--bg);
       color: var(--ink)
     }
@@ -3899,6 +3899,57 @@
     @media (prefers-reduced-motion: reduce) {
       .linked-owl-mascot::after { animation: none !important; transform: none !important; will-change: auto; }
     }
+
+    /* Feature completion: mentor milestones, session history and schedule changes. */
+    .mentor-milestones { margin: 18px 0 22px; }
+    .milestone-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
+    .milestone-card { min-width:0; border:1px solid var(--line); background:var(--panel, #fff); border-radius:14px; padding:13px; }
+    .milestone-card .milestone-mark { width:30px;height:30px;border-radius:10px;display:grid;place-items:center;background:var(--amber-soft);color:var(--amber);font-size:15px;margin-bottom:9px; }
+    .milestone-card.achieved .milestone-mark { background:var(--green-soft);color:var(--green); }
+    .milestone-title { font-size:11px;font-weight:850;color:var(--ink);line-height:1.4; }
+    .milestone-desc { font-size:10px;color:var(--muted);line-height:1.55;margin-top:4px; }
+    .milestone-status { display:inline-flex;margin-top:8px;font-size:9px;font-weight:850;border-radius:999px;padding:4px 7px;background:var(--amber-soft);color:var(--amber); }
+    .milestone-card.achieved .milestone-status { background:var(--green-soft);color:var(--green); }
+    .session-history-list { display:grid; gap:10px; }
+    .session-history-row { display:flex; align-items:flex-start; gap:12px; border:1px solid var(--line); border-radius:13px; padding:13px; background:var(--panel, #fff); }
+    .session-history-copy { flex:1; min-width:0; }
+    .session-history-title { font-size:12px;font-weight:800;color:var(--ink); }
+    .session-history-meta { color:var(--muted);font-size:10px;line-height:1.6;margin-top:4px;overflow-wrap:anywhere; }
+    .session-history-actions { display:flex; gap:7px; flex-wrap:wrap; margin-top:8px; }
+    .change-proposal { margin:10px 0 5px; padding:12px; border:1px solid #f0d49a; background:var(--amber-soft); color:var(--ink); border-radius:12px; font-size:11px; line-height:1.6; }
+    .change-proposal strong { display:block; margin-bottom:4px; }
+    .change-proposal-actions { display:flex; gap:7px; flex-wrap:wrap; margin-top:9px; }
+    .form-hint.warn { color:var(--amber); }
+    .course-module-actions { display:flex;gap:7px;flex-wrap:wrap;align-items:center; }
+    .module-edit-btn { border:1px solid var(--line);background:var(--panel, #fff);color:var(--ink);padding:7px 9px;border-radius:9px;font-size:10px;font-weight:800; }
+    .module-edit-btn:hover { transform:translateY(-1px); }
+    .course-sessions-panel { margin-top:16px; }
+    .course-session-list { display:grid;gap:9px;margin-top:12px; }
+    .course-session-card { display:flex;gap:11px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--panel, #fff);min-width:0; }
+    .course-session-icon { width:34px;height:34px;border-radius:11px;display:grid;place-items:center;flex:none;background:var(--green-soft);color:var(--green); }
+    .course-session-copy { flex:1;min-width:0; }
+    .course-session-title { font-size:12px;font-weight:850;color:var(--ink);overflow-wrap:anywhere; }
+    .course-session-meta { font-size:10px;color:var(--muted);line-height:1.65;margin-top:4px;overflow-wrap:anywhere; }
+    .course-session-actions { display:flex;flex-wrap:wrap;gap:6px;margin-top:8px; }
+    .course-session-note { margin-top:8px;padding:9px 10px;border-radius:9px;background:var(--surface-soft, #f4f7fb);font-size:10px;line-height:1.6;color:var(--ink);white-space:pre-wrap;overflow-wrap:anywhere; }
+    html[data-theme="dark"] .course-session-note { background:#13243a; }
+    .course-session-pending { padding:9px 10px;margin-top:8px;border:1px solid #e8c778;background:var(--amber-soft);border-radius:10px;font-size:10px;color:var(--ink);line-height:1.6; }
+    @media(max-width:1050px) { .milestone-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+    @media(max-width:580px) { .milestone-grid { gap:8px; } .milestone-card { padding:11px; } .session-history-row { padding:11px; } }
+    @media(prefers-reduced-motion:reduce) { .module-edit-btn:hover { transform:none; } }
+  </style>
+  <style id="linked-alignment-typography">
+    body, button, input, select, textarea, .nav-btn, .crumb, .list-meta, .form-hint {
+      font-family: "Satoshi", "Avenir Next", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    h1, h2, h3, h4, .brand-name, .page-head h1, .hero h2, .section-head h3,
+    .modal-header h2, .mentor-title, .profile-name, .stat-number, .list-title {
+      font-family: "Cabinet Grotesk", "Satoshi", "Avenir Next", Inter, ui-sans-serif, system-ui, sans-serif;
+    }
+    .course-completion-action { display:flex;align-items:flex-start;gap:12px;justify-content:space-between;flex-wrap:wrap;margin-top:12px;padding:13px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel, #fff); }
+    .course-completion-action p { margin:3px 0 0;color:var(--muted);font-size:10px;line-height:1.6; }
+    .course-completion-action strong { color:var(--ink);font-size:11px; }
+    @media(prefers-reduced-motion:reduce) { html:focus-within { scroll-behavior:auto; } }
   </style>
 
 </head>
@@ -4100,6 +4151,7 @@
     let databaseMentorsError = '';
     let databaseMentorLoadPromise = null;
     let mentorWorkspaceProfile = null;
+    let mentorSessionStats = { userId: null, loaded: false, confirmed: null, completed: null, error: '' };
     let mentorWorkspaceSubjects = [];
     let mentorWorkspaceExpertise = [];
     let mentorWorkspaceLoaded = false;
@@ -4143,6 +4195,10 @@
     let notificationLoadPromise = null;
     let opportunityLoadPromise = null;
     const notificationActionInFlight = new Set();
+    const sessionChangeActionInFlight = new Set();
+    const courseModuleActionInFlight = new Set();
+    let sessionChangeTableReady = true;
+    let sessionChangeCapabilityWarned = false;
     const mentorsSeed = [{
         id: 'm1',
         name: 'Jayren Stanley',
@@ -4608,34 +4664,54 @@
             state.role === 'mentor' ? row.mentor_id === userId : row.learner_id === userId
           );
           state.requests = participantRows.map(mapDatabaseRequest);
-          if (state.role === 'learner' && state.requests.length) {
-            const completedRequests = state.requests.filter(request => request.status === 'completed' && request.source === 'database');
-            const requestIds = completedRequests.map(request => request.id);
-            if (requestIds.length) {
-              const { data: sessionRows, error: sessionLookupError } = await linkedSupabase
-                .from('sessions')
-                .select('id, learning_request_id')
-                .in('learning_request_id', requestIds)
+          const persistedRequests = state.requests.filter(request => request.source === 'database' && ['confirmed', 'completed', 'reviewed', 'cancelled'].includes(request.status));
+          const requestIds = persistedRequests.map(request => request.id);
+          if (requestIds.length) {
+            const { data: sessionRows, error: sessionLookupError } = await linkedSupabase
+              .from('sessions')
+              .select('id, learning_request_id, learner_id, mentor_id, topic, starts_at, duration_minutes, mode, location_or_link, status, summary, next_steps, course_id')
+              .in('learning_request_id', requestIds);
+            if (sessionLookupError) console.warn('LINKED: could not attach session history:', sessionLookupError.message);
+            const safeSessions = sessionLookupError ? [] : (sessionRows || []);
+            const sessionIds = safeSessions.map(session => session.id);
+            const sessionByRequest = Object.fromEntries(safeSessions.map(session => [session.learning_request_id, session]));
+            let reviewsBySession = {};
+            if (state.role === 'learner' && sessionIds.length) {
+              const { data: ownReviews, error: ownReviewError } = await linkedSupabase
+                .from('reviews')
+                .select('id, session_id, rating, comment, moderation_status, created_at')
+                .in('session_id', sessionIds)
                 .eq('learner_id', userId);
-              if (sessionLookupError) console.warn('LINKED: could not attach sessions to completed requests:', sessionLookupError.message);
-              const safeSessions = sessionRows || [];
-              const sessionIds = safeSessions.map(session => session.id);
-              const sessionByRequest = Object.fromEntries(safeSessions.map(session => [session.learning_request_id, session]));
-              let reviewsBySession = {};
-              if (sessionIds.length) {
-                const { data: ownReviews, error: ownReviewError } = await linkedSupabase
-                  .from('reviews')
-                  .select('id, session_id, rating, comment, moderation_status, created_at')
-                  .in('session_id', sessionIds)
-                  .eq('learner_id', userId);
-                if (ownReviewError) console.warn('LINKED: could not load own reviews:', ownReviewError.message);
-                reviewsBySession = Object.fromEntries((ownReviews || []).map(review => [review.session_id, review]));
+              if (ownReviewError) console.warn('LINKED: could not load own reviews:', ownReviewError.message);
+              reviewsBySession = Object.fromEntries((ownReviews || []).map(review => [review.session_id, review]));
+            }
+            persistedRequests.forEach(request => {
+              const session = sessionByRequest[request.id];
+              request.sessionId = session ? session.id : null;
+              request.sessionStatus = session ? session.status : null;
+              request.sessionSummary = session ? (session.summary || '') : '';
+              request.sessionNextSteps = session ? (session.next_steps || '') : '';
+              request.sessionCourseId = session ? session.course_id : null;
+              if (state.role === 'learner') request.review = session ? (reviewsBySession[session.id] || null) : null;
+            });
+            // Schedule-change requests require the companion migration. If it has not been applied yet,
+            // keep the rest of Learning Requests usable and show a clear notice only when the action is used.
+            if (sessionChangeTableReady && window.linkedCurrentUserId === userId) {
+              try {
+                const { data: changeRows, error: changeError } = await linkedSupabase
+                  .from('session_change_requests')
+                  .select('id, session_id, learning_request_id, requester_id, change_type, proposed_starts_at, proposed_duration_minutes, proposed_mode, proposed_location_or_link, reason, status, created_at')
+                  .in('learning_request_id', requestIds)
+                  .eq('status', 'pending')
+                  .order('created_at', { ascending: false });
+                if (changeError) throw changeError;
+                const pendingByRequest = {};
+                (changeRows || []).forEach(change => { if (!pendingByRequest[change.learning_request_id]) pendingByRequest[change.learning_request_id] = change; });
+                persistedRequests.forEach(request => { request.pendingChange = pendingByRequest[request.id] || null; });
+              } catch (changeError) {
+                sessionChangeTableReady = false;
+                console.info('LINKED: schedule-change workflow is not enabled yet. Apply the companion migration to activate it.');
               }
-              completedRequests.forEach(request => {
-                const session = sessionByRequest[request.id];
-                request.sessionId = session ? session.id : null;
-                request.review = session ? (reviewsBySession[session.id] || null) : null;
-              });
             }
           }
           databaseRequestsLoaded = true;
@@ -4694,7 +4770,7 @@
           const mentorIds = [...new Set(rows.map(row => row.mentor_id).filter(Boolean))];
           const { data: moduleRows, error: moduleError } = await linkedSupabase
             .from('course_modules')
-            .select('id, course_id, sequence_no, title, topic, exercise_description, assignment_description, recommended_resources')
+            .select('id, course_id, sequence_no, title, topic, material_url, exercise_description, assignment_description, recommended_resources')
             .in('course_id', courseIds)
             .order('sequence_no', { ascending: true });
           if (moduleError) throw moduleError;
@@ -4738,8 +4814,13 @@
               id: module.id,
               sequenceNo: module.sequence_no,
               title: module.title,
+              topic: module.topic || '',
+              materialUrl: module.material_url || '',
+              exerciseDescription: module.exercise_description || '',
+              assignmentDescription: module.assignment_description || '',
+              recommendedResources: module.recommended_resources || '',
               sub: module.topic || module.exercise_description || module.assignment_description || row.learning_objective || 'Materi pembelajaran',
-              kind: module.recommended_resources ? 'Materi & sumber belajar' : 'Modul pembelajaran'
+              kind: module.recommended_resources || module.material_url ? 'Materi & sumber belajar' : 'Modul pembelajaran'
             }));
             return {
               id: row.id,
@@ -5789,7 +5870,19 @@
       const reqs = state.requests.filter(r => ['pending', 'confirmed',
         'completed', 'reviewed'
       ].includes(r.status));
-      return `<div class="page-head"><div><div class="eyebrow">MY LEARNING</div><h1>Ruang belajarmu</h1><p>Pantau course, catatan sesi, status request, dan langkah belajar selanjutnya dari satu tempat</p></div><button class="btn btn-primary" data-page-jump="mentors">${icon('plus',15)} Mulai belajar</button></div><div class="page-tabs"><button class="tab-btn active" data-learning-tab="courses">Full Course</button><button class="tab-btn" data-learning-tab="requests">Single Session & Request</button></div><div id="learning-tab-content">${renderLearningCourses()}</div>`
+      return `<div class="page-head"><div><div class="eyebrow">MY LEARNING</div><h1>Ruang belajarmu</h1><p>Pantau course, catatan sesi, status request, dan langkah belajar selanjutnya dari satu tempat</p></div><button class="btn btn-primary" data-page-jump="mentors">${icon('plus',15)} Mulai belajar</button></div><div class="page-tabs"><button class="tab-btn active" data-learning-tab="courses">Full Course</button><button class="tab-btn" data-learning-tab="requests">Single Session & Request</button></div><div class="notice" style="margin-bottom:15px"><strong>Single Session vs Full Course:</strong> Single Session berfokus pada satu kebutuhan belajar dan tidak membuat course. Full Course memiliki learning plan beberapa modul yang dapat disusun mentor; progres modul dan riwayat sesi adalah dua hal berbeda dan dicatat secara terpisah.</div><div id="learning-tab-content">${renderLearningCourses()}</div><section class="section" aria-labelledby="session-history-title"><div class="section-head"><div><h3 id="session-history-title">Riwayat sesi</h3><p>Jadwal dan catatan dari sesi yang sudah dikonfirmasi atau selesai.</p></div><button class="text-link" data-page-jump="requests">Semua request →</button></div>${renderLearningSessionHistory()}</section>`
+    }
+
+    function renderLearningSessionHistory() {
+      if (!window.linkedCurrentUserId) {
+        return `<div class="panel"><div class="empty"><strong>Riwayat sesi akun akan tampil di sini</strong>Masuk ke akun LINKED untuk melihat jadwal, status, dan catatan yang tersimpan.</div></div>`;
+      }
+      const items = (state.requests || []).filter(r => r.source === 'database' && ['confirmed','completed','reviewed','cancelled'].includes(r.status))
+        .sort((a,b) => `${b.date || ''}T${b.time || ''}`.localeCompare(`${a.date || ''}T${a.time || ''}`));
+      if (databaseRequestsLoading && !databaseRequestsLoaded) return `<div class="panel"><div class="empty">Memuat riwayat sesi…</div></div>`;
+      if (databaseRequestsError) return `<div class="panel"><div class="empty"><strong>Riwayat sesi belum dapat dimuat</strong>Coba muat ulang Learning Requests.</div></div>`;
+      if (!items.length) return `<div class="panel"><div class="empty"><strong>Belum ada riwayat sesi</strong>Setelah permintaanmu dikonfirmasi, jadwal dan catatan sesi akan tercatat di sini.</div></div>`;
+      return `<div class="session-history-list">${items.slice(0,8).map(r => `<article class="session-history-row"><div class="timeline-dot" aria-hidden="true">${r.status === 'completed' || r.status === 'reviewed' ? icon('check',13) : r.status === 'cancelled' ? icon('x',13) : icon('calendar',13)}</div><div class="session-history-copy"><div class="session-history-title">${esc(r.topic)} · ${esc(r.type)}</div><div class="session-history-meta">${state.role === 'mentor' ? 'Learner' : 'Mentor'}: ${esc(state.role === 'mentor' ? r.learner : (r.mentorName || 'Mentor'))}<br>${formatDate(r.date)} · ${esc(r.time || 'Waktu belum tersedia')} · ${esc(r.duration || 'Durasi belum tersedia')} · ${esc(statusLabel(r.status))}<br>${esc(r.mode || '')}${r.location ? ' · ' + esc(r.location) : ''}${r.sessionSummary ? '<br>Catatan: ' + esc(r.sessionSummary.slice(0,180)) : ''}${r.type === 'Full Course' ? '<br>Jadwal setiap sesi dan ulasannya tersedia di learning plan.' : ''}</div><div class="session-history-actions">${r.type !== 'Full Course' && (r.status === 'confirmed' || ['completed','reviewed'].includes(r.status)) ? `<button class="btn btn-ghost btn-sm" data-action="session-notes" data-id="${esc(r.id)}">${state.role === 'mentor' ? 'Buka catatan sesi' : 'Lihat catatan sesi'}</button>` : ''}${r.type === 'Full Course' && ['confirmed','completed','reviewed'].includes(r.status) ? `<button class="btn btn-soft btn-sm" data-action="open-request-course" data-id="${esc(r.id)}">${state.role === 'mentor' ? 'Kelola learning plan' : 'Lihat learning plan'}</button>` : ''}</div></div></article>`).join('')}</div>`;
     }
 
     function renderLearningCourses() {
@@ -5858,39 +5951,187 @@
       const mentorName = r.mentorName || (m && m.name) || 'Mentor';
       const mentorInitials = r.mentorInitials || initials(mentorName);
       const mentorColor = m && m.color ? m.color : '';
+      const userId = window.linkedCurrentUserId;
       let actions = '';
       if (r.source === 'database') {
-        if (opts.mentorView && r.status === 'pending') actions =
-          `<button class="btn btn-primary btn-sm" data-action="accept-request" data-id="${r.id}">Terima request</button><button class="btn btn-danger btn-sm" data-action="reject-request" data-id="${r.id}">Tolak</button>`;
-        else if (opts.mentorView && r.status === 'confirmed') actions =
-          `<button class="btn btn-ghost btn-sm" data-action="session-notes" data-id="${r.id}">Catatan sesi</button><button class="btn btn-soft btn-sm" data-action="complete-request" data-id="${r.id}">Tandai sesi selesai</button>`;
-        else if (opts.mentorView && r.status === 'completed') actions =
-          `<button class="btn btn-ghost btn-sm" data-action="session-notes" data-id="${r.id}">Edit catatan sesi</button>`;
-        else if (!opts.mentorView && r.status === 'pending') actions =
-          `<button class="btn btn-ghost btn-sm" data-action="cancel-request" data-id="${r.id}">Batalkan</button>`;
-        else if (!opts.mentorView && r.status === 'confirmed') actions =
-          `<button class="btn btn-ghost btn-sm" data-action="session-notes" data-id="${r.id}">Lihat catatan sesi</button><span class="list-meta">Jadwal sudah dikonfirmasi.</span>`;
-        else if (!opts.mentorView && r.status === 'completed')
-          actions = r.review
-            ? `<span class="list-meta">Ulasan terkirim · ★ ${Number(r.review.rating)}/5</span>`
-            : `<button class="btn btn-soft btn-sm" data-action="leave-review" data-id="${r.id}">Beri ulasan</button>`;
-      } else if (opts.mentorView && r.status === 'pending') actions =
-        `<button class="btn btn-primary btn-sm" data-action="accept-request" data-id="${r.id}">Terima request</button><button class="btn btn-danger btn-sm" data-action="reject-request" data-id="${r.id}">Tolak</button>`;
-      else if (opts.mentorView && r.status === 'confirmed' && r.type === 'Full Course') actions =
-        `<button class="btn btn-soft btn-sm" data-action="open-request-course" data-id="${r.id}">Kelola learning plan</button>`;
-      else if (opts.mentorView && r.status === 'confirmed') actions =
-        `<button class="btn btn-soft btn-sm" data-action="complete-request" data-id="${r.id}">Tandai sesi selesai</button>`;
-      else if (!opts.mentorView && r.status === 'confirmed' && r.type === 'Full Course') actions =
-        `<button class="btn btn-soft btn-sm" data-action="open-request-course" data-id="${r.id}">Lihat learning plan</button>`;
-      else if (r.status === 'completed' && !state.reviews.some(v => v.requestId === r.id)) actions =
-        `<button class="btn btn-soft btn-sm" data-action="leave-review" data-id="${r.id}">Beri ulasan</button>`;
-      else if (r.status === 'pending' && !opts.mentorView) actions =
-        `<button class="btn btn-ghost btn-sm" data-action="cancel-request" data-id="${r.id}">Batalkan</button>`;
-      else if (r.status === 'confirmed') actions =
-        `<button class="btn btn-ghost btn-sm" data-action="session-notes" data-id="${r.id}">Catatan sesi</button>`;
+        const change = r.pendingChange || null;
+        if (change) {
+          const isChangeRequester = change.requester_id === userId;
+          const changeTypeLabel = change.change_type === 'cancel' ? 'Permintaan pembatalan sesi' : 'Usulan perubahan jadwal';
+          const proposedDate = change.proposed_starts_at ? new Date(change.proposed_starts_at) : null;
+          const proposedDateText = proposedDate && !Number.isNaN(proposedDate.getTime()) ? proposedDate.toLocaleString('id-ID', { dateStyle:'medium', timeStyle:'short', timeZone:'Asia/Jakarta' }) : '';
+          actions = `<div class="change-proposal"><strong>${esc(changeTypeLabel)}</strong>${isChangeRequester ? 'Menunggu tanggapan dari peserta lainnya.' : 'Peserta lain mengajukan perubahan. Pilih apakah usulan ini dapat diterima.'}${change.change_type === 'reschedule' ? `<br>Jadwal usulan: ${esc(proposedDateText)} · ${esc(String(change.proposed_duration_minutes || r.durationMinutes || 90))} menit · ${esc(change.proposed_mode || r.mode || '')}${change.proposed_location_or_link ? ' · ' + esc(change.proposed_location_or_link) : ''}` : ''}${change.reason ? `<br>Alasan: ${esc(change.reason)}` : ''}<div class="change-proposal-actions">${isChangeRequester ? `<button class="btn btn-ghost btn-sm" data-action="withdraw-session-change" data-id="${esc(change.id)}">Tarik permintaan</button>` : `<button class="btn btn-primary btn-sm" data-action="review-session-change" data-status="accepted" data-id="${esc(change.id)}">Setujui</button><button class="btn btn-danger btn-sm" data-action="review-session-change" data-status="rejected" data-id="${esc(change.id)}">Tolak usulan</button>`}</div></div>`;
+        } else if (opts.mentorView && r.status === 'pending') {
+          actions = `<button class="btn btn-primary btn-sm" data-action="accept-request" data-id="${esc(r.id)}">Terima request</button><button class="btn btn-danger btn-sm" data-action="reject-request" data-id="${esc(r.id)}">Tolak</button>`;
+        } else if (!opts.mentorView && r.status === 'pending') {
+          actions = `<button class="btn btn-ghost btn-sm" data-action="cancel-request" data-id="${esc(r.id)}">Batalkan</button>`;
+        } else if (r.type === 'Full Course' && ['confirmed','completed','reviewed'].includes(r.status)) {
+          actions = `<button class="btn btn-soft btn-sm" data-action="open-request-course" data-id="${esc(r.id)}">${opts.mentorView ? 'Kelola learning plan & sesi' : 'Lihat learning plan & sesi'}</button><span class="list-meta">Jadwal dan catatan setiap sesi dikelola terpisah dari progres modul.</span>`;
+        } else if (r.status === 'confirmed') {
+          const notesButton = `<button class="btn btn-ghost btn-sm" data-action="session-notes" data-id="${esc(r.id)}">${opts.mentorView ? 'Catatan sesi' : 'Lihat catatan sesi'}</button>`;
+          const completeButton = opts.mentorView ? `<button class="btn btn-soft btn-sm" data-action="complete-request" data-id="${esc(r.id)}">Tandai sesi selesai</button>` : '';
+          const changeButtons = `<button class="btn btn-ghost btn-sm" data-action="request-reschedule" data-id="${esc(r.id)}">Usulkan jadwal baru</button><button class="btn btn-ghost btn-sm" data-action="request-session-cancel" data-id="${esc(r.id)}">Minta pembatalan</button>`;
+          actions = `${notesButton}${completeButton}${changeButtons}`;
+        } else if (['completed','reviewed'].includes(r.status)) {
+          if (opts.mentorView) actions = `<button class="btn btn-ghost btn-sm" data-action="session-notes" data-id="${esc(r.id)}">Edit catatan sesi</button>`;
+          else actions = r.review
+            ? `<span class="list-meta">Ulasan terkirim · ★ ${Number(r.review.rating)}/5</span><button class="btn btn-ghost btn-sm" data-action="session-notes" data-id="${esc(r.id)}">Lihat catatan sesi</button>`
+            : `<button class="btn btn-soft btn-sm" data-action="leave-review" data-id="${esc(r.id)}">Beri ulasan</button><button class="btn btn-ghost btn-sm" data-action="session-notes" data-id="${esc(r.id)}">Lihat catatan sesi</button>`;
+        }
+      } else if (opts.mentorView && r.status === 'pending') actions = `<button class="btn btn-primary btn-sm" data-action="accept-request" data-id="${esc(r.id)}">Terima request</button><button class="btn btn-danger btn-sm" data-action="reject-request" data-id="${esc(r.id)}">Tolak</button>`;
+      else if (opts.mentorView && r.status === 'confirmed' && r.type === 'Full Course') actions = `<button class="btn btn-soft btn-sm" data-action="open-request-course" data-id="${esc(r.id)}">Kelola learning plan</button>`;
+      else if (opts.mentorView && r.status === 'confirmed') actions = `<button class="btn btn-soft btn-sm" data-action="complete-request" data-id="${esc(r.id)}">Tandai sesi selesai</button>`;
+      else if (r.status === 'completed' && !state.reviews.some(v => v.requestId === r.id)) actions = `<button class="btn btn-soft btn-sm" data-action="leave-review" data-id="${esc(r.id)}">Beri ulasan</button>`;
+      else if (r.status === 'pending' && !opts.mentorView) actions = `<button class="btn btn-ghost btn-sm" data-action="cancel-request" data-id="${esc(r.id)}">Batalkan</button>`;
       const avatarText = opts.mentorView ? (r.learnerInitials || initials(r.learner)) : mentorInitials;
       const metaName = opts.mentorView ? `Learner: ${esc(r.learner)}` : `Mentor: ${esc(mentorName)}`;
-      return `<div class="list-card"><div class="mentor-avatar ${mentorColor}">${esc(avatarText)}</div><div class="list-card-body"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap"><h3 class="list-title">${esc(r.topic)} <span style="font-weight:500;color:#8290a3">· ${esc(r.subject)}</span></h3>${statusHtml(r.status)}</div><div class="list-meta">${metaName}<br>${esc(r.type)} · ${formatDate(r.date)} pukul ${esc(r.time)} · ${esc(r.duration)}<br>${esc(r.mode)}${r.location?' · '+esc(r.location):''}<br><span style="color:#536681">Tujuan:</span> ${esc(r.objective)}</div><div class="list-actions">${actions}</div></div></div>`
+      return `<div class="list-card"><div class="mentor-avatar ${mentorColor}">${esc(avatarText)}</div><div class="list-card-body"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap"><h3 class="list-title">${esc(r.topic)} <span style="font-weight:500;color:#8290a3">· ${esc(r.subject)}</span></h3>${statusHtml(r.status)}</div><div class="list-meta">${metaName}<br>${esc(r.type)} · ${formatDate(r.date)} pukul ${esc(r.time)} · ${esc(r.duration)}<br>${esc(r.mode)}${r.location?' · '+esc(r.location):''}<br><span style="color:#536681">Tujuan:</span> ${esc(r.objective)}${r.sessionSummary ? '<br><span style="color:#536681">Catatan sesi:</span> ' + esc(r.sessionSummary.slice(0,180)) : ''}</div><div class="list-actions">${actions}</div></div></div>`;
+    }
+
+    function scheduleStartMillis(dateValue, timeValue) {
+      if (!dateValue || !timeValue) return NaN;
+      // The application operates in Asia/Jakarta (UTC+7).
+      return new Date(`${dateValue}T${String(timeValue).slice(0,5)}:00+07:00`).getTime();
+    }
+
+    function validateFutureSchedule(dateValue, timeValue) {
+      const start = scheduleStartMillis(dateValue, timeValue);
+      return Number.isFinite(start) && start > Date.now() + 60 * 1000;
+    }
+
+    function overlapsMentorConfirmedSession(candidate, excludeId = null) {
+      const start = scheduleStartMillis(candidate.date, candidate.time);
+      if (!Number.isFinite(start)) return false;
+      const end = start + Number(candidate.durationMinutes || 60) * 60000;
+      return (state.requests || []).some(existing => {
+        if (existing.source !== 'database' || existing.id === excludeId || existing.mentorId !== candidate.mentorId || existing.status !== 'confirmed') return false;
+        const otherStart = scheduleStartMillis(existing.date, existing.time);
+        if (!Number.isFinite(otherStart)) return false;
+        const otherEnd = otherStart + Number(existing.durationMinutes || 60) * 60000;
+        return start < otherEnd && otherStart < end;
+      });
+    }
+
+    async function openSessionChangeForm(requestId, changeType) {
+      const request = state.requests.find(item => item.id === requestId && item.source === 'database');
+      const userId = window.linkedCurrentUserId;
+      if (!request || request.status !== 'confirmed' || !userId || ![request.learnerId, request.mentorId].includes(userId)) {
+        showToast('Perubahan hanya bisa diajukan untuk sesi terkonfirmasi yang melibatkan akunmu.');
+        return;
+      }
+      if (!sessionChangeTableReady) {
+        showToast('Fitur perubahan jadwal belum diaktifkan. Pengelola perlu menerapkan pembaruan database terlebih dahulu.');
+        return;
+      }
+      if (!request.sessionId) {
+        try {
+          const { data, error } = await linkedSupabase.from('sessions')
+            .select('id, learning_request_id, learner_id, mentor_id, starts_at, duration_minutes, mode, location_or_link, status')
+            .eq('learning_request_id', request.id).maybeSingle();
+          if (error) throw error;
+          if (!data || data.status !== 'confirmed') throw new Error('Sesi terkonfirmasi belum tersedia. Muat ulang halaman lalu coba kembali.');
+          request.sessionId = data.id;
+        } catch (error) {
+          console.error('LINKED: could not open schedule-change flow:', error);
+          showToast('Detail sesi belum berhasil dimuat. Silakan muat ulang dan coba lagi.');
+          return;
+        }
+      }
+      const isReschedule = changeType === 'reschedule';
+      const mentor = databaseMentors.find(item => item.id === request.mentorId);
+      const modeOptions = (mentor && mentor.mode && mentor.mode.length ? mentor.mode : ['Online','Offline'])
+        .map(mode => `<option value="${esc(mode.toLowerCase())}" ${(String(request.mode).toLowerCase() === mode.toLowerCase()) ? 'selected' : ''}>${esc(mode)}</option>`).join('');
+      const modeLabel = isReschedule ? `<div class="form-group"><label>Mode pertemuan</label><select class="select" name="mode" required>${modeOptions}</select></div>` : '';
+      openModal(`<div class="modal-header"><div><div class="eyebrow">${isReschedule ? 'PERUBAHAN JADWAL' : 'PEMBATALAN SESI'}</div><h2>${isReschedule ? 'Usulkan jadwal baru' : 'Minta pembatalan sesi'}</h2><p>${esc(request.topic)} · ${formatDate(request.date)} pukul ${esc(request.time)}</p></div><button class="modal-close" data-close-modal aria-label="Tutup">×</button></div><div class="modal-body"><form id="session-change-form"><div class="notice">Usulan akan dikirim ke peserta lainnya. Jadwal yang sekarang tetap berlaku sampai usulan diterima.</div>${isReschedule ? `<div class="form-grid" style="margin-top:14px"><div class="form-group"><label>Tanggal baru</label><input class="input" name="date" type="date" min="${localIsoDate(0)}" value="${esc(request.date || localIsoDate(1))}" required /></div><div class="form-group"><label>Waktu baru</label><input class="input" name="time" type="time" value="${esc(request.time || '16:00')}" required /></div><div class="form-group"><label>Durasi</label><select class="select" name="duration"><option value="60" ${Number(request.durationMinutes)===60?'selected':''}>60 menit</option><option value="90" ${Number(request.durationMinutes)===90?'selected':''}>90 menit</option><option value="120" ${Number(request.durationMinutes)===120?'selected':''}>120 menit</option></select></div>${modeLabel}<div class="form-group full"><label>Lokasi / tautan pertemuan</label><input class="input" name="location" maxlength="500" value="${esc(request.location || '')}" required placeholder="Tautan pertemuan atau lokasi kampus" /></div></div>` : ''}<div class="form-group" style="margin-top:14px"><label>Alasan ${isReschedule ? 'perubahan jadwal' : 'pembatalan'}</label><textarea class="textarea" name="reason" rows="3" maxlength="1000" required placeholder="Jelaskan singkat alasan perubahan…"></textarea></div><div class="modal-actions"><button type="button" class="btn btn-ghost" data-close-modal>Batal</button><button type="submit" class="btn btn-primary">Kirim usulan</button></div></form></div>`, true);
+      const form = document.getElementById('session-change-form');
+      form.addEventListener('submit', async event => {
+        event.preventDefault();
+        const button = form.querySelector('button[type="submit"]');
+        if (button.disabled) return;
+        button.disabled = true;
+        button.textContent = 'Mengirim…';
+        try {
+          const fd = new FormData(form);
+          const reason = String(fd.get('reason') || '').trim();
+          if (!reason) throw new Error('Tulis alasan singkat agar peserta lainnya memahami usulan ini.');
+          const payload = {
+            session_id: request.sessionId,
+            learning_request_id: request.id,
+            requester_id: userId,
+            change_type: isReschedule ? 'reschedule' : 'cancel',
+            reason
+          };
+          if (isReschedule) {
+            const dateValue = String(fd.get('date') || '');
+            const timeValue = String(fd.get('time') || '');
+            const duration = Number(fd.get('duration') || 60);
+            const mode = String(fd.get('mode') || '').toLowerCase();
+            const location = String(fd.get('location') || '').trim();
+            if (!validateFutureSchedule(dateValue, timeValue)) throw new Error('Pilih tanggal dan waktu baru yang masih berada di masa depan.');
+            if (![60,90,120].includes(duration)) throw new Error('Pilih durasi yang tersedia.');
+            if (!['online','offline'].includes(mode)) throw new Error('Pilih mode pertemuan yang valid.');
+            if (!location) throw new Error('Isi tautan pertemuan atau lokasi baru.');
+            if (mode === 'online') {
+              let parsed; try { parsed = new URL(location); } catch (_) { throw new Error('Untuk pertemuan online, masukkan tautan HTTPS yang valid.'); }
+              if (parsed.protocol !== 'https:') throw new Error('Tautan pertemuan online harus menggunakan HTTPS.');
+            }
+            payload.proposed_starts_at = new Date(`${dateValue}T${timeValue}:00+07:00`).toISOString();
+            payload.proposed_duration_minutes = duration;
+            payload.proposed_mode = mode;
+            payload.proposed_location_or_link = location;
+          }
+          const { error } = await linkedSupabase.from('session_change_requests').insert(payload);
+          if (error) throw error;
+          closeModal();
+          databaseRequestsLoaded = false;
+          await loadDatabaseRequests(true);
+          render();
+          showToast(isReschedule ? 'Usulan jadwal baru berhasil dikirim.' : 'Permintaan pembatalan berhasil dikirim.');
+        } catch (error) {
+          console.error('LINKED: failed to submit session change:', error);
+          const message = String(error && error.message || '');
+          if (message.includes('session_change_requests') || message.includes('relation')) sessionChangeTableReady = false;
+          const validationPrefixes = ['Tulis ', 'Pilih ', 'Isi ', 'Untuk pertemuan ', 'Tautan '];
+          showToast(validationPrefixes.some(prefix => message.startsWith(prefix)) ? message : 'Usulan belum berhasil dikirim. Periksa isian atau coba lagi.');
+          button.disabled = false;
+          button.textContent = 'Kirim usulan';
+        }
+      });
+    }
+
+    async function updateSessionChangeRequestStatus(changeId, nextStatus) {
+      if (!['accepted','rejected','withdrawn'].includes(nextStatus) || sessionChangeActionInFlight.has(changeId)) return;
+      const related = (state.requests || []).find(request => request.pendingChange && request.pendingChange.id === changeId);
+      let change = related && related.pendingChange;
+      const userId = window.linkedCurrentUserId;
+      if (!change && userId) {
+        const lookup = await linkedSupabase.from('session_change_requests')
+          .select('id,session_id,learning_request_id,requester_id,change_type,status')
+          .eq('id', changeId).maybeSingle();
+        if (!lookup.error) change = lookup.data;
+      }
+      if (!change || !userId) return showToast('Usulan perubahan tidak ditemukan. Muat ulang halaman.');
+      if (nextStatus === 'withdrawn' && change.requester_id !== userId) return showToast('Hanya pengaju yang dapat menarik usulan.');
+      if (['accepted','rejected'].includes(nextStatus) && change.requester_id === userId) return showToast('Usulanmu sendiri menunggu tanggapan peserta lainnya.');
+      sessionChangeActionInFlight.add(changeId);
+      try {
+        const { data, error } = await linkedSupabase.from('session_change_requests')
+          .update({ status: nextStatus }).eq('id', changeId).eq('status','pending').select('id,status').maybeSingle();
+        if (error) throw error;
+        if (!data) throw new Error('Usulan sudah diproses atau tidak dapat diubah.');
+        databaseRequestsLoaded = false;
+        await loadDatabaseRequests(true);
+        await loadDatabaseCourses(true).catch(() => {});
+        render();
+        const messages = { accepted: change.change_type === 'cancel' ? 'Pembatalan disetujui; sesi dibatalkan.' : 'Jadwal baru disetujui.', rejected: 'Usulan perubahan ditolak.', withdrawn: 'Usulan perubahan ditarik.' };
+        showToast(messages[nextStatus]);
+      } catch (error) {
+        console.error('LINKED: failed to process session change:', error);
+        const message = String(error && error.message || '');
+        showToast(message.includes('LINKED_SCHEDULE_CONFLICT') ? 'Jadwal baru bentrok dengan sesi mentor lain. Ajukan waktu yang berbeda.' : 'Usulan belum berhasil diproses. Muat ulang halaman lalu coba lagi.');
+      } finally {
+        sessionChangeActionInFlight.delete(changeId);
+      }
     }
 
     function mentorStatusInfo(status) {
@@ -5937,6 +6178,25 @@
           } else {
             mentorWorkspaceExpertise = [];
           }
+          mentorSessionStats = { userId, loaded: false, confirmed: null, completed: null, error: '' };
+          try {
+            const { data: sessionRows, error: sessionStatsError } = await linkedSupabase
+              .from('sessions')
+              .select('id, status')
+              .eq('mentor_id', userId);
+            if (sessionStatsError) throw sessionStatsError;
+            const mentorSessions = sessionRows || [];
+            mentorSessionStats = {
+              userId,
+              loaded: true,
+              confirmed: mentorSessions.filter(row => row.status === 'confirmed').length,
+              completed: mentorSessions.filter(row => ['completed', 'reviewed'].includes(row.status)).length,
+              error: ''
+            };
+          } catch (sessionStatsError) {
+            mentorSessionStats = { userId, loaded: false, confirmed: null, completed: null, error: sessionStatsError && sessionStatsError.message ? sessionStatsError.message : 'Statistik sesi belum tersedia' };
+            console.warn('LINKED: mentor session statistics could not be loaded:', sessionStatsError);
+          }
           mentorWorkspaceLoaded = true;
           console.info('LINKED: mentor workspace profile loaded from Supabase.');
         } catch (error) {
@@ -5973,8 +6233,9 @@
         request.source === 'database' && (!currentMentorUserId || request.mentorId === currentMentorUserId)
       );
       const mentorPendingCount = mentorRequests.filter(request => request.status === 'pending').length;
-      const mentorConfirmedCount = mentorRequests.filter(request => request.status === 'confirmed').length;
-      const mentorCompletedCount = mentorRequests.filter(request => ['completed', 'reviewed'].includes(request.status)).length;
+      const sessionStatsReady = mentorSessionStats.loaded && mentorSessionStats.userId === currentMentorUserId;
+      const mentorConfirmedCount = sessionStatsReady ? mentorSessionStats.confirmed : null;
+      const mentorCompletedCount = sessionStatsReady ? mentorSessionStats.completed : null;
       const currentMentorRecord = databaseMentors.find(mentor => mentor.id === currentMentorUserId);
       const mentorPublishedReviewCount = currentMentorRecord ? Number(currentMentorRecord.reviews || 0) : 0;
       const mentorRatingUnavailable = Boolean(databaseMentorsError || (!databaseMentorsLoaded && databaseMentorsLoading));
@@ -5987,7 +6248,18 @@
           ? `${mentorPublishedReviewCount} ulasan dipublikasikan`
           : 'Belum ada ulasan dipublikasikan';
       const requestMetric = count => databaseRequestsLoading ? '…' : databaseRequestsError ? '—' : String(count);
-      const mentorStatsMarkup = `<section class="mentor-session-summary" aria-labelledby="mentor-session-summary-title"><div class="section-head"><div><h3 id="mentor-session-summary-title">Ringkasan sesi</h3><p>Statistik aktivitas mentoring dari akunmu.</p></div><button class="text-link" type="button" data-page-jump="requests">Lihat semua request →</button></div><div class="mentor-workspace-stats"><div class="stat-card"><div class="stat-top"><span class="stat-label">Request menunggu</span><span class="stat-icon amber">${icon('clock',17)}</span></div><div class="stat-number">${requestMetric(mentorPendingCount)}</div><div class="stat-note">Perlu ditinjau</div></div><div class="stat-card"><div class="stat-top"><span class="stat-label">Sesi terkonfirmasi</span><span class="stat-icon green">${icon('calendar',17)}</span></div><div class="stat-number">${requestMetric(mentorConfirmedCount)}</div><div class="stat-note">Jadwal disepakati</div></div><div class="stat-card"><div class="stat-top"><span class="stat-label">Sesi selesai</span><span class="stat-icon">${icon('check',17)}</span></div><div class="stat-number">${requestMetric(mentorCompletedCount)}</div><div class="stat-note">Berdasarkan request selesai</div></div><div class="stat-card"><div class="stat-top"><span class="stat-label">Rating profil</span><span class="stat-icon purple">${icon('star',17)}</span></div><div class="stat-number">${mentorRatingText === '—' ? '—' : `${mentorRatingText} <span class="mentor-rating-denom">/ 5</span>`}</div><div class="stat-note">${esc(mentorRatingNote)}</div></div></div>${databaseRequestsError ? '<p class="mentor-stats-note" role="status">Statistik request belum berhasil dimuat. Muat ulang halaman atau buka Learning requests.</p>' : ''}</section>`;
+      const sessionMetric = count => count === null ? (mentorSessionStats.error ? '—' : '…') : String(count);
+      const mentorStatsMarkup = `<section class="mentor-session-summary" aria-labelledby="mentor-session-summary-title"><div class="section-head"><div><h3 id="mentor-session-summary-title">Ringkasan sesi</h3><p>Statistik aktivitas mentoring dari sesi yang tercatat.</p></div><button class="text-link" type="button" data-page-jump="requests">Lihat semua request →</button></div><div class="mentor-workspace-stats"><div class="stat-card"><div class="stat-top"><span class="stat-label">Request menunggu</span><span class="stat-icon amber">${icon('clock',17)}</span></div><div class="stat-number">${requestMetric(mentorPendingCount)}</div><div class="stat-note">Perlu ditinjau</div></div><div class="stat-card"><div class="stat-top"><span class="stat-label">Sesi terkonfirmasi</span><span class="stat-icon green">${icon('calendar',17)}</span></div><div class="stat-number">${sessionMetric(mentorConfirmedCount)}</div><div class="stat-note">Jumlah jadwal aktif</div></div><div class="stat-card"><div class="stat-top"><span class="stat-label">Sesi selesai</span><span class="stat-icon">${icon('check',17)}</span></div><div class="stat-number">${sessionMetric(mentorCompletedCount)}</div><div class="stat-note">Termasuk sesi dalam Full Course</div></div><div class="stat-card"><div class="stat-top"><span class="stat-label">Rating profil</span><span class="stat-icon purple">${icon('star',17)}</span></div><div class="stat-number">${mentorRatingText === '—' ? '—' : `${mentorRatingText} <span class="mentor-rating-denom">/ 5</span>`}</div><div class="stat-note">${esc(mentorRatingNote)}</div></div></div>${databaseRequestsError ? '<p class="mentor-stats-note" role="status">Statistik request belum berhasil dimuat. Muat ulang halaman atau buka Learning requests.</p>' : ''}${mentorSessionStats.error ? '<p class="mentor-stats-note" role="status">Statistik sesi belum berhasil dimuat. Muat ulang workspace mentor untuk mencoba kembali.</p>' : ''}</section>`;
+
+      const mentorRatingValue = mentorRatingText === '—' ? null : Number(mentorRatingText);
+      const mentorCompletedForMilestones = mentorCompletedCount === null ? 0 : mentorCompletedCount;
+      const milestoneSpecs = [
+        { title: 'Sesi pertama', detail: 'Selesaikan 1 sesi mentoring', achieved: mentorCompletedCount !== null && mentorCompletedCount >= 1, progress: mentorCompletedCount === null ? 'Statistik belum tersedia' : `${Math.min(mentorCompletedForMilestones, 1)}/1 sesi` },
+        { title: 'Mentor konsisten', detail: 'Selesaikan 5 sesi', achieved: mentorCompletedCount !== null && mentorCompletedCount >= 5, progress: mentorCompletedCount === null ? 'Statistik belum tersedia' : `${Math.min(mentorCompletedForMilestones, 5)}/5 sesi` },
+        { title: 'Teman belajar andalan', detail: 'Selesaikan 10 sesi', achieved: mentorCompletedCount !== null && mentorCompletedCount >= 10, progress: mentorCompletedCount === null ? 'Statistik belum tersedia' : `${Math.min(mentorCompletedForMilestones, 10)}/10 sesi` },
+        { title: 'Rating berkualitas', detail: 'Rating minimal 4,5 dari setidaknya 3 ulasan publik', achieved: mentorRatingValue !== null && mentorRatingValue >= 4.5 && mentorPublishedReviewCount >= 3, progress: mentorRatingUnavailable ? 'Memuat rating…' : `${mentorPublishedReviewCount}/3 ulasan · ${mentorRatingValue === null ? '—' : mentorRatingValue.toFixed(1) + '/5'}` }
+      ];
+      const mentorMilestonesMarkup = `<section class="panel mentor-milestones" aria-labelledby="mentor-milestones-title"><div class="section-head"><div><h3 id="mentor-milestones-title">Pencapaian mentor</h3><p>Apresiasi berdasarkan aktivitas nyata di akunmu. Tidak ada hadiah uang yang diproses di dalam pilot.</p></div></div><div class="milestone-grid">${milestoneSpecs.map((item, index) => `<article class="milestone-card ${item.achieved ? 'achieved' : ''}"><div class="milestone-mark" aria-hidden="true">${item.achieved ? '✓' : ['①','②','③','★'][index]}</div><div class="milestone-title">${esc(item.title)}</div><div class="milestone-desc">${esc(item.detail)}</div><div class="milestone-desc">${esc(item.progress)}</div><span class="milestone-status">${item.achieved ? 'Tercapai' : 'Dalam perjalanan'}</span></article>`).join('')}</div></section>`;
       const profileSummary = mentorWorkspaceProfile
         ? `<div class="profile-head"><div class="mentor-avatar">${esc(initials(userName))}</div><div><div class="profile-name">${esc(userName)}</div><div class="profile-role">${esc(currentProgram)}</div><div class="chips" style="margin-top:8px"><span class="${statusClass}">${esc(statusText)}</span></div></div></div><div class="notice" style="margin-top:16px">${mentorWorkspaceEditApproved ? 'Kamu sedang mengubah profil yang telah disetujui. Setelah disimpan, profil akan menunggu peninjauan ulang dan sementara tidak tampil di direktori.' : isApproved ? 'Profil kamu sudah disetujui dan dapat muncul di direktori selama tetap aktif.' : 'Profil belum muncul di Find a mentor sampai diverifikasi dan disetujui oleh pengelola.'}</div>`
         : `<div class="notice" style="margin-bottom:16px"><strong>Belum ada profil mentor.</strong> Isi formulir berikut untuk mengajukan profil. Profil tidak akan tampil di direktori sebelum disetujui.</div>`;
@@ -5998,7 +6270,7 @@
           const topicText = Array.isArray(x.topics) ? x.topics.join(', ') : '';
           return `<div class="list-card"><div class="list-card-body"><div class="list-title">${esc(sub ? sub.name : 'Mata kuliah')}</div><div class="list-meta">${esc(topicText || 'Topik belum dicantumkan')}</div></div></div>`;
         }).join('');
-        return `<div class="page-head"><div><div class="eyebrow">MENTOR WORKSPACE</div><h1>Profil mentor</h1><p>Profil yang tersimpan di akun kamu.</p></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="${statusClass}">${esc(statusText)}</span><button class="btn btn-primary btn-sm" data-action="edit-approved-mentor-profile">Ajukan perubahan profil</button></div></div>${mentorStatsMarkup}<div class="dash-grid"><section class="panel">${profileSummary}<div class="divider"></div><div class="form-group"><label>Tentang saya</label><p>${esc(p.teaching_bio || 'Belum dicantumkan')}</p></div><div class="form-group"><label>Pengalaman mengajar</label><p>${esc(p.teaching_experience || 'Belum dicantumkan')}</p></div><div class="form-group"><label>Ketersediaan</label><p>${esc(p.availability_notes || 'Belum dicantumkan')}</p></div><div class="form-group"><label>Mode belajar</label><div class="chips">${p.online_available?'<span class="chip blue">Online</span>':''}${p.offline_available?'<span class="chip blue">Offline</span>':''}</div></div><div class="form-group"><label>Mata kuliah dan topik</label>${nameList || '<div class="empty">Belum ada mata kuliah yang ditambahkan.</div>'}</div><div class="notice" style="margin-top:16px">Jika kamu mengajukan perubahan, profil akan ditinjau ulang dan sementara tidak tampil di direktori sampai disetujui kembali.</div></section><aside class="panel"><h3>Verifikasi mentor</h3><p class="list-meta" style="line-height:1.8">Status persetujuan ditentukan oleh pengelola. Profil hanya ditampilkan kepada learner setelah disetujui dan diaktifkan.</p></aside></div>`;
+        return `<div class="page-head"><div><div class="eyebrow">MENTOR WORKSPACE</div><h1>Profil mentor</h1><p>Profil yang tersimpan di akun kamu.</p></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="${statusClass}">${esc(statusText)}</span><button class="btn btn-primary btn-sm" data-action="edit-approved-mentor-profile">Ajukan perubahan profil</button></div></div>${mentorStatsMarkup}${mentorMilestonesMarkup}<div class="dash-grid"><section class="panel">${profileSummary}<div class="divider"></div><div class="form-group"><label>Tentang saya</label><p>${esc(p.teaching_bio || 'Belum dicantumkan')}</p></div><div class="form-group"><label>Pengalaman mengajar</label><p>${esc(p.teaching_experience || 'Belum dicantumkan')}</p></div><div class="form-group"><label>Ketersediaan</label><p>${esc(p.availability_notes || 'Belum dicantumkan')}</p></div><div class="form-group"><label>Mode belajar</label><div class="chips">${p.online_available?'<span class="chip blue">Online</span>':''}${p.offline_available?'<span class="chip blue">Offline</span>':''}</div></div><div class="form-group"><label>Mata kuliah dan topik</label>${nameList || '<div class="empty">Belum ada mata kuliah yang ditambahkan.</div>'}</div><div class="notice" style="margin-top:16px">Jika kamu mengajukan perubahan, profil akan ditinjau ulang dan sementara tidak tampil di direktori sampai disetujui kembali.</div></section><aside class="panel"><h3>Verifikasi mentor</h3><p class="list-meta" style="line-height:1.8">Status persetujuan ditentukan oleh pengelola. Profil hanya ditampilkan kepada learner setelah disetujui dan diaktifkan.</p></aside></div>`;
       }
 
       const subjectsHtml = mentorWorkspaceSubjects.length
@@ -6518,9 +6790,17 @@
       }
       const isMentor = request.mentorId === userId;
       const isLearner = request.learnerId === userId;
+      if (nextStatus === 'completed' && request.type === 'Full Course') {
+        showToast('Untuk Full Course, selesaikan setiap sesi dari dalam learning plan.');
+        return;
+      }
       const allowed = ['confirmed', 'rejected', 'completed'].includes(nextStatus) ? isMentor : nextStatus === 'cancelled' && isLearner;
       if (!allowed) {
         showToast('Akun ini tidak memiliki akses untuk mengubah request tersebut.');
+        return;
+      }
+      if (nextStatus === 'confirmed' && isMentor && overlapsMentorConfirmedSession(request, request.id)) {
+        showToast('Jadwal bentrok dengan sesi terkonfirmasi lain. Buka request dan pilih waktu yang berbeda bersama learner.');
         return;
       }
       databaseRequestActionInFlight.add(id);
@@ -6541,7 +6821,8 @@
         showToast(messages[nextStatus] || 'Status request diperbarui.');
       } catch (error) {
         console.error('LINKED: unable to update learning request:', error);
-        showToast('Permintaan belum berhasil diperbarui. Silakan coba lagi.');
+        const message = String(error && error.message || '');
+        showToast(message.includes('LINKED_SCHEDULE_CONFLICT') ? 'Jadwal bentrok dengan sesi mentor lain. Pilih waktu lain sebelum menerima request.' : 'Permintaan belum berhasil diperbarui. Silakan coba lagi.');
       } finally {
         databaseRequestActionInFlight.delete(id);
       }
@@ -6588,9 +6869,13 @@
       if (action === 'open-request-course') {
         const c = state.courses.find(c => c.requestId === id);
         if (c) return openCourse(c.id);
-        showToast('Learning plan belum tersedia');
+        showToast('Learning plan belum tersedia. Pastikan request Full Course sudah dikonfirmasi.');
         return
       }
+      if (action === 'request-reschedule') return openSessionChangeForm(id, 'reschedule');
+      if (action === 'request-session-cancel') return openSessionChangeForm(id, 'cancel');
+      if (action === 'review-session-change') return updateSessionChangeRequestStatus(id, data.status);
+      if (action === 'withdraw-session-change') return updateSessionChangeRequestStatus(id, 'withdrawn');
       if (action === 'toggle-module') {
         const c = state.courses.find(c => c.id === data.course);
         if (!c) return;
@@ -6767,7 +7052,7 @@
         ? mentor.mode.map(mode => `<option value="${mode.toLowerCase()}">${esc(mode)}</option>`).join('')
         : '<option value="">Pilih mentor terlebih dahulu</option>';
       openModal(
-        `<div class="modal-header"><div><div class="eyebrow">LEARNING REQUEST</div><h2>Jelaskan kebutuhan belajarmu</h2><p>Request akan disimpan ke database dan dapat dilihat oleh mentor yang kamu pilih.</p></div><button class="modal-close" data-close-modal>×</button></div><div class="modal-body"><form id="request-form"><div class="form-grid"><div class="form-group full"><label>Mentor pilihan</label><select class="select" name="mentorId" required><option value="">Pilih mentor</option>${mentorOptionHtml}</select><div class="form-hint">Kamu memilih mentor sendiri. Akun tidak dapat mengirim request kepada dirinya sendiri.</div></div><div class="form-group"><label>Subject</label><select class="select" name="subjectId" required>${subjectsFor(selectedMentor)}</select></div><div class="form-group"><label>Topik spesifik</label><input class="input" name="topic" maxlength="180" required placeholder="Contoh: Hypothesis Testing"/></div><div class="form-group full"><label>Jenis pembelajaran</label><div class="radio-row"><label class="radio-option"><input type="radio" name="type" value="single_session" checked/><span>Single Session<br><small style="font-size:9px;font-weight:500">Satu kebutuhan spesifik</small></span></label><label class="radio-option"><input type="radio" name="type" value="full_course"/><span>Full Course<br><small style="font-size:9px;font-weight:500">Beberapa sesi terstruktur</small></span></label></div></div><div class="form-group full"><label>Tujuan belajar</label><textarea class="textarea" name="objective" maxlength="2000" required placeholder="Apa yang ingin kamu pahami setelah sesi?" rows="3"></textarea></div><div class="form-group"><label>Tanggal pilihan</label><input class="input" name="date" type="date" min="${localIsoDate(0)}" value="${localIsoDate(3)}" required/></div><div class="form-group"><label>Waktu pilihan</label><input class="input" name="time" type="time" value="16:00" required/></div><div class="form-group"><label>Durasi</label><select class="select" name="duration"><option value="60">60 menit</option><option value="90" selected>90 menit</option><option value="120">120 menit</option></select></div><div class="form-group"><label>Mode</label><select class="select" name="mode" required>${modesFor(selectedMentor)}</select></div><div class="form-group full"><label>Lokasi / link pertemuan</label><input class="input" name="location" maxlength="500" placeholder="Contoh: area belajar kampus atau tautan meeting" value="" /></div><div class="form-group full"><label>Catatan tambahan</label><textarea class="textarea" name="notes" maxlength="2000" rows="2" placeholder="Tingkat pemahaman saat ini, materi yang sudah dicoba, atau kebutuhan khusus."></textarea></div><div class="form-group full" id="course-week-group" style="display:none"><label>Perkiraan struktur Full Course</label><div class="notice">Rencana sesi dan modul dapat disepakati bersama mentor setelah request diterima.</div></div></div><div class="modal-actions"><button type="button" class="btn btn-ghost" data-close-modal>Batal</button><button class="btn btn-primary" type="submit">Kirim learning request ${icon('arrow',14)}</button></div></form></div>`,
+        `<div class="modal-header"><div><div class="eyebrow">LEARNING REQUEST</div><h2>Jelaskan kebutuhan belajarmu</h2><p>Permintaan belajar akan dikirim kepada mentor yang kamu pilih.</p></div><button class="modal-close" data-close-modal>×</button></div><div class="modal-body"><form id="request-form"><div class="form-grid"><div class="form-group full"><label>Mentor pilihan</label><select class="select" name="mentorId" required><option value="">Pilih mentor</option>${mentorOptionHtml}</select><div class="form-hint">Kamu memilih mentor sendiri. Akun tidak dapat mengirim request kepada dirinya sendiri.</div></div><div class="form-group"><label>Subject</label><select class="select" name="subjectId" required>${subjectsFor(selectedMentor)}</select></div><div class="form-group"><label>Topik spesifik</label><input class="input" name="topic" maxlength="180" required placeholder="Contoh: Hypothesis Testing"/></div><div class="form-group full"><label>Jenis pembelajaran</label><div class="radio-row"><label class="radio-option"><input type="radio" name="type" value="single_session" checked/><span>Single Session<br><small style="font-size:9px;font-weight:500">Satu kebutuhan spesifik</small></span></label><label class="radio-option"><input type="radio" name="type" value="full_course"/><span>Full Course<br><small style="font-size:9px;font-weight:500">Beberapa sesi terstruktur</small></span></label></div></div><div class="form-group full"><label>Tujuan belajar</label><textarea class="textarea" name="objective" maxlength="2000" required placeholder="Apa yang ingin kamu pahami setelah sesi?" rows="3"></textarea></div><div class="form-group"><label>Tanggal sesi pertama</label><input class="input" name="date" type="date" min="${localIsoDate(0)}" value="${localIsoDate(3)}" required/></div><div class="form-group"><label>Waktu sesi pertama</label><input class="input" name="time" type="time" value="16:00" required/></div><div class="form-group"><label>Durasi</label><select class="select" name="duration"><option value="60">60 menit</option><option value="90" selected>90 menit</option><option value="120">120 menit</option></select></div><div class="form-group"><label>Mode</label><select class="select" name="mode" required>${modesFor(selectedMentor)}</select></div><div class="form-group full"><label id="request-location-label">Lokasi / tautan pertemuan</label><input class="input" name="location" maxlength="500" required placeholder="Tautan HTTPS untuk online atau lokasi kampus untuk offline" value=""/><div class="form-hint" id="request-location-hint">Cantumkan tautan meeting atau lokasi yang cukup jelas agar jadwal dapat disepakati.</div></div><div class="form-group full"><label>Catatan tambahan</label><textarea class="textarea" name="notes" maxlength="2000" rows="2" placeholder="Tingkat pemahaman saat ini, materi yang sudah dicoba, atau kebutuhan khusus."></textarea></div><div class="form-group full" id="course-week-group" style="display:none"><label>Perkiraan struktur Full Course</label><div class="notice">Rencana sesi dan modul dapat disepakati bersama mentor setelah request diterima.</div></div></div><div class="modal-actions"><button type="button" class="btn btn-ghost" data-close-modal>Batal</button><button class="btn btn-primary" type="submit">Kirim learning request ${icon('arrow',14)}</button></div></form></div>`,
         true);
       const form = document.getElementById('request-form');
       const mentorSelect = form.elements.mentorId;
@@ -6782,8 +7067,21 @@
       };
       refreshMentorOptions();
       mentorSelect.addEventListener('change', refreshMentorOptions);
+      const locationInput = form.elements.location;
+      const locationLabel = document.getElementById('request-location-label');
+      const locationHint = document.getElementById('request-location-hint');
+      const refreshLocationGuidance = () => {
+        const online = String(modeSelect.value || '').toLowerCase() === 'online';
+        locationLabel.textContent = online ? 'Tautan pertemuan online' : 'Lokasi pertemuan offline';
+        locationInput.placeholder = online ? 'Contoh: https://meet.google.com/…' : 'Contoh: perpustakaan / area belajar kampus';
+        locationHint.textContent = online ? 'Gunakan tautan HTTPS yang bisa dibuka peserta sesi.' : 'Tulis lokasi yang cukup spesifik dan mudah ditemukan.';
+      };
+      refreshLocationGuidance();
+      modeSelect.addEventListener('change', refreshLocationGuidance);
       form.querySelectorAll('input[name="type"]').forEach(radio => radio.addEventListener('change', () => {
-        document.getElementById('course-week-group').style.display = form.querySelector('input[name="type"]:checked').value === 'full_course' ? 'block' : 'none';
+        const fullCourse = form.querySelector('input[name="type"]:checked').value === 'full_course';
+        document.getElementById('course-week-group').style.display = fullCourse ? 'block' : 'none';
+        document.getElementById('course-week-group').innerHTML = fullCourse ? '<label>Rencana Full Course</label><div class="notice">Tanggal dan waktu di atas adalah pilihan sesi awal. Setelah diterima, mentor menyusun learning plan berisi beberapa modul; jadwal sesi berikutnya disepakati bersama.</div>' : '';
       }));
       form.addEventListener('submit', async event => {
         event.preventDefault();
@@ -6808,6 +7106,15 @@
           if (!['online', 'offline'].includes(selectedMode) || !mentor.mode.map(value => value.toLowerCase()).includes(selectedMode)) {
             throw new Error('Pilih mode belajar yang tersedia pada profil mentor.');
           }
+          const selectedDate = String(formData.get('date') || '');
+          const selectedTime = String(formData.get('time') || '');
+          if (!validateFutureSchedule(selectedDate, selectedTime)) throw new Error('Pilih tanggal dan waktu yang masih berada di masa depan.');
+          const selectedLocation = String(formData.get('location') || '').trim();
+          if (!selectedLocation) throw new Error('Isi lokasi atau tautan pertemuan agar jadwal jelas bagi kedua pihak.');
+          if (selectedMode === 'online') {
+            let meetingUrl; try { meetingUrl = new URL(selectedLocation); } catch (_) { throw new Error('Untuk sesi online, masukkan tautan HTTPS yang valid.'); }
+            if (meetingUrl.protocol !== 'https:') throw new Error('Tautan pertemuan online harus menggunakan HTTPS.');
+          }
           await ensureDatabaseProfile(user);
           const learningType = String(formData.get('type') || 'single_session');
           const payload = {
@@ -6818,11 +7125,11 @@
             learning_objective: String(formData.get('objective') || '').trim(),
             learning_type: learningType,
             requested_week: learningType === 'full_course' ? 'Learning plan to be agreed' : null,
-            preferred_date: String(formData.get('date') || ''),
-            preferred_time: String(formData.get('time') || ''),
+            preferred_date: selectedDate,
+            preferred_time: selectedTime,
             duration_minutes: Number(formData.get('duration') || 90),
             mode: selectedMode,
-            location_or_link: String(formData.get('location') || '').trim() || null,
+            location_or_link: selectedLocation,
             additional_notes: String(formData.get('notes') || '').trim() || null
           };
           if (!payload.topic || !payload.learning_objective) throw new Error('Isi topik dan tujuan belajar.');
@@ -6842,7 +7149,9 @@
           }
         } catch (error) {
           console.error('LINKED: could not create learning request:', error);
-          showToast('Permintaan belum berhasil dikirim. Silakan coba lagi.');
+          const message = String(error && error.message || '');
+          const validationPrefixes = ['Pilih ', 'Isi ', 'Kamu ', 'Untuk sesi ', 'Tautan ', 'Sesi login '];
+          showToast(validationPrefixes.some(prefix => message.startsWith(prefix)) ? message : 'Permintaan belum berhasil dikirim. Silakan coba lagi.');
           submitButton.disabled = false;
           submitButton.textContent = 'Kirim learning request';
         }
@@ -6854,30 +7163,426 @@
       if (!c) return;
       const total = c.modules.length;
       const pct = total ? Math.round(c.doneModules.length / total * 100) : 0;
-      const canEdit = !c.source || state.role === 'learner';
+      const canUpdateProgress = !c.source || state.role === 'learner';
+      const parentRequest = (state.requests || []).find(request => request.id === c.requestId);
+      const canManageModules = c.source === 'database' && state.role === 'mentor' && c.mentorId === window.linkedCurrentUserId && (!parentRequest || parentRequest.status === 'confirmed');
+      const moduleRows = c.modules.map((m, i) => {
+        const learnerControl = canUpdateProgress
+          ? `<button class="module-check ${c.doneModules.includes(i)?'done':''}" data-modal-module="${i}" aria-label="${c.doneModules.includes(i)?'Tandai modul belum selesai':'Tandai modul selesai'}">${c.doneModules.includes(i)?icon('check',14):''}</button>`
+          : `<span class="module-check ${c.doneModules.includes(i)?'done':''}" aria-hidden="true">${c.doneModules.includes(i)?icon('check',14):''}</span>`;
+        const mentorControl = canManageModules ? `<button class="module-edit-btn" data-course-module-edit="${esc(c.id)}" data-module-index="${i}">Edit materi</button>` : '';
+        const moduleResource = m.materialUrl ? `<a class="inline-link" href="${esc(safeExternalHttpUrl(m.materialUrl) || '#')}" target="_blank" rel="noopener noreferrer">Buka materi ↗</a>` : '';
+        return `<div class="module-row">${learnerControl}<div class="module-info"><div class="module-title">Week ${Number(m.sequenceNo || i+1)} · ${esc(m.title)}</div><div class="module-sub">${esc(m.sub || m.topic || 'Modul pembelajaran')}</div>${moduleResource ? `<div style="margin-top:5px">${moduleResource}</div>` : ''}${m.exerciseDescription ? `<div class="module-sub"><strong>Latihan:</strong> ${esc(m.exerciseDescription)}</div>` : ''}${m.assignmentDescription ? `<div class="module-sub"><strong>Tugas:</strong> ${esc(m.assignmentDescription)}</div>` : ''}${m.recommendedResources ? `<div class="module-sub"><strong>Sumber:</strong> ${esc(m.recommendedResources)}</div>` : ''}</div><div class="course-module-actions"><span class="module-lock">${c.doneModules.includes(i)?'Selesai':'Belum'}</span>${mentorControl}</div></div>`;
+      }).join('');
+      const footerActions = `${canManageModules ? `<button type="button" class="btn btn-soft" data-course-module-add="${esc(c.id)}">+ Tambah modul</button>` : ''}<button class="btn btn-primary" data-close-modal>${canManageModules ? 'Selesai mengelola' : 'Selesai'}</button>`;
       openModal(
-        `<div class="modal-header"><div><div class="eyebrow">LEARNING MODULE</div><h2>${esc(c.title)}</h2><p>${esc(c.mentorName)} · ${c.modules.length} modul · Full Course</p></div><button class="modal-close" data-close-modal>×</button></div><div class="modal-body"><div class="progress-row" style="margin-bottom:18px"><div class="progress"><span style="width:${pct}%"></span></div><div class="progress-num">${c.doneModules.length}/${c.modules.length} selesai</div></div><div class="module-list">${c.modules.map((m,i)=>`<div class="module-row">${canEdit?`<button class="module-check ${c.doneModules.includes(i)?'done':''}" data-modal-module="${i}">${c.doneModules.includes(i)?icon('check',14):''}</button>`:`<span class="module-check ${c.doneModules.includes(i)?'done':''}">${c.doneModules.includes(i)?icon('check',14):''}</span>`}<div class="module-info"><div class="module-title">Week ${i+1} · ${esc(m.title)}</div><div class="module-sub">${esc(m.sub)}</div></div><span class="module-lock">${c.doneModules.includes(i)?'Selesai':'Belum'}</span></div>`).join('')}</div><div class="notice" style="margin-top:16px">${c.source === 'database' ? (canEdit ? 'Progres tersimpan otomatis dan dapat dilihat kembali saat kamu masuk ke akun ini.' : 'Kamu dapat melihat progres learner pada setiap modul.') : 'Tandai modul selesai setelah kamu benar-benar mempelajari topiknya.'}</div><div class="modal-actions"><button class="btn btn-primary" data-close-modal>Selesai</button></div></div>`,
-        true);
-      document.querySelectorAll('[data-modal-module]').forEach(b => b
-        .addEventListener('click', async () => {
-          const i = Number(b.dataset.modalModule);
-          if (c.source === 'database') {
-            closeModal();
-            await toggleDatabaseModuleProgress(c, i);
-            openCourse(id);
-            return;
+        `<div class="modal-header"><div><div class="eyebrow">LEARNING MODULE</div><h2>${esc(c.title)}</h2><p>${esc(c.mentorName)} · ${c.modules.length} modul · Full Course</p></div><button class="modal-close" data-close-modal aria-label="Tutup">×</button></div><div class="modal-body"><div class="progress-row" style="margin-bottom:18px"><div class="progress"><span style="width:${pct}%"></span></div><div class="progress-num">${c.doneModules.length}/${total} selesai</div></div><div class="module-list">${moduleRows || '<div class="empty"><strong>Belum ada modul</strong>Mentor dapat menambahkan modul pertama untuk learning plan ini.</div>'}</div><section class="course-sessions-panel" id="course-sessions-panel" aria-label="Jadwal dan riwayat sesi"><div class="section-head"><div><h3>Jadwal & riwayat sesi</h3><p>Sesi mentoring dicatat terpisah dari modul yang diselesaikan.</p></div></div><div class="empty">Memuat jadwal sesi…</div></section><div class="notice" style="margin-top:16px">${canManageModules ? 'Susun materi, latihan, tugas, dan sumber belajar untuk learner yang mengikuti Full Course ini. Jadwalkan setiap sesi secara terpisah dan tandai selesai setelah sesi terlaksana.' : c.source === 'database' ? (canUpdateProgress ? 'Tandai modul setelah dipelajari. Catatan sesi dan jadwal tetap tersimpan sebagai riwayat terpisah.' : 'Materi, jadwal, catatan sesi, dan progres dibagikan antara learner dan mentor yang terlibat.') : 'Data ini adalah materi contoh. Tandai modul selesai setelah kamu benar-benar mempelajari topiknya.'}</div><div class="modal-actions">${footerActions}</div></div>`, true);
+      document.querySelectorAll('[data-modal-module]').forEach(button => button.addEventListener('click', async () => {
+        const moduleIndex = Number(button.dataset.modalModule);
+        if (c.source === 'database') {
+          closeModal();
+          await toggleDatabaseModuleProgress(c, moduleIndex);
+          openCourse(id);
+          return;
+        }
+        const position = c.doneModules.indexOf(moduleIndex);
+        if (position >= 0) c.doneModules.splice(position, 1); else c.doneModules.push(moduleIndex);
+        saveState();
+        openCourse(id);
+      }));
+      document.querySelectorAll('[data-course-module-edit]').forEach(button => button.addEventListener('click', () => openCourseModuleEditor(button.dataset.courseModuleEdit, Number(button.dataset.moduleIndex))));
+      document.querySelectorAll('[data-course-module-add]').forEach(button => button.addEventListener('click', () => openCourseModuleEditor(button.dataset.courseModuleAdd, null)));
+      if (c.source === 'database') loadAndRenderCourseSessions(id).catch(error => {
+        console.error('LINKED: course sessions could not be loaded:', error);
+        const host = document.getElementById('course-sessions-panel');
+        if (host) host.innerHTML = '<div class="empty"><strong>Jadwal sesi belum dapat dimuat</strong>Coba tutup learning plan, lalu buka kembali.</div>';
+      });
+    }
+
+    async function loadAndRenderCourseSessions(courseId) {
+      const host = document.getElementById('course-sessions-panel');
+      const course = state.courses.find(item => item.id === courseId && item.source === 'database');
+      if (!host || !course || !window.linkedCurrentUserId) return;
+      host.innerHTML = '<div class="empty">Memuat jadwal sesi…</div>';
+      const [{ data: sessionRows, error: sessionError }, { data: requestRow, error: requestError }] = await Promise.all([
+        linkedSupabase.from('sessions')
+          .select('id, learning_request_id, course_id, learner_id, mentor_id, topic, starts_at, duration_minutes, mode, location_or_link, status, summary, next_steps, created_at')
+          .eq('course_id', courseId)
+          .order('starts_at', { ascending: true }),
+        linkedSupabase.from('learning_requests')
+          .select('id, status, learning_type')
+          .eq('id', course.requestId)
+          .maybeSingle()
+      ]);
+      if (sessionError) throw sessionError;
+      if (requestError) throw requestError;
+      const sessions = sessionRows || [];
+      const sessionIds = sessions.map(session => session.id);
+      let reviewBySession = {};
+      let pendingBySession = {};
+      if (state.role === 'learner' && sessionIds.length) {
+        const { data, error } = await linkedSupabase.from('reviews')
+          .select('id, session_id, rating, comment, moderation_status, created_at')
+          .in('session_id', sessionIds)
+          .eq('learner_id', window.linkedCurrentUserId);
+        if (error) throw error;
+        reviewBySession = Object.fromEntries((data || []).map(review => [review.session_id, review]));
+      }
+      if (sessionIds.length) {
+        try {
+          const { data, error } = await linkedSupabase.from('session_change_requests')
+            .select('id, session_id, learning_request_id, requester_id, change_type, proposed_starts_at, proposed_duration_minutes, proposed_mode, proposed_location_or_link, reason, status, created_at')
+            .in('session_id', sessionIds)
+            .eq('status', 'pending')
+            .order('created_at', { ascending: false });
+          if (error) throw error;
+          (data || []).forEach(change => { if (!pendingBySession[change.session_id]) pendingBySession[change.session_id] = change; });
+          sessionChangeTableReady = true;
+        } catch (error) {
+          sessionChangeTableReady = false;
+          console.info('LINKED: session change options need the workflow migration.');
+        }
+      }
+      const isMentor = state.role === 'mentor' && course.mentorId === window.linkedCurrentUserId;
+      const canSchedule = isMentor && requestRow && requestRow.status === 'confirmed' && requestRow.learning_type === 'full_course';
+      const allSessionsAccountedFor = sessions.length > 0 && sessions.every(session => ['completed','reviewed','cancelled'].includes(session.status)) && sessions.some(session => ['completed','reviewed'].includes(session.status));
+      const allModulesCompleted = course.modules.length > 0 && course.doneModules.length === course.modules.length;
+      const canCompleteFullCourse = canSchedule && allSessionsAccountedFor && allModulesCompleted;
+      const completionAction = isMentor && requestRow && requestRow.status === 'completed'
+        ? '<div class="course-completion-action"><div><strong>Full Course sudah selesai</strong><p>Learning plan dan riwayat sesi tetap tersedia untuk ditinjau.</p></div></div>'
+        : canSchedule ? (canCompleteFullCourse
+          ? `<div class="course-completion-action"><div><strong>Semua sesi dan modul sudah selesai</strong><p>Kamu bisa menutup learning plan ini. Course tetap dapat dilihat sebagai riwayat belajar.</p></div><button type="button" class="btn btn-primary btn-sm" data-course-complete="${esc(courseId)}">Selesaikan Full Course</button></div>`
+          : '<div class="course-completion-action"><div><strong>Belum siap ditutup</strong><p>Full Course dapat diselesaikan setelah semua sesi tercatat selesai atau dibatalkan, setidaknya satu sesi benar-benar selesai, dan seluruh modul telah diselesaikan learner.</p></div></div>') : '';
+      host.innerHTML = `<div class="section-head"><div><h3>Jadwal & riwayat sesi</h3><p>${sessions.length} sesi tercatat · progres modul dihitung terpisah.</p></div>${canSchedule ? `<button type="button" class="btn btn-primary btn-sm" data-course-session-add="${esc(courseId)}">+ Jadwalkan sesi</button>` : ''}</div>${!sessions.length ? '<div class="empty"><strong>Belum ada sesi yang tercatat pada course ini.</strong>Setelah request Full Course dikonfirmasi, jadwal sesi awal akan muncul di sini.</div>' : `<div class="course-session-list">${sessions.map((session,index) => {
+        const when = new Date(session.starts_at);
+        const whenText = Number.isNaN(when.getTime()) ? 'Jadwal belum tersedia' : when.toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short',timeZone:'Asia/Jakarta'});
+        const review = reviewBySession[session.id];
+        const change = pendingBySession[session.id];
+        let actionButtons = '';
+        if (change) {
+          const isRequester = change.requester_id === window.linkedCurrentUserId;
+          const proposedDate = change.proposed_starts_at ? new Date(change.proposed_starts_at) : null;
+          const proposedText = proposedDate && !Number.isNaN(proposedDate.getTime()) ? proposedDate.toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short',timeZone:'Asia/Jakarta'}) : '';
+          actionButtons = `<div class="course-session-pending"><strong>${change.change_type === 'cancel' ? 'Usulan pembatalan' : 'Usulan jadwal baru'}</strong><br>${isRequester ? 'Menunggu tanggapan peserta lainnya.' : 'Tinjau usulan dari peserta lainnya.'}${change.change_type === 'reschedule' ? `<br>Jadwal usulan: ${esc(proposedText)} · ${Number(change.proposed_duration_minutes || session.duration_minutes)} menit · ${esc(change.proposed_mode || session.mode)} · ${esc(change.proposed_location_or_link || '')}` : ''}${change.reason ? `<br>Alasan: ${esc(change.reason)}` : ''}<div class="course-session-actions">${isRequester ? `<button type="button" class="btn btn-ghost btn-sm" data-course-session-change-review="${esc(change.id)}" data-next-status="withdrawn" data-course-id="${esc(courseId)}">Tarik usulan</button>` : `<button type="button" class="btn btn-primary btn-sm" data-course-session-change-review="${esc(change.id)}" data-next-status="accepted" data-course-id="${esc(courseId)}">Setujui</button><button type="button" class="btn btn-danger btn-sm" data-course-session-change-review="${esc(change.id)}" data-next-status="rejected" data-course-id="${esc(courseId)}">Tolak</button>`}</div></div>`;
+        } else if (session.status === 'confirmed') {
+          actionButtons = `<button type="button" class="btn btn-ghost btn-sm" data-course-session-notes="${esc(session.id)}" data-course-id="${esc(courseId)}">${isMentor ? 'Edit catatan' : 'Lihat catatan'}</button>${isMentor ? `<button type="button" class="btn btn-soft btn-sm" data-course-session-complete="${esc(session.id)}" data-course-id="${esc(courseId)}">Tandai sesi selesai</button>` : ''}<button type="button" class="btn btn-ghost btn-sm" data-course-session-change="${esc(session.id)}" data-change-type="reschedule" data-course-id="${esc(courseId)}">Usulkan jadwal baru</button><button type="button" class="btn btn-ghost btn-sm" data-course-session-change="${esc(session.id)}" data-change-type="cancel" data-course-id="${esc(courseId)}">Minta pembatalan</button>`;
+        } else if (session.status === 'completed' || session.status === 'reviewed') {
+          actionButtons = `<button type="button" class="btn btn-ghost btn-sm" data-course-session-notes="${esc(session.id)}" data-course-id="${esc(courseId)}">${isMentor ? 'Edit catatan' : 'Lihat catatan'}</button>${!isMentor ? (review ? `<span class="list-meta">Ulasan ${Number(review.rating)}/5 · ${esc(review.moderation_status === 'published' ? 'ditampilkan' : review.moderation_status === 'hidden' ? 'disembunyikan' : 'menunggu tinjauan')}</span>` : `<button type="button" class="btn btn-soft btn-sm" data-course-session-review="${esc(session.id)}" data-course-id="${esc(courseId)}">Beri ulasan</button>`) : ''}`;
+        } else {
+          actionButtons = `<span class="list-meta">Sesi tidak aktif.</span>`;
+        }
+        return `<article class="course-session-card"><div class="course-session-icon" aria-hidden="true">${icon(session.status === 'completed' || session.status === 'reviewed' ? 'check' : session.status === 'cancelled' ? 'x' : 'calendar',16)}</div><div class="course-session-copy"><div class="course-session-title">${index === 0 ? 'Sesi awal' : `Sesi ${index + 1}`} · ${esc(session.topic || course.title)}</div><div class="course-session-meta">${esc(whenText)} · ${Number(session.duration_minutes)} menit · ${esc(session.mode === 'online' ? 'Online' : 'Offline')} · ${esc(statusLabel(session.status))}<br>${session.location_or_link ? esc(session.location_or_link) : 'Lokasi/tautan belum dicantumkan'}</div>${session.summary ? `<div class="course-session-note"><strong>Ringkasan:</strong> ${esc(session.summary)}${session.next_steps ? `<br><br><strong>Langkah berikutnya:</strong> ${esc(session.next_steps)}` : ''}</div>` : session.next_steps ? `<div class="course-session-note"><strong>Langkah berikutnya:</strong> ${esc(session.next_steps)}</div>` : ''}<div class="course-session-actions">${actionButtons}</div></div></article>`;
+      }).join('')}</div>`}${completionAction}`;
+      host.querySelectorAll('[data-course-session-add]').forEach(button => button.addEventListener('click', () => openCourseSessionForm(courseId)));
+      host.querySelectorAll('[data-course-complete]').forEach(button => button.addEventListener('click', () => completeFullCourse(courseId)));
+      host.querySelectorAll('[data-course-session-notes]').forEach(button => button.addEventListener('click', () => openCourseSessionNotes(courseId, button.dataset.courseSessionNotes)));
+      host.querySelectorAll('[data-course-session-complete]').forEach(button => button.addEventListener('click', () => completeCourseSession(courseId, button.dataset.courseSessionComplete)));
+      host.querySelectorAll('[data-course-session-review]').forEach(button => button.addEventListener('click', () => openCourseSessionReview(courseId, button.dataset.courseSessionReview)));
+      host.querySelectorAll('[data-course-session-change]').forEach(button => button.addEventListener('click', () => openCourseSessionChangeForm(courseId, button.dataset.courseSessionChange, button.dataset.changeType)));
+      host.querySelectorAll('[data-course-session-change-review]').forEach(button => button.addEventListener('click', async () => {
+        await updateSessionChangeRequestStatus(button.dataset.courseSessionChangeReview, button.dataset.nextStatus);
+        await loadAndRenderCourseSessions(courseId).catch(() => {});
+      }));
+    }
+
+    async function openCourseSessionForm(courseId) {
+      const course = state.courses.find(item => item.id === courseId && item.source === 'database');
+      const userId = window.linkedCurrentUserId;
+      if (!course || state.role !== 'mentor' || course.mentorId !== userId) return showToast('Hanya mentor pemilik course yang dapat menjadwalkan sesi.');
+      if (!linkedSupabase || !userId) return showToast('Masuk kembali sebelum menjadwalkan sesi.');
+      const mentor = databaseMentors.find(item => item.id === userId);
+      const modes = mentor && Array.isArray(mentor.mode) && mentor.mode.length ? mentor.mode : ['Online','Offline'];
+      const modeOptions = modes.map(mode => `<option value="${esc(mode.toLowerCase())}">${esc(mode)}</option>`).join('');
+      openModal(`<div class="modal-header"><div><div class="eyebrow">FULL COURSE</div><h2>Jadwalkan sesi berikutnya</h2><p>${esc(course.title)}</p></div><button class="modal-close" data-close-modal aria-label="Tutup">×</button></div><div class="modal-body"><form id="course-session-form"><div class="form-group"><label>Topik sesi</label><input class="input" name="topic" maxlength="180" required placeholder="Contoh: Latihan terapan dan pembahasan kasus" /></div><div class="form-grid" style="margin-top:12px"><div class="form-group"><label>Tanggal</label><input class="input" type="date" name="date" min="${localIsoDate(0)}" value="${localIsoDate(3)}" required /></div><div class="form-group"><label>Waktu</label><input class="input" type="time" name="time" value="16:00" required /></div><div class="form-group"><label>Durasi</label><select class="select" name="duration"><option value="60">60 menit</option><option value="90" selected>90 menit</option><option value="120">120 menit</option></select></div><div class="form-group"><label>Mode</label><select class="select" name="mode" required>${modeOptions}</select></div><div class="form-group full"><label id="course-session-location-label">Tautan pertemuan online</label><input class="input" name="location" maxlength="500" required placeholder="Contoh: https://meet.google.com/…" /><div class="form-hint" id="course-session-location-hint">Gunakan tautan HTTPS untuk sesi online.</div></div></div><div class="notice" style="margin-top:12px">Sesi tambahan akan muncul pada learning plan dan riwayat sesi. Jadwal baru akan ditolak jika bertabrakan dengan sesi lain milik mentor.</div><div class="modal-actions"><button type="button" class="btn btn-ghost" data-close-modal>Batal</button><button class="btn btn-primary" type="submit">Simpan jadwal</button></div></form></div>`, true);
+      const form = document.getElementById('course-session-form');
+      const modeField = form.elements.mode;
+      const locationLabel = document.getElementById('course-session-location-label');
+      const locationHint = document.getElementById('course-session-location-hint');
+      const refreshGuidance = () => {
+        const online = String(modeField.value).toLowerCase() === 'online';
+        locationLabel.textContent = online ? 'Tautan pertemuan online' : 'Lokasi pertemuan offline';
+        form.elements.location.placeholder = online ? 'Contoh: https://meet.google.com/…' : 'Contoh: ruang belajar kampus';
+        locationHint.textContent = online ? 'Gunakan tautan HTTPS yang bisa dibuka peserta sesi.' : 'Tulis lokasi yang jelas dan mudah ditemukan.';
+      };
+      refreshGuidance(); modeField.addEventListener('change', refreshGuidance);
+      form.addEventListener('submit', async event => {
+        event.preventDefault();
+        const button = form.querySelector('button[type="submit"]');
+        if (button.disabled) return;
+        button.disabled = true; button.textContent = 'Menyimpan jadwal…';
+        try {
+          const fd = new FormData(form);
+          const topic = String(fd.get('topic') || '').trim();
+          const dateValue = String(fd.get('date') || '');
+          const timeValue = String(fd.get('time') || '');
+          const duration = Number(fd.get('duration') || 90);
+          const mode = String(fd.get('mode') || '').toLowerCase();
+          const location = String(fd.get('location') || '').trim();
+          if (!topic) throw new Error('Isi topik sesi terlebih dahulu.');
+          if (!validateFutureSchedule(dateValue, timeValue)) throw new Error('Pilih tanggal dan waktu yang masih berada di masa depan.');
+          if (![60,90,120].includes(duration)) throw new Error('Pilih durasi sesi yang tersedia.');
+          if (!['online','offline'].includes(mode) || !modes.map(x => x.toLowerCase()).includes(mode)) throw new Error('Pilih mode yang tersedia pada profil mentor.');
+          if (!location) throw new Error('Isi lokasi atau tautan pertemuan.');
+          if (mode === 'online') { const url = new URL(location); if (url.protocol !== 'https:') throw new Error('Tautan sesi online harus menggunakan HTTPS.'); }
+          const { error } = await linkedSupabase.rpc('linked_schedule_course_session', {
+            p_course_id: courseId,
+            p_topic: topic,
+            p_starts_at: new Date(`${dateValue}T${timeValue}:00+07:00`).toISOString(),
+            p_duration_minutes: duration,
+            p_mode: mode,
+            p_location_or_link: location
+          });
+          if (error) throw error;
+          closeModal();
+          await loadDatabaseRequests(true).catch(() => {});
+          await loadDatabaseCourses(true);
+          render(); openCourse(courseId);
+          showToast('Jadwal sesi berhasil disimpan.');
+        } catch (error) {
+          console.error('LINKED: course session scheduling failed:', error);
+          const message = String(error && error.message || '');
+          showToast(message.includes('LINKED_SCHEDULE_CONFLICT') ? 'Jadwal bertabrakan dengan sesi mentor lain. Pilih waktu berbeda.' : message.includes('LINKED_COURSE_NOT_ACTIVE') ? 'Learning plan ini tidak lagi aktif untuk penjadwalan.' : 'Jadwal belum berhasil disimpan. Periksa data lalu coba lagi.');
+          button.disabled = false; button.textContent = 'Simpan jadwal';
+        }
+      });
+    }
+
+    async function completeCourseSession(courseId, sessionId) {
+      const course = state.courses.find(item => item.id === courseId && item.source === 'database');
+      if (!course || state.role !== 'mentor' || course.mentorId !== window.linkedCurrentUserId) return showToast('Hanya mentor pemilik course yang dapat menyelesaikan sesi.');
+      const session = await linkedSupabase.from('sessions').select('id,status,topic').eq('id', sessionId).eq('course_id', courseId).maybeSingle();
+      if (session.error || !session.data) return showToast('Sesi belum berhasil dimuat. Muat ulang learning plan lalu coba lagi.');
+      if (session.data.status !== 'confirmed') return showToast('Hanya sesi terkonfirmasi yang dapat ditandai selesai.');
+      if (!window.confirm(`Tandai sesi “${session.data.topic}” sebagai selesai? Pastikan sesi memang sudah terlaksana.`)) return;
+      try {
+        const { error } = await linkedSupabase.rpc('linked_complete_course_session', { p_session_id: sessionId });
+        if (error) throw error;
+        databaseRequestsLoaded = false;
+        await loadDatabaseRequests(true);
+        await loadDatabaseCourses(true);
+        render(); openCourse(courseId);
+        showToast('Sesi berhasil ditandai selesai.');
+      } catch (error) {
+        console.error('LINKED: course session completion failed:', error);
+        showToast('Sesi belum berhasil diperbarui. Pastikan pembaruan database sudah diterapkan, lalu coba lagi.');
+      }
+    }
+
+    async function completeFullCourse(courseId) {
+      const course = state.courses.find(item => item.id === courseId && item.source === 'database');
+      if (!course || state.role !== 'mentor' || course.mentorId !== window.linkedCurrentUserId) return showToast('Hanya mentor pemilik learning plan yang dapat menyelesaikan Full Course.');
+      if (!window.confirm(`Selesaikan Full Course “${course.title}”? Pastikan seluruh sesi sudah ditangani dan semua modul ditandai selesai oleh learner.`)) return;
+      try {
+        const { error } = await linkedSupabase.rpc('linked_complete_full_course', { p_course_id: courseId });
+        if (error) throw error;
+        databaseRequestsLoaded = false;
+        await loadDatabaseRequests(true);
+        await loadDatabaseCourses(true);
+        render();
+        openCourse(courseId);
+        showToast('Full Course berhasil diselesaikan. Riwayatnya tetap tersedia.');
+      } catch (error) {
+        console.error('LINKED: full course completion failed:', error);
+        const message = String(error && error.message || '');
+        if (message.includes('LINKED_COURSE_MODULES_INCOMPLETE')) showToast('Full Course belum bisa diselesaikan. Pastikan semua modul sudah ditandai selesai oleh learner.');
+        else if (message.includes('LINKED_COURSE_SESSIONS_INCOMPLETE')) showToast('Full Course belum bisa diselesaikan. Pastikan semua sesi sudah selesai atau dibatalkan dengan benar.');
+        else showToast('Full Course belum berhasil diselesaikan. Muat ulang learning plan lalu coba lagi.');
+      }
+    }
+
+    async function openCourseSessionNotes(courseId, sessionId) {
+      const userId = window.linkedCurrentUserId;
+      if (!userId) return showToast('Masuk kembali untuk membuka catatan sesi.');
+      try {
+        const { data: session, error } = await linkedSupabase.from('sessions')
+          .select('id,course_id,learner_id,mentor_id,topic,starts_at,status,summary,next_steps')
+          .eq('id', sessionId).eq('course_id', courseId).maybeSingle();
+        if (error) throw error;
+        if (!session || ![session.learner_id, session.mentor_id].includes(userId)) throw new Error('Sesi tidak ditemukan untuk akun ini.');
+        const canEdit = state.role === 'mentor' && session.mentor_id === userId;
+        const when = new Date(session.starts_at);
+        openModal(`<div class="modal-header"><div><div class="eyebrow">CATATAN SESI FULL COURSE</div><h2>${esc(session.topic)}</h2><p>${Number.isNaN(when.getTime()) ? '' : esc(when.toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short',timeZone:'Asia/Jakarta'}))}${canEdit ? ' · Edit catatan mentor' : ' · Hanya bisa dibaca'}</p></div><button class="modal-close" data-close-modal aria-label="Tutup">×</button></div><div class="modal-body"><form id="course-session-notes-form"><div class="form-group"><label>Ringkasan sesi / materi yang dibahas</label><textarea class="textarea" name="summary" rows="4" maxlength="5000" ${canEdit?'':'readonly'} placeholder="Konsep utama, contoh yang dibahas, dan hal yang sudah dipahami...">${esc(session.summary || '')}</textarea></div><div class="form-group" style="margin-top:12px"><label>Langkah belajar berikutnya</label><textarea class="textarea" name="nextSteps" rows="3" maxlength="3000" ${canEdit?'':'readonly'} placeholder="Latihan, tugas, atau materi lanjutan...">${esc(session.next_steps || '')}</textarea></div><div class="modal-actions"><button type="button" class="btn btn-ghost" data-close-modal>Tutup</button>${canEdit?'<button type="submit" class="btn btn-primary">Simpan catatan</button>':''}</div></form></div>`,true);
+        if (!canEdit) return;
+        const form = document.getElementById('course-session-notes-form');
+        form.addEventListener('submit', async event => {
+          event.preventDefault();
+          const button = form.querySelector('button[type="submit"]');
+          if (button.disabled) return;
+          button.disabled = true; button.textContent = 'Menyimpan…';
+          const fd = new FormData(form);
+          try {
+            const { data, error: updateError } = await linkedSupabase.from('sessions')
+              .update({ summary: String(fd.get('summary') || '').trim() || null, next_steps: String(fd.get('nextSteps') || '').trim() || null })
+              .eq('id', sessionId).eq('mentor_id', userId).select('id').maybeSingle();
+            if (updateError) throw updateError;
+            if (!data) throw new Error('Sesi tidak dapat diperbarui.');
+            closeModal(); openCourse(courseId); showToast('Catatan sesi berhasil disimpan.');
+          } catch (error) {
+            console.error('LINKED: course session notes update failed:', error);
+            showToast('Catatan sesi belum berhasil disimpan. Silakan coba lagi.');
+            button.disabled = false; button.textContent = 'Simpan catatan';
           }
-          const at = c.doneModules.indexOf(i);
-          if (at >= 0) c.doneModules.splice(at, 1);
-          else c.doneModules.push(i);
-          saveState();
-          openCourse(id)
+        });
+      } catch (error) {
+        console.error('LINKED: course session notes loading failed:', error);
+        showToast('Catatan sesi belum berhasil dimuat. Silakan coba lagi.');
+      }
+    }
+
+    async function openCourseSessionReview(courseId, sessionId) {
+      const userId = window.linkedCurrentUserId;
+      if (!userId || state.role !== 'learner') return showToast('Ulasan hanya dapat dikirim oleh learner.');
+      try {
+        const { data: session, error } = await linkedSupabase.from('sessions')
+          .select('id,course_id,learner_id,mentor_id,topic,status')
+          .eq('id', sessionId).eq('course_id', courseId).maybeSingle();
+        if (error) throw error;
+        if (!session || session.learner_id !== userId || session.status !== 'completed') throw new Error('Ulasan hanya tersedia setelah sesi milikmu selesai.');
+        const { data: existing, error: existingError } = await linkedSupabase.from('reviews')
+          .select('id').eq('session_id', sessionId).maybeSingle();
+        if (existingError) throw existingError;
+        if (existing) return showToast('Ulasan untuk sesi ini sudah pernah dikirim.');
+        selectedRating = 5;
+        openModal(`<div class="modal-header"><div><div class="eyebrow">LEARNER FEEDBACK</div><h2>Bagaimana sesi ini?</h2><p>${esc(session.topic)} · Ulasan khusus untuk sesi yang telah selesai.</p></div><button class="modal-close" data-close-modal aria-label="Tutup">×</button></div><div class="modal-body"><div class="review-stars" style="margin:14px 0 18px">${[1,2,3,4,5].map(n=>`<button type="button" class="star-btn ${n<=selectedRating?'active':''}" data-course-star="${n}" aria-label="${n} dari 5 bintang">★</button>`).join('')}</div><form id="course-session-review-form"><div class="form-group"><label>Ulasan</label><textarea class="textarea" name="comment" rows="4" maxlength="2000" required placeholder="Apa yang membantu? Apa yang bisa diperbaiki?"></textarea></div><div class="modal-actions"><button type="button" class="btn btn-ghost" data-close-modal>Batal</button><button type="submit" class="btn btn-primary">Kirim ulasan</button></div></form></div>`,true);
+        document.querySelectorAll('[data-course-star]').forEach(button => button.addEventListener('click', () => {
+          selectedRating = Number(button.dataset.courseStar);
+          document.querySelectorAll('[data-course-star]').forEach(item => item.classList.toggle('active', Number(item.dataset.courseStar) <= selectedRating));
         }));
+        document.getElementById('course-session-review-form').addEventListener('submit', async event => {
+          event.preventDefault();
+          const form = event.currentTarget;
+          const button = form.querySelector('button[type="submit"]');
+          if (button.disabled) return;
+          const comment = String(new FormData(form).get('comment') || '').trim();
+          if (!comment) return showToast('Tulis ulasan terlebih dahulu.');
+          button.disabled = true; button.textContent = 'Mengirim…';
+          try {
+            const { error: insertError } = await linkedSupabase.from('reviews').insert({ session_id:sessionId, learner_id:userId, mentor_id:session.mentor_id, rating:selectedRating, comment });
+            if (insertError) throw insertError;
+            closeModal(); databaseMentorsLoaded = false; databaseMentorLoadPromise = null;
+            await loadDatabaseMentors(true).catch(() => {});
+            openCourse(courseId); showToast('Ulasan sesi berhasil dikirim dan menunggu pemeriksaan.');
+          } catch (error) {
+            console.error('LINKED: course session review failed:', error);
+            showToast('Ulasan belum berhasil dikirim. Mungkin sudah ada ulasan untuk sesi ini.');
+            button.disabled = false; button.textContent = 'Kirim ulasan';
+          }
+        });
+      } catch (error) {
+        console.error('LINKED: course session review preflight failed:', error);
+        showToast('Sesi belum bisa diulas. Pastikan sesi sudah selesai dan belum memiliki ulasan.');
+      }
+    }
+
+    async function openCourseSessionChangeForm(courseId, sessionId, changeType) {
+      const userId = window.linkedCurrentUserId;
+      if (!userId || !sessionChangeTableReady) return showToast('Fitur perubahan sesi belum aktif. Terapkan pembaruan database terlebih dahulu.');
+      try {
+        const { data: session, error } = await linkedSupabase.from('sessions')
+          .select('id,course_id,learning_request_id,learner_id,mentor_id,topic,starts_at,duration_minutes,mode,location_or_link,status')
+          .eq('id',sessionId).eq('course_id',courseId).maybeSingle();
+        if (error) throw error;
+        if (!session || ![session.learner_id,session.mentor_id].includes(userId) || session.status !== 'confirmed') throw new Error('Hanya sesi course yang masih terkonfirmasi dapat diubah.');
+        const isMentor = session.mentor_id === userId && state.role === 'mentor';
+        const isReschedule = changeType === 'reschedule';
+        const currentDate = new Date(session.starts_at);
+        const dateValue = Number.isNaN(currentDate.getTime()) ? localIsoDate(2) : new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Jakarta',year:'numeric',month:'2-digit',day:'2-digit'}).format(currentDate);
+        const timeValue = Number.isNaN(currentDate.getTime()) ? '16:00' : new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Jakarta',hour:'2-digit',minute:'2-digit',hour12:false}).format(currentDate);
+        const modeOptions = ['online','offline'].map(mode => `<option value="${mode}" ${String(session.mode).toLowerCase()===mode?'selected':''}>${mode==='online'?'Online':'Offline'}</option>`).join('');
+        openModal(`<div class="modal-header"><div><div class="eyebrow">FULL COURSE</div><h2>${isReschedule?'Usulkan jadwal baru':'Minta pembatalan sesi'}</h2><p>${esc(session.topic)} · ${esc(formatDate(dateValue))}</p></div><button class="modal-close" data-close-modal aria-label="Tutup">×</button></div><div class="modal-body"><form id="course-session-change-form"><div class="notice">Jadwal saat ini tetap berlaku sampai peserta lainnya menyetujui usulan.</div>${isReschedule?`<div class="form-grid" style="margin-top:12px"><div class="form-group"><label>Tanggal baru</label><input class="input" name="date" type="date" min="${localIsoDate(0)}" value="${esc(dateValue)}" required /></div><div class="form-group"><label>Waktu baru</label><input class="input" name="time" type="time" value="${esc(timeValue)}" required /></div><div class="form-group"><label>Durasi</label><select class="select" name="duration"><option value="60" ${Number(session.duration_minutes)===60?'selected':''}>60 menit</option><option value="90" ${Number(session.duration_minutes)===90?'selected':''}>90 menit</option><option value="120" ${Number(session.duration_minutes)===120?'selected':''}>120 menit</option></select></div><div class="form-group"><label>Mode</label><select class="select" name="mode">${modeOptions}</select></div><div class="form-group full"><label>Lokasi / tautan</label><input class="input" name="location" value="${esc(session.location_or_link||'')}" maxlength="500" required /></div></div>`:''}<div class="form-group" style="margin-top:12px"><label>Alasan</label><textarea class="textarea" name="reason" maxlength="1000" rows="3" required></textarea></div><div class="modal-actions"><button type="button" class="btn btn-ghost" data-close-modal>Batal</button><button type="submit" class="btn btn-primary">Kirim usulan</button></div></form></div>`,true);
+        const form = document.getElementById('course-session-change-form');
+        form.addEventListener('submit',async event=>{
+          event.preventDefault(); const button=form.querySelector('button[type="submit"]'); if(button.disabled)return; button.disabled=true; button.textContent='Mengirim…';
+          try {
+            const fd=new FormData(form); const reason=String(fd.get('reason')||'').trim(); if(!reason)throw new Error('Tulis alasan perubahan.');
+            const payload={session_id:sessionId,learning_request_id:null,requester_id:userId,change_type:isReschedule?'reschedule':'cancel',reason};
+            if(isReschedule){
+              const d=String(fd.get('date')||''),t=String(fd.get('time')||''),duration=Number(fd.get('duration')||90),mode=String(fd.get('mode')||'').toLowerCase(),location=String(fd.get('location')||'').trim();
+              if(!validateFutureSchedule(d,t))throw new Error('Pilih tanggal dan waktu baru di masa depan.');
+              if(![60,90,120].includes(duration))throw new Error('Pilih durasi yang tersedia.');
+              if(!location)throw new Error('Isi lokasi atau tautan pertemuan.');
+              if(mode==='online'){const url=new URL(location);if(url.protocol!=='https:')throw new Error('Tautan sesi online harus menggunakan HTTPS.');}
+              payload.proposed_starts_at=new Date(`${d}T${t}:00+07:00`).toISOString();payload.proposed_duration_minutes=duration;payload.proposed_mode=mode;payload.proposed_location_or_link=location;
+            }
+            const {error:insertError}=await linkedSupabase.from('session_change_requests').insert(payload);if(insertError)throw insertError;
+            closeModal();openCourse(courseId);showToast(isReschedule?'Usulan jadwal sesi berhasil dikirim.':'Permintaan pembatalan sesi berhasil dikirim.');
+          }catch(error){console.error('LINKED: course session change request failed:',error);const message=String(error&&error.message||'');showToast(message.startsWith('Tulis ')||message.startsWith('Pilih ')||message.startsWith('Isi ')||message.startsWith('Tautan ')?message:'Usulan belum berhasil dikirim. Muat ulang learning plan dan coba lagi.');button.disabled=false;button.textContent='Kirim usulan';}
+        });
+      } catch(error) { console.error('LINKED: course session change preflight failed:',error); showToast('Informasi sesi belum berhasil dimuat. Coba lagi.'); }
+    }
+
+    function safeExternalHttpUrl(value) {
+      const raw = String(value || '').trim();
+      if (!raw) return '';
+      try { const url = new URL(raw); return ['https:','http:'].includes(url.protocol) ? url.href : ''; }
+      catch (_) { return ''; }
+    }
+
+    function openCourseModuleEditor(courseId, moduleIndex = null) {
+      const course = state.courses.find(item => item.id === courseId && item.source === 'database');
+      const userId = window.linkedCurrentUserId;
+      if (!course || state.role !== 'mentor' || course.mentorId !== userId) {
+        showToast('Hanya mentor pemilik learning plan yang dapat mengelola modul.');
+        return;
+      }
+      const existing = moduleIndex === null ? null : course.modules[moduleIndex];
+      if (moduleIndex !== null && !existing) return showToast('Modul tidak ditemukan. Muat ulang learning plan.');
+      openModal(`<div class="modal-header"><div><div class="eyebrow">KELOLA FULL COURSE</div><h2>${existing ? 'Edit modul' : 'Tambah modul'}</h2><p>${esc(course.title)} · ${existing ? 'Perbarui materi yang sudah ada.' : 'Tambahkan langkah baru ke learning plan.'}</p></div><button class="modal-close" data-close-modal aria-label="Tutup">×</button></div><div class="modal-body"><form id="course-module-form"><div class="form-group"><label>Judul modul</label><input class="input" name="title" maxlength="180" required value="${esc(existing ? existing.title : '')}" placeholder="Contoh: Dasar-dasar pemrosesan data" /></div><div class="form-group" style="margin-top:12px"><label>Topik / tujuan modul</label><textarea class="textarea" name="topic" rows="2" maxlength="1200" required placeholder="Apa yang akan dipahami learner?">${esc(existing ? (existing.topic || existing.sub || '') : '')}</textarea></div><div class="form-group" style="margin-top:12px"><label>Link materi (opsional)</label><input class="input" type="url" name="materialUrl" maxlength="800" value="${esc(existing ? existing.materialUrl || '' : '')}" placeholder="https://…" /></div><div class="form-group" style="margin-top:12px"><label>Latihan (opsional)</label><textarea class="textarea" name="exerciseDescription" rows="2" maxlength="1200">${esc(existing ? existing.exerciseDescription || '' : '')}</textarea></div><div class="form-group" style="margin-top:12px"><label>Tugas lanjutan (opsional)</label><textarea class="textarea" name="assignmentDescription" rows="2" maxlength="1200">${esc(existing ? existing.assignmentDescription || '' : '')}</textarea></div><div class="form-group" style="margin-top:12px"><label>Sumber belajar (opsional)</label><textarea class="textarea" name="recommendedResources" rows="2" maxlength="1200">${esc(existing ? existing.recommendedResources || '' : '')}</textarea></div><div class="modal-actions"><button type="button" class="btn btn-ghost" data-close-modal>Batal</button><button type="submit" class="btn btn-primary">${existing ? 'Simpan perubahan' : 'Tambah modul'}</button></div></form></div>`, true);
+      const form = document.getElementById('course-module-form');
+      form.addEventListener('submit', async event => {
+        event.preventDefault();
+        if (courseModuleActionInFlight.has(courseId)) return;
+        const button = form.querySelector('button[type="submit"]');
+        button.disabled = true;
+        button.textContent = 'Menyimpan…';
+        courseModuleActionInFlight.add(courseId);
+        try {
+          const fd = new FormData(form);
+          const title = String(fd.get('title') || '').trim();
+          const topic = String(fd.get('topic') || '').trim();
+          const materialUrl = String(fd.get('materialUrl') || '').trim();
+          if (!title || !topic) throw new Error('Judul dan topik modul wajib diisi.');
+          if (materialUrl && !safeExternalHttpUrl(materialUrl)) throw new Error('Link materi harus menggunakan HTTP atau HTTPS yang valid.');
+          const payload = {
+            title, topic, material_url: materialUrl || null,
+            exercise_description: String(fd.get('exerciseDescription') || '').trim() || null,
+            assignment_description: String(fd.get('assignmentDescription') || '').trim() || null,
+            recommended_resources: String(fd.get('recommendedResources') || '').trim() || null
+          };
+          let result;
+          if (existing) {
+            result = await linkedSupabase.from('course_modules').update(payload).eq('id', existing.id).eq('course_id', courseId).select('id').maybeSingle();
+          } else {
+            const nextSequence = Math.max(0, ...course.modules.map(module => Number(module.sequenceNo || 0))) + 1;
+            result = await linkedSupabase.from('course_modules').insert({ ...payload, course_id: courseId, sequence_no: nextSequence }).select('id').single();
+          }
+          if (result.error) throw result.error;
+          if (!result.data) throw new Error('Modul tidak tersimpan. Pastikan pengaturan akses mentor sudah diperbarui.');
+          closeModal();
+          databaseCoursesLoaded = false;
+          await loadDatabaseCourses(true);
+          render();
+          openCourse(courseId);
+          showToast(existing ? 'Modul berhasil diperbarui.' : 'Modul baru berhasil ditambahkan.');
+        } catch (error) {
+          console.error('LINKED: course module save failed:', error);
+          const message = String(error && error.message || '');
+          showToast(message.includes('permission') || message.includes('row-level') ? 'Belum ada izin untuk mengelola modul. Jalankan pembaruan database yang menyertai file ini.' : 'Modul belum berhasil disimpan. Periksa isian lalu coba lagi.');
+          button.disabled = false;
+          button.textContent = existing ? 'Simpan perubahan' : 'Tambah modul';
+        } finally {
+          courseModuleActionInFlight.delete(courseId);
+        }
+      });
     }
 
     function openReview(id) {
       const r = state.requests.find(x => x.id === id);
       if (!r) return;
+      if (r.source === 'database' && r.type === 'Full Course') {
+        showToast('Pilih sesi yang sudah selesai di dalam learning plan untuk memberikan ulasan.');
+        return;
+      }
       if (r.source === 'database' && (state.role !== 'learner' || r.learnerId !== window.linkedCurrentUserId || r.status !== 'completed')) {
         showToast('Ulasan hanya dapat diberikan oleh learner yang mengikuti sesi setelah sesi selesai.');
         return;
@@ -7079,7 +7784,7 @@
 
     function showAbout() {
       openModal(
-        `<div class="modal-header"><div><div class="eyebrow">TENTANG LINKED</div><h2>LINKED · Peer Learning Platform</h2><p>Teach What You Know. Learn What You Need.</p></div><button class="modal-close" data-close-modal aria-label="Tutup">×</button></div><div class="modal-body"><div class="notice"><strong>Campus pilot:</strong> LINKED membantu mahasiswa menemukan mentor sebaya, mengatur sesi belajar, dan mengikuti progres pembelajaran. Beberapa alur operasional masih disempurnakan berdasarkan masukan pengguna.</div><div class="divider"></div><div class="steps"><div class="step"><div class="step-num">1</div><div><div class="step-title">Belajar sebagai learner</div><div class="step-text">Temukan mentor, kirim permintaan, atur jadwal, lalu ikuti progres belajarmu.</div></div></div><div class="step"><div class="step-num">2</div><div><div class="step-title">Berbagi sebagai mentor</div><div class="step-text">Kelola permintaan, konfirmasi sesi, tulis catatan belajar, dan dukung mahasiswa lain.</div></div></div><div class="step"><div class="step-num">3</div><div><div class="step-title">Jaga kualitas komunitas</div><div class="step-text">Berikan ulasan secara bertanggung jawab dan gunakan Bantuan & masukan saat menemukan masalah.</div></div></div></div><div class="divider"></div><div class="small-label">Transparansi dan penggunaan</div><p class="list-meta" style="line-height:1.9">LINKED menyediakan notifikasi dalam aplikasi. Notifikasi email otomatis dan pembayaran belum tersedia. Informasi di Opportunities harus diperiksa kembali oleh pengguna pada penyelenggara sebelum mendaftar.</p><div class="legal-actions"><span class="list-meta">Privasi dan aturan komunitas</span><div class="legal-actions-right"><button class="btn btn-ghost" data-legal-action="privacy">Kebijakan privasi</button><button class="btn btn-ghost" data-legal-action="terms">Ketentuan penggunaan</button></div></div><div class="modal-actions"><button class="btn btn-primary" data-close-modal>Mulai eksplorasi</button></div></div>`
+        `<div class="modal-header"><div><div class="eyebrow">TENTANG LINKED</div><h2>LINKED · Peer Learning Platform</h2><p>Teach What You Know. Learn What You Need.</p></div><button class="modal-close" data-close-modal aria-label="Tutup">×</button></div><div class="modal-body"><div class="notice"><strong>Campus pilot:</strong> LINKED membantu mahasiswa menemukan mentor sebaya, mengatur sesi belajar, dan mengikuti progres pembelajaran. Beberapa alur operasional masih disempurnakan berdasarkan masukan pengguna.</div><div class="divider"></div><div class="steps"><div class="step"><div class="step-num">1</div><div><div class="step-title">Belajar sebagai learner</div><div class="step-text">Temukan mentor, kirim permintaan, atur jadwal, lalu ikuti progres belajarmu.</div></div></div><div class="step"><div class="step-num">2</div><div><div class="step-title">Berbagi sebagai mentor</div><div class="step-text">Kelola permintaan, konfirmasi sesi, tulis catatan belajar, dan dukung mahasiswa lain.</div></div></div><div class="step"><div class="step-num">3</div><div><div class="step-title">Jaga kualitas komunitas</div><div class="step-text">Berikan ulasan secara bertanggung jawab dan gunakan Bantuan & masukan saat menemukan masalah.</div></div></div></div><div class="divider"></div><div class="small-label">Transparansi dan penggunaan</div><p class="list-meta" style="line-height:1.9">LINKED menyediakan notifikasi dalam aplikasi. Notifikasi email otomatis dan pembayaran di dalam platform belum tersedia. Selama pilot, biaya administrasi ditetapkan 0% untuk 30 pengguna pertama; tidak ada transaksi atau biaya layanan yang diproses oleh LINKED. Jika biaya layanan dipertimbangkan setelah pilot, besarannya akan dikaji melalui survei dan diumumkan sebelum diberlakukan. Informasi di Opportunities harus diperiksa kembali pada penyelenggara sebelum mendaftar.</p><div class="notice" style="margin-top:13px"><strong>Alur operasional:</strong> request belum menjadi jadwal sampai diterima mentor. Perubahan jadwal atau pembatalan sesi yang sudah dikonfirmasi harus disetujui peserta lainnya. Jika tidak dapat hadir atau terjadi masalah, komunikasikan melalui request terkait dan laporkan kendala lewat Bantuan & masukan. Ulasan hanya diberikan untuk sesi yang benar-benar selesai.</div><div class="legal-actions"><span class="list-meta">Privasi dan aturan komunitas</span><div class="legal-actions-right"><button class="btn btn-ghost" data-legal-action="privacy">Kebijakan privasi</button><button class="btn btn-ghost" data-legal-action="terms">Ketentuan penggunaan</button></div></div><div class="modal-actions"><button class="btn btn-primary" data-close-modal>Mulai eksplorasi</button></div></div>`
       );
     }
 
@@ -7100,9 +7805,9 @@
         <section class="legal-section"><h3>1. Tujuan layanan</h3><p>LINKED adalah platform peer learning untuk membantu mahasiswa menemukan mentor sebaya, mengatur kegiatan belajar, berbagi catatan, mengikuti progres, dan menemukan kesempatan pengembangan diri. LINKED bukan pengganti pengajaran resmi, layanan konseling profesional, atau jaminan hasil akademik.</p></section>
         <section class="legal-section"><h3>2. Informasi akun yang benar</h3><p>Gunakan informasi yang akurat dan hanya gunakan akun milikmu sendiri. Jangan menyamar sebagai orang lain, mengambil alih akun, atau mencoba mengakses data yang tidak menjadi hakmu. Jaga kredensial login dan segera laporkan aktivitas yang mencurigakan.</p></section>
         <section class="legal-section"><h3>3. Perilaku komunitas</h3><ul><li>Perlakukan learner dan mentor dengan hormat.</li><li>Jangan melakukan intimidasi, pelecehan, diskriminasi, spam, penipuan, atau pembalasan melalui ulasan.</li><li>Jangan mengunggah data pribadi orang lain tanpa izin atau membagikan kata sandi dan informasi rahasia.</li><li>Jangan membuat ulasan palsu, memanipulasi rating, atau menyatakan keahlian yang tidak dimiliki.</li></ul></section>
-        <section class="legal-section"><h3>4. Jadwal dan pembelajaran</h3><p>Permintaan belajar bukan konfirmasi sampai diterima oleh mentor. Learner dan mentor bertanggung jawab memastikan waktu, mode, lokasi atau tautan pertemuan, dan tujuan belajar sudah disepakati. Beri tahu pihak lain jika perlu mengubah atau membatalkan rencana. Catatan dan progres harus menggambarkan aktivitas belajar secara wajar.</p></section>
+        <section class="legal-section"><h3>4. Jadwal dan pembelajaran</h3><p>Permintaan belajar bukan konfirmasi sampai diterima oleh mentor. Learner dan mentor bertanggung jawab memastikan waktu, mode, lokasi atau tautan pertemuan, dan tujuan belajar sudah disepakati. Jika sesi telah dikonfirmasi, gunakan fitur usulan perubahan jadwal atau permintaan pembatalan; jadwal tidak berubah sebelum peserta lainnya menyetujuinya. Hindari mengonfirmasi dua sesi mentor pada waktu yang bertumpang tindih. Jika tidak dapat hadir, beritahu peserta lain seawal mungkin. Gunakan Bantuan & masukan untuk melaporkan ketidakhadiran tanpa pemberitahuan atau masalah perilaku. Catatan dan progres harus menggambarkan aktivitas belajar secara wajar.</p></section>
         <section class="legal-section"><h3>5. Ulasan, Opportunities, dan moderasi</h3><p>Berikan ulasan yang jujur dan relevan dengan sesi yang benar-benar selesai. Kesempatan yang dicantumkan di LINKED dapat berubah atau memiliki syarat tambahan; periksa ketentuan terbaru pada penyelenggara sebelum mendaftar. Pengelola dapat meninjau atau menyembunyikan konten yang melanggar aturan, menyesatkan, tidak relevan, atau menimbulkan risiko bagi komunitas.</p></section>
-        <section class="legal-section"><h3>6. Batasan layanan selama pilot</h3><p>LINKED dapat mengalami gangguan, perubahan fungsi, atau pemeliharaan. Pengelola berupaya menjaga data dan layanan, tetapi tidak menjanjikan layanan selalu tersedia atau menjamin hasil akademik, kelayakan suatu kesempatan, atau kualitas setiap interaksi antar pengguna.</p></section>
+        <section class="legal-section"><h3>6. Batasan layanan selama pilot</h3><p>LINKED dapat mengalami gangguan, perubahan fungsi, atau pemeliharaan. Pengelola berupaya menjaga data dan layanan, tetapi tidak menjanjikan layanan selalu tersedia atau menjamin hasil akademik, kelayakan suatu kesempatan, atau kualitas setiap interaksi antar pengguna. Pembayaran dan pembagian service fee belum diaktifkan di aplikasi; tidak ada transaksi yang diproses melalui LINKED selama pilot.</p></section>
         <section class="legal-section"><h3>7. Pelaporan dan penegakan aturan</h3><p>Gunakan menu <em>Bantuan & masukan</em> untuk melaporkan gangguan atau perilaku yang tidak pantas. Pengelola dapat meminta klarifikasi, membatasi konten, menonaktifkan profil mentor, atau membatasi akses apabila diperlukan untuk menjaga keamanan komunitas dan integritas layanan.</p></section>
         <section class="legal-section"><h3>8. Perubahan ketentuan</h3><p>Ketentuan ini dapat diperbarui seiring perkembangan pilot. Versi terbaru akan tersedia dalam LINKED. Jika ada perubahan material, pengelola sebaiknya memberikan pemberitahuan yang sesuai kepada pengguna.</p></section>
         <div class="legal-updated">Terakhir diperbarui: 29 Oktober 2026 · Dokumen operasional untuk fase campus pilot; tinjau kembali sebelum peluncuran publik berskala luas.</div>`;
@@ -7232,6 +7937,8 @@
 
     function showAuthenticatedApp(user) {
       authDemoBypass = false;
+      const demoTag = document.querySelector('.demo-tag');
+      if (demoTag) demoTag.innerHTML = '<span class="demo-dot"></span> CAMPUS PILOT · DATA AKUN';
       authGate.hidden = true;
       authAccountButton.hidden = false;
       const incomingUserId = user && user.id ? user.id : null;
@@ -7302,6 +8009,8 @@
       accountProfileLoading = false;
       accountProfileLoadPromise = null;
       authDemoBypass = true;
+      const demoTag = document.querySelector('.demo-tag');
+      if (demoTag) demoTag.innerHTML = '<span class="demo-dot"></span> DEMO LOKAL · DATA CONTOH';
       authGate.hidden = true;
       authAccountButton.hidden = true;
       showToast('Mode demo lokal aktif — belum menggunakan data bersama');
@@ -7385,6 +8094,8 @@
         setAuthMessage('Kamu sudah keluar dari akun.', 'success');
         authGate.hidden = false;
         authAccountButton.hidden = true;
+        const demoTag = document.querySelector('.demo-tag');
+        if (demoTag) demoTag.innerHTML = '<span class="demo-dot"></span> CAMPUS PILOT';
       } catch (error) {
         showToast('Belum berhasil keluar dari akun. Silakan coba lagi.');
       } finally {
