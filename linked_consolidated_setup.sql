@@ -1697,4 +1697,903 @@ GRANT SELECT (id, full_name, study_program, cohort_year, created_at, updated_at)
 --   )
 -- ORDER BY c.relname;
 
+
+-- ============================================================================
+-- WORKFLOW ALIGNMENT: SCHEDULING, FULL COURSE AND SESSION CHANGE SAFEGUARDS
+-- ============================================================================
+-- LINKED — Workflow Alignment Migration
+-- Included after the initial schema, admin, notification, and security-hardening setup in this fresh-project baseline.
+-- This final section aligns Full Course scheduling, module access, rescheduling, cancellation, and completion rules.
+-- Safe to re-run in normal conditions. Review any reported prerequisite error rather than bypassing it.
+
+
+DO $guard$
+BEGIN
+  IF to_regclass('public.profiles') IS NULL
+     OR to_regclass('public.mentor_profiles') IS NULL
+     OR to_regclass('public.learning_requests') IS NULL
+     OR to_regclass('public.courses') IS NULL
+     OR to_regclass('public.course_modules') IS NULL
+     OR to_regclass('public.module_progress') IS NULL
+     OR to_regclass('public.sessions') IS NULL
+     OR to_regclass('public.reviews') IS NULL THEN
+    RAISE EXCEPTION 'Required LINKED tables are missing. Apply this migration only to the existing LINKED database after the base schema and security setup.';
+  END IF;
+  IF to_regprocedure('private.linked_create_notification(uuid,text,text,text,text,uuid)') IS NULL THEN
+    RAISE EXCEPTION 'LINKED notification helper is missing. Apply the existing notification setup before this migration.';
+  END IF;
+END;
+$guard$;
+
+-- ---------------------------------------------------------------------------
+-- 1. Full Course modules: mentor can edit only an active learning plan they own.
+-- ---------------------------------------------------------------------------
+REVOKE ALL PRIVILEGES ON TABLE public.course_modules FROM PUBLIC, anon, authenticated;
+-- Revoke known column-level writes too, in case earlier scripts granted them separately.
+REVOKE INSERT (id, course_id, sequence_no, title, topic, material_url, exercise_description, assignment_description, recommended_resources, created_at)
+  ON TABLE public.course_modules FROM PUBLIC, anon, authenticated;
+REVOKE UPDATE (id, course_id, sequence_no, title, topic, material_url, exercise_description, assignment_description, recommended_resources, created_at)
+  ON TABLE public.course_modules FROM PUBLIC, anon, authenticated;
+GRANT SELECT ON TABLE public.course_modules TO authenticated;
+GRANT INSERT (course_id, sequence_no, title, topic, material_url, exercise_description, assignment_description, recommended_resources)
+  ON TABLE public.course_modules TO authenticated;
+GRANT UPDATE (sequence_no, title, topic, material_url, exercise_description, assignment_description, recommended_resources)
+  ON TABLE public.course_modules TO authenticated;
+ALTER TABLE public.course_modules ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS module_mentor_insert ON public.course_modules;
+CREATE POLICY module_mentor_insert ON public.course_modules
+FOR INSERT TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM public.courses c
+    JOIN public.learning_requests lr ON lr.id = c.learning_request_id
+    WHERE c.id = course_id
+      AND c.mentor_id = (SELECT auth.uid())
+      AND c.is_active = true
+      AND lr.learning_type = 'full_course'::public.learning_type
+      AND lr.status = 'confirmed'::public.request_status
+  )
+  AND EXISTS (
+    SELECT 1 FROM public.mentor_profiles mp
+    WHERE mp.user_id = (SELECT auth.uid())
+      AND mp.verification_status::text = 'approved'
+      AND mp.is_active = true
+  )
+);
+
+DROP POLICY IF EXISTS module_mentor_update ON public.course_modules;
+CREATE POLICY module_mentor_update ON public.course_modules
+FOR UPDATE TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM public.courses c
+    JOIN public.learning_requests lr ON lr.id = c.learning_request_id
+    WHERE c.id = course_id
+      AND c.mentor_id = (SELECT auth.uid())
+      AND c.is_active = true
+      AND lr.learning_type = 'full_course'::public.learning_type
+      AND lr.status = 'confirmed'::public.request_status
+  )
+  AND EXISTS (
+    SELECT 1 FROM public.mentor_profiles mp
+    WHERE mp.user_id = (SELECT auth.uid())
+      AND mp.verification_status::text = 'approved'
+      AND mp.is_active = true
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM public.courses c
+    JOIN public.learning_requests lr ON lr.id = c.learning_request_id
+    WHERE c.id = course_id
+      AND c.mentor_id = (SELECT auth.uid())
+      AND c.is_active = true
+      AND lr.learning_type = 'full_course'::public.learning_type
+      AND lr.status = 'confirmed'::public.request_status
+  )
+  AND EXISTS (
+    SELECT 1 FROM public.mentor_profiles mp
+    WHERE mp.user_id = (SELECT auth.uid())
+      AND mp.verification_status::text = 'approved'
+      AND mp.is_active = true
+  )
+);
+
+-- ---------------------------------------------------------------------------
+-- 2. Server-side schedule conflict protection for confirmed sessions.
+-- Protects both participants, serializes competing bookings, and allows notes-only
+-- edits to historical confirmed sessions without treating them as rescheduling.
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.linked_prevent_mentor_schedule_conflict()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = pg_catalog, public
+AS $function$
+DECLARE
+  has_conflict boolean;
+BEGIN
+  IF TG_OP = 'UPDATE'
+     AND NEW.starts_at IS NOT DISTINCT FROM OLD.starts_at
+     AND NEW.duration_minutes IS NOT DISTINCT FROM OLD.duration_minutes
+     AND NEW.mentor_id IS NOT DISTINCT FROM OLD.mentor_id
+     AND NEW.learner_id IS NOT DISTINCT FROM OLD.learner_id
+     AND NEW.status IS NOT DISTINCT FROM OLD.status THEN
+    RETURN NEW;
+  END IF;
+
+  IF NEW.status <> 'confirmed'::public.request_status THEN
+    RETURN NEW;
+  END IF;
+
+  IF NEW.starts_at <= now() THEN
+    RAISE EXCEPTION USING ERRCODE = '23514', MESSAGE = 'LINKED_SCHEDULE_IN_PAST';
+  END IF;
+
+  -- Acquire participant locks in a deterministic order so simultaneous confirmations
+  -- involving either participant cannot both pass the overlap check.
+  PERFORM pg_advisory_xact_lock(hashtextextended('user:' || LEAST(NEW.mentor_id::text, NEW.learner_id::text), 0));
+  PERFORM pg_advisory_xact_lock(hashtextextended('user:' || GREATEST(NEW.mentor_id::text, NEW.learner_id::text), 0));
+
+  SELECT EXISTS (
+    SELECT 1 FROM public.sessions s
+    WHERE s.id IS DISTINCT FROM NEW.id
+      AND s.status = 'confirmed'::public.request_status
+      AND (
+        s.mentor_id IN (NEW.mentor_id, NEW.learner_id)
+        OR s.learner_id IN (NEW.mentor_id, NEW.learner_id)
+      )
+      AND tstzrange(s.starts_at, s.starts_at + make_interval(mins => s.duration_minutes), '[)')
+          && tstzrange(NEW.starts_at, NEW.starts_at + make_interval(mins => NEW.duration_minutes), '[)')
+  ) INTO has_conflict;
+
+  IF has_conflict THEN
+    RAISE EXCEPTION USING ERRCODE = '23P01', MESSAGE = 'LINKED_SCHEDULE_CONFLICT';
+  END IF;
+  RETURN NEW;
+END;
+$function$;
+REVOKE ALL ON FUNCTION public.linked_prevent_mentor_schedule_conflict() FROM PUBLIC, anon, authenticated;
+DROP TRIGGER IF EXISTS linked_prevent_mentor_schedule_conflict ON public.sessions;
+CREATE TRIGGER linked_prevent_mentor_schedule_conflict
+BEFORE INSERT OR UPDATE OF starts_at, duration_minutes, mentor_id, learner_id, status
+ON public.sessions FOR EACH ROW
+EXECUTE FUNCTION public.linked_prevent_mentor_schedule_conflict();
+
+CREATE OR REPLACE FUNCTION public.linked_guard_confirmed_request_schedule()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = pg_catalog, public
+AS $function$
+DECLARE
+  slot_start timestamptz;
+  slot_end timestamptz;
+  has_conflict boolean;
+  mentor_row public.mentor_profiles%ROWTYPE;
+BEGIN
+  IF OLD.status::text <> 'pending' OR NEW.status::text <> 'confirmed' THEN
+    RETURN NEW;
+  END IF;
+
+  SELECT * INTO mentor_row FROM public.mentor_profiles mp WHERE mp.user_id = NEW.mentor_id;
+  IF NOT FOUND OR mentor_row.verification_status::text <> 'approved' OR mentor_row.is_active IS DISTINCT FROM true THEN
+    RAISE EXCEPTION 'LINKED_MENTOR_NOT_ACTIVE';
+  END IF;
+  IF (NEW.mode = 'online'::public.learning_mode AND mentor_row.online_available IS DISTINCT FROM true)
+     OR (NEW.mode = 'offline'::public.learning_mode AND mentor_row.offline_available IS DISTINCT FROM true) THEN
+    RAISE EXCEPTION 'LINKED_MODE_NOT_AVAILABLE';
+  END IF;
+  IF NEW.location_or_link IS NULL OR length(btrim(NEW.location_or_link)) = 0 THEN
+    RAISE EXCEPTION 'LINKED_LOCATION_REQUIRED';
+  END IF;
+  IF NEW.mode = 'online'::public.learning_mode AND btrim(NEW.location_or_link) !~* '^https://[^[:space:]]+$' THEN
+    RAISE EXCEPTION 'LINKED_ONLINE_URL_MUST_USE_HTTPS';
+  END IF;
+  IF NEW.duration_minutes NOT BETWEEN 30 AND 240 THEN
+    RAISE EXCEPTION 'LINKED_INVALID_DURATION';
+  END IF;
+
+  slot_start := (NEW.preferred_date + NEW.preferred_time) AT TIME ZONE 'Asia/Jakarta';
+  slot_end := slot_start + make_interval(mins => NEW.duration_minutes);
+  IF slot_start <= now() THEN
+    RAISE EXCEPTION USING ERRCODE = '23514', MESSAGE = 'LINKED_SCHEDULE_IN_PAST';
+  END IF;
+
+  PERFORM pg_advisory_xact_lock(hashtextextended('user:' || LEAST(NEW.mentor_id::text, NEW.learner_id::text), 0));
+  PERFORM pg_advisory_xact_lock(hashtextextended('user:' || GREATEST(NEW.mentor_id::text, NEW.learner_id::text), 0));
+
+  SELECT EXISTS (
+    SELECT 1 FROM public.sessions s
+    WHERE s.status = 'confirmed'::public.request_status
+      AND s.learning_request_id IS DISTINCT FROM NEW.id
+      AND (
+        s.mentor_id IN (NEW.mentor_id, NEW.learner_id)
+        OR s.learner_id IN (NEW.mentor_id, NEW.learner_id)
+      )
+      AND s.starts_at < slot_end
+      AND s.starts_at + make_interval(mins => s.duration_minutes) > slot_start
+  ) INTO has_conflict;
+
+  IF has_conflict THEN
+    RAISE EXCEPTION USING ERRCODE = '23P01', MESSAGE = 'LINKED_SCHEDULE_CONFLICT';
+  END IF;
+  RETURN NEW;
+END;
+$function$;
+REVOKE ALL ON FUNCTION public.linked_guard_confirmed_request_schedule() FROM PUBLIC, anon, authenticated;
+DROP TRIGGER IF EXISTS linked_guard_confirmed_request_schedule ON public.learning_requests;
+CREATE TRIGGER linked_guard_confirmed_request_schedule
+BEFORE UPDATE OF status ON public.learning_requests
+FOR EACH ROW EXECUTE FUNCTION public.linked_guard_confirmed_request_schedule();
+
+-- ---------------------------------------------------------------------------
+-- 3. Ensure confirmed Full Courses have a durable course/module learning plan,
+-- and link the first confirmed session to that course for unified history.
+-- Existing mentor-authored modules are preserved.
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.linked_ensure_course_for_request(p_request_id uuid)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = pg_catalog, public
+AS $function$
+DECLARE
+  req public.learning_requests%ROWTYPE;
+  course_uuid uuid;
+  module_count integer := 5;
+  i integer;
+  module_title text;
+BEGIN
+  SELECT * INTO req FROM public.learning_requests WHERE id = p_request_id;
+  IF NOT FOUND OR req.learning_type::text <> 'full_course'
+     OR req.status::text NOT IN ('confirmed','completed','reviewed') THEN
+    RETURN;
+  END IF;
+
+  IF req.requested_week IS NOT NULL THEN
+    BEGIN
+      module_count := (regexp_match(req.requested_week, '([0-9]{1,2})'))[1]::integer;
+    EXCEPTION WHEN OTHERS THEN
+      module_count := 5;
+    END;
+  END IF;
+  module_count := LEAST(8, GREATEST(4, COALESCE(module_count, 5)));
+
+  SELECT c.id INTO course_uuid
+  FROM public.courses c
+  WHERE c.learning_request_id = req.id
+  ORDER BY c.created_at ASC LIMIT 1;
+
+  IF course_uuid IS NULL THEN
+    INSERT INTO public.courses (learning_request_id, learner_id, mentor_id, subject_id, title, learning_objective, is_active)
+    VALUES (req.id, req.learner_id, req.mentor_id, req.subject_id, left(req.topic || ' — Full Course', 240), req.learning_objective, true)
+    RETURNING id INTO course_uuid;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM public.course_modules m WHERE m.course_id = course_uuid) THEN
+    FOR i IN 1..module_count LOOP
+      module_title := CASE i
+        WHEN 1 THEN 'Tujuan belajar dan pemetaan kemampuan awal'
+        WHEN 2 THEN left('Konsep dasar: ' || req.topic, 180)
+        WHEN 3 THEN left('Pendalaman materi: ' || req.topic, 180)
+        WHEN 4 THEN 'Latihan terbimbing dan pembahasan'
+        WHEN 5 THEN 'Penerapan pada studi kasus'
+        WHEN 6 THEN 'Latihan mandiri dan umpan balik'
+        WHEN 7 THEN 'Pendalaman topik lanjutan'
+        ELSE 'Evaluasi akhir dan langkah belajar berikutnya'
+      END;
+      INSERT INTO public.course_modules (course_id, sequence_no, title, topic, exercise_description)
+      VALUES (course_uuid, i, module_title, req.topic,
+        CASE WHEN i >= module_count - 1 THEN 'Catat pertanyaan dan contoh yang ingin dibahas pada sesi.' ELSE NULL END);
+    END LOOP;
+  END IF;
+END;
+$function$;
+REVOKE ALL ON FUNCTION public.linked_ensure_course_for_request(uuid) FROM PUBLIC, anon, authenticated;
+
+DO $backfill_courses$
+DECLARE request_row record;
+BEGIN
+  FOR request_row IN
+    SELECT id FROM public.learning_requests
+    WHERE learning_type::text = 'full_course'
+      AND status::text IN ('confirmed','completed','reviewed')
+  LOOP
+    PERFORM public.linked_ensure_course_for_request(request_row.id);
+  END LOOP;
+END;
+$backfill_courses$;
+
+CREATE OR REPLACE FUNCTION public.linked_sync_session_from_request()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = pg_catalog, public
+AS $function$
+DECLARE
+  course_uuid uuid;
+BEGIN
+  IF OLD.status::text IS DISTINCT FROM NEW.status::text
+     AND OLD.status::text = 'pending'
+     AND NEW.status::text = 'confirmed' THEN
+    SELECT c.id INTO course_uuid
+    FROM public.courses c
+    WHERE c.learning_request_id = NEW.id
+    ORDER BY c.created_at ASC LIMIT 1;
+
+    IF NOT EXISTS (SELECT 1 FROM public.sessions s WHERE s.learning_request_id = NEW.id) THEN
+      INSERT INTO public.sessions (
+        learning_request_id, course_id, learner_id, mentor_id, topic,
+        starts_at, duration_minutes, mode, location_or_link, status
+      ) VALUES (
+        NEW.id, course_uuid, NEW.learner_id, NEW.mentor_id, NEW.topic,
+        (NEW.preferred_date + NEW.preferred_time) AT TIME ZONE 'Asia/Jakarta',
+        NEW.duration_minutes, NEW.mode, NEW.location_or_link, 'confirmed'
+      );
+    ELSE
+      UPDATE public.sessions SET course_id = COALESCE(course_id, course_uuid)
+      WHERE learning_request_id = NEW.id;
+    END IF;
+  ELSIF OLD.status::text = 'confirmed' AND NEW.status::text = 'completed' THEN
+    -- Never turn a cancelled course session into a completed session.
+    UPDATE public.sessions SET status = 'completed'
+    WHERE learning_request_id = NEW.id AND status = 'confirmed'::public.request_status;
+  END IF;
+  RETURN NEW;
+END;
+$function$;
+REVOKE ALL ON FUNCTION public.linked_sync_session_from_request() FROM PUBLIC, anon, authenticated;
+DROP TRIGGER IF EXISTS linked_sync_session_from_request ON public.learning_requests;
+CREATE TRIGGER linked_sync_session_from_request
+AFTER UPDATE OF status ON public.learning_requests
+FOR EACH ROW EXECUTE FUNCTION public.linked_sync_session_from_request();
+
+-- Backfill Full Course session links without altering existing schedules/statuses.
+UPDATE public.sessions s
+SET course_id = c.id
+FROM public.courses c
+WHERE s.learning_request_id = c.learning_request_id
+  AND s.course_id IS NULL;
+
+-- Repair missing primary session records when a valid confirmed schedule exists.
+-- Historical completed/reviewed requests may be backfilled even if their date is in the past.
+INSERT INTO public.sessions (
+  learning_request_id, course_id, learner_id, mentor_id, topic,
+  starts_at, duration_minutes, mode, location_or_link, status
+)
+SELECT
+  lr.id, c.id, lr.learner_id, lr.mentor_id, lr.topic,
+  (lr.preferred_date + lr.preferred_time) AT TIME ZONE 'Asia/Jakarta',
+  lr.duration_minutes, lr.mode, lr.location_or_link,
+  CASE WHEN lr.status::text IN ('completed','reviewed') THEN 'completed'::public.request_status ELSE 'confirmed'::public.request_status END
+FROM public.learning_requests lr
+LEFT JOIN public.courses c ON c.learning_request_id = lr.id
+WHERE lr.status::text IN ('confirmed','completed','reviewed')
+  AND (lr.status::text <> 'confirmed' OR (lr.preferred_date + lr.preferred_time) AT TIME ZONE 'Asia/Jakarta' > now())
+  AND NOT EXISTS (SELECT 1 FROM public.sessions s WHERE s.learning_request_id = lr.id);
+
+-- ---------------------------------------------------------------------------
+-- 4. Session reschedule/cancellation proposals.
+-- Single Session proposals carry learning_request_id. Full Course session
+-- proposals set it NULL so canceling one course session does not cancel the plan.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.session_change_requests (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  session_id uuid NOT NULL REFERENCES public.sessions(id) ON DELETE CASCADE,
+  learning_request_id uuid REFERENCES public.learning_requests(id) ON DELETE CASCADE,
+  requester_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  change_type text NOT NULL CHECK (change_type IN ('reschedule','cancel')),
+  proposed_starts_at timestamptz,
+  proposed_duration_minutes integer CHECK (proposed_duration_minutes BETWEEN 30 AND 240),
+  proposed_mode public.learning_mode,
+  proposed_location_or_link text,
+  reason text NOT NULL CHECK (length(trim(reason)) BETWEEN 1 AND 1000),
+  status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','accepted','rejected','withdrawn')),
+  reviewed_by uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+  reviewed_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  CHECK (
+    (change_type = 'reschedule' AND proposed_starts_at IS NOT NULL
+      AND proposed_duration_minutes IS NOT NULL AND proposed_mode IS NOT NULL
+      AND proposed_location_or_link IS NOT NULL AND length(trim(proposed_location_or_link)) > 0)
+    OR
+    (change_type = 'cancel' AND proposed_starts_at IS NULL
+      AND proposed_duration_minutes IS NULL AND proposed_mode IS NULL
+      AND proposed_location_or_link IS NULL)
+  )
+);
+ALTER TABLE public.session_change_requests ALTER COLUMN learning_request_id DROP NOT NULL;
+ALTER TABLE public.session_change_requests ENABLE ROW LEVEL SECURITY;
+CREATE INDEX IF NOT EXISTS session_change_requests_request_idx
+  ON public.session_change_requests (learning_request_id, status, created_at DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS session_change_requests_one_pending_per_session
+  ON public.session_change_requests (session_id) WHERE status = 'pending';
+
+REVOKE ALL PRIVILEGES ON TABLE public.session_change_requests FROM PUBLIC, anon, authenticated;
+GRANT SELECT (id, session_id, learning_request_id, requester_id, change_type,
+  proposed_starts_at, proposed_duration_minutes, proposed_mode,
+  proposed_location_or_link, reason, status, reviewed_by, reviewed_at, created_at)
+  ON TABLE public.session_change_requests TO authenticated;
+GRANT INSERT (session_id, learning_request_id, requester_id, change_type,
+  proposed_starts_at, proposed_duration_minutes, proposed_mode,
+  proposed_location_or_link, reason)
+  ON TABLE public.session_change_requests TO authenticated;
+GRANT UPDATE (status) ON TABLE public.session_change_requests TO authenticated;
+
+DROP POLICY IF EXISTS session_change_participant_read ON public.session_change_requests;
+CREATE POLICY session_change_participant_read ON public.session_change_requests
+FOR SELECT TO authenticated
+USING (EXISTS (
+  SELECT 1 FROM public.sessions s
+  WHERE s.id = session_id
+    AND (s.learner_id = (SELECT auth.uid()) OR s.mentor_id = (SELECT auth.uid()))
+));
+
+DROP POLICY IF EXISTS session_change_participant_insert ON public.session_change_requests;
+CREATE POLICY session_change_participant_insert ON public.session_change_requests
+FOR INSERT TO authenticated
+WITH CHECK (
+  requester_id = (SELECT auth.uid())
+  AND status = 'pending'
+  AND EXISTS (
+    SELECT 1 FROM public.sessions s
+    WHERE s.id = session_id
+      AND s.status = 'confirmed'::public.request_status
+      AND (s.learner_id = (SELECT auth.uid()) OR s.mentor_id = (SELECT auth.uid()))
+      AND (
+        (learning_request_id IS NOT NULL
+          AND s.course_id IS NULL
+          AND s.learning_request_id = session_change_requests.learning_request_id
+          AND EXISTS (
+            SELECT 1 FROM public.learning_requests lr
+            WHERE lr.id = session_change_requests.learning_request_id
+              AND lr.learning_type = 'single_session'::public.learning_type
+              AND lr.status = 'confirmed'::public.request_status
+          ))
+        OR
+        (learning_request_id IS NULL
+          AND s.course_id IS NOT NULL
+          AND EXISTS (
+            SELECT 1 FROM public.courses c
+            JOIN public.learning_requests lr ON lr.id = c.learning_request_id
+            WHERE c.id = s.course_id
+              AND c.learner_id = s.learner_id
+              AND c.mentor_id = s.mentor_id
+              AND c.is_active = true
+              AND lr.learning_type = 'full_course'::public.learning_type
+              AND lr.status = 'confirmed'::public.request_status
+          ))
+      )
+  )
+);
+
+DROP POLICY IF EXISTS session_change_requester_withdraw ON public.session_change_requests;
+CREATE POLICY session_change_requester_withdraw ON public.session_change_requests
+FOR UPDATE TO authenticated
+USING (requester_id = (SELECT auth.uid()) AND status = 'pending')
+WITH CHECK (requester_id = (SELECT auth.uid()) AND status = 'withdrawn');
+
+DROP POLICY IF EXISTS session_change_counterpart_review ON public.session_change_requests;
+CREATE POLICY session_change_counterpart_review ON public.session_change_requests
+FOR UPDATE TO authenticated
+USING (
+  status = 'pending'
+  AND requester_id <> (SELECT auth.uid())
+  AND EXISTS (
+    SELECT 1 FROM public.sessions s
+    WHERE s.id = session_id AND s.status = 'confirmed'::public.request_status
+      AND ((s.learner_id = (SELECT auth.uid()) AND requester_id = s.mentor_id)
+        OR (s.mentor_id = (SELECT auth.uid()) AND requester_id = s.learner_id))
+  )
+)
+WITH CHECK (
+  status IN ('accepted','rejected')
+  AND requester_id <> (SELECT auth.uid())
+  AND EXISTS (
+    SELECT 1 FROM public.sessions s
+    WHERE s.id = session_id
+      AND (s.learner_id = (SELECT auth.uid()) OR s.mentor_id = (SELECT auth.uid()))
+  )
+);
+
+CREATE OR REPLACE FUNCTION public.linked_stamp_session_change_review()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = pg_catalog, public
+AS $function$
+BEGIN
+  IF OLD.status = 'pending' AND NEW.status IN ('accepted','rejected') THEN
+    NEW.reviewed_by := auth.uid();
+    NEW.reviewed_at := now();
+  END IF;
+  RETURN NEW;
+END;
+$function$;
+REVOKE ALL ON FUNCTION public.linked_stamp_session_change_review() FROM PUBLIC, anon, authenticated;
+
+CREATE OR REPLACE FUNCTION public.linked_apply_session_change_request()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = pg_catalog, public
+AS $function$
+DECLARE
+  session_row public.sessions%ROWTYPE;
+  recipient uuid;
+  target_page text;
+  target_id uuid;
+  request_title text;
+BEGIN
+  IF OLD.status <> 'pending' OR NEW.status NOT IN ('accepted','rejected') THEN
+    RETURN NEW;
+  END IF;
+
+  SELECT * INTO session_row FROM public.sessions WHERE id = NEW.session_id FOR UPDATE;
+  IF NOT FOUND OR session_row.status <> 'confirmed'::public.request_status THEN
+    RAISE EXCEPTION USING MESSAGE = 'LINKED_SESSION_NOT_CONFIRMED';
+  END IF;
+
+  recipient := NEW.requester_id;
+  target_page := CASE WHEN NEW.learning_request_id IS NULL THEN 'learning' ELSE 'requests' END;
+  target_id := COALESCE(NEW.learning_request_id, session_row.course_id);
+
+  IF NEW.status = 'accepted' THEN
+    IF NEW.change_type = 'reschedule' THEN
+      IF NEW.proposed_starts_at IS NULL OR NEW.proposed_starts_at <= now() THEN
+        RAISE EXCEPTION 'LINKED_SCHEDULE_IN_PAST';
+      END IF;
+      IF NEW.proposed_duration_minutes NOT BETWEEN 30 AND 240 THEN
+        RAISE EXCEPTION 'LINKED_INVALID_DURATION';
+      END IF;
+      IF NEW.proposed_mode IS NULL OR NEW.proposed_location_or_link IS NULL
+         OR length(btrim(NEW.proposed_location_or_link)) = 0 THEN
+        RAISE EXCEPTION 'LINKED_LOCATION_REQUIRED';
+      END IF;
+      IF NEW.proposed_mode = 'online'::public.learning_mode
+         AND btrim(NEW.proposed_location_or_link) !~* '^https://[^[:space:]]+$' THEN
+        RAISE EXCEPTION 'LINKED_ONLINE_URL_MUST_USE_HTTPS';
+      END IF;
+      IF EXISTS (
+        SELECT 1 FROM public.mentor_profiles mp
+        WHERE mp.user_id = session_row.mentor_id
+          AND ((NEW.proposed_mode = 'online'::public.learning_mode AND mp.online_available IS DISTINCT FROM true)
+            OR (NEW.proposed_mode = 'offline'::public.learning_mode AND mp.offline_available IS DISTINCT FROM true))
+      ) THEN
+        RAISE EXCEPTION 'LINKED_MODE_NOT_AVAILABLE';
+      END IF;
+    END IF;
+    IF NEW.change_type = 'cancel' THEN
+      UPDATE public.sessions SET status = 'cancelled'::public.request_status WHERE id = NEW.session_id;
+      IF NEW.learning_request_id IS NOT NULL THEN
+        UPDATE public.learning_requests SET status = 'cancelled'::public.request_status, updated_at = now()
+        WHERE id = NEW.learning_request_id AND status = 'confirmed'::public.request_status
+          AND learning_type = 'single_session'::public.learning_type;
+      END IF;
+      request_title := 'Pembatalan sesi disetujui';
+    ELSE
+      UPDATE public.sessions
+      SET starts_at = NEW.proposed_starts_at,
+          duration_minutes = NEW.proposed_duration_minutes,
+          mode = NEW.proposed_mode,
+          location_or_link = NEW.proposed_location_or_link
+      WHERE id = NEW.session_id;
+      IF NEW.learning_request_id IS NOT NULL THEN
+        UPDATE public.learning_requests
+        SET preferred_date = (NEW.proposed_starts_at AT TIME ZONE 'Asia/Jakarta')::date,
+            preferred_time = (NEW.proposed_starts_at AT TIME ZONE 'Asia/Jakarta')::time,
+            duration_minutes = NEW.proposed_duration_minutes,
+            mode = NEW.proposed_mode,
+            location_or_link = NEW.proposed_location_or_link,
+            updated_at = now()
+        WHERE id = NEW.learning_request_id AND status = 'confirmed'::public.request_status;
+      END IF;
+      request_title := 'Jadwal baru disetujui';
+    END IF;
+  ELSE
+    request_title := CASE WHEN NEW.change_type = 'cancel' THEN 'Permintaan pembatalan ditolak' ELSE 'Usulan jadwal ditolak' END;
+  END IF;
+
+  IF to_regprocedure('private.linked_create_notification(uuid,text,text,text,text,uuid)') IS NOT NULL THEN
+    PERFORM private.linked_create_notification(
+      recipient,
+      'session_change_reviewed',
+      request_title,
+      CASE WHEN NEW.change_type = 'cancel' AND NEW.status = 'accepted'
+        THEN 'Peserta lain menyetujui pembatalan sesi.'
+        WHEN NEW.change_type = 'reschedule' AND NEW.status = 'accepted'
+        THEN 'Peserta lain menyetujui usulan jadwal baru.'
+        ELSE 'Peserta lain telah memberikan tanggapan pada usulanmu.' END,
+      target_page, target_id
+    );
+  END IF;
+  RETURN NEW;
+END;
+$function$;
+REVOKE ALL ON FUNCTION public.linked_apply_session_change_request() FROM PUBLIC, anon, authenticated;
+
+DROP TRIGGER IF EXISTS linked_stamp_session_change_review ON public.session_change_requests;
+CREATE TRIGGER linked_stamp_session_change_review
+BEFORE UPDATE OF status ON public.session_change_requests
+FOR EACH ROW EXECUTE FUNCTION public.linked_stamp_session_change_review();
+DROP TRIGGER IF EXISTS linked_apply_session_change_request ON public.session_change_requests;
+CREATE TRIGGER linked_apply_session_change_request
+AFTER UPDATE OF status ON public.session_change_requests
+FOR EACH ROW EXECUTE FUNCTION public.linked_apply_session_change_request();
+
+CREATE OR REPLACE FUNCTION private.linked_notify_session_change_requested()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $function$
+DECLARE
+  other_user uuid;
+  target_page text;
+  target_id uuid;
+  session_row public.sessions%ROWTYPE;
+  kind_label text;
+BEGIN
+  SELECT * INTO session_row FROM public.sessions s WHERE s.id = NEW.session_id;
+  IF NOT FOUND THEN RETURN NEW; END IF;
+  other_user := CASE WHEN session_row.learner_id = NEW.requester_id THEN session_row.mentor_id ELSE session_row.learner_id END;
+  target_page := CASE WHEN NEW.learning_request_id IS NULL THEN 'learning' ELSE 'requests' END;
+  target_id := COALESCE(NEW.learning_request_id, session_row.course_id);
+  kind_label := CASE WHEN NEW.change_type = 'cancel' THEN 'pembatalan sesi' ELSE 'perubahan jadwal' END;
+  IF other_user IS NOT NULL AND to_regprocedure('private.linked_create_notification(uuid,text,text,text,text,uuid)') IS NOT NULL THEN
+    PERFORM private.linked_create_notification(
+      other_user, 'session_change_requested', 'Permintaan ' || kind_label,
+      'Peserta sesi mengajukan ' || kind_label || '. Buka LINKED untuk meninjau usulan.',
+      target_page, target_id
+    );
+  END IF;
+  RETURN NEW;
+END;
+$function$;
+REVOKE ALL ON FUNCTION private.linked_notify_session_change_requested() FROM PUBLIC, anon, authenticated;
+DROP TRIGGER IF EXISTS linked_notify_session_change_requested ON public.session_change_requests;
+CREATE TRIGGER linked_notify_session_change_requested
+AFTER INSERT ON public.session_change_requests
+FOR EACH ROW EXECUTE FUNCTION private.linked_notify_session_change_requested();
+
+-- Make notes notifications point to a Full Course when the individual session has no request id.
+CREATE OR REPLACE FUNCTION private.notify_session_notes_changed()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $function$
+DECLARE
+  target_page text;
+  target_id uuid;
+BEGIN
+  IF NEW.summary IS NOT DISTINCT FROM OLD.summary AND NEW.next_steps IS NOT DISTINCT FROM OLD.next_steps THEN
+    RETURN NEW;
+  END IF;
+  target_page := CASE WHEN NEW.learning_request_id IS NULL THEN 'learning' ELSE 'requests' END;
+  target_id := COALESCE(NEW.learning_request_id, NEW.course_id);
+  PERFORM private.linked_create_notification(
+    NEW.learner_id, 'session_notes_updated', 'Catatan sesi diperbarui',
+    'Mentor memperbarui ringkasan sesi atau langkah belajar berikutnya.', target_page, target_id
+  );
+  RETURN NEW;
+END;
+$function$;
+REVOKE ALL ON FUNCTION private.notify_session_notes_changed() FROM PUBLIC, anon, authenticated;
+DROP TRIGGER IF EXISTS linked_notify_session_notes_changed ON public.sessions;
+CREATE TRIGGER linked_notify_session_notes_changed
+AFTER UPDATE OF summary, next_steps ON public.sessions
+FOR EACH ROW EXECUTE FUNCTION private.notify_session_notes_changed();
+
+-- ---------------------------------------------------------------------------
+-- 5. Secure RPC: schedule an additional Full Course session.
+-- The browser cannot insert directly into sessions; server-side trigger validates overlaps.
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.linked_schedule_course_session(
+  p_course_id uuid,
+  p_topic text,
+  p_starts_at timestamptz,
+  p_duration_minutes integer,
+  p_mode public.learning_mode,
+  p_location_or_link text
+) RETURNS uuid
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = pg_catalog, public
+AS $function$
+DECLARE
+  course_row public.courses%ROWTYPE;
+  request_row public.learning_requests%ROWTYPE;
+  mentor_row public.mentor_profiles%ROWTYPE;
+  session_uuid uuid;
+BEGIN
+  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'LINKED_AUTH_REQUIRED'; END IF;
+  SELECT * INTO course_row FROM public.courses c
+  WHERE c.id = p_course_id AND c.mentor_id = auth.uid() AND c.is_active = true
+  FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'LINKED_COURSE_NOT_AVAILABLE'; END IF;
+  SELECT * INTO request_row FROM public.learning_requests lr
+  WHERE lr.id = course_row.learning_request_id FOR UPDATE;
+  IF NOT FOUND OR request_row.learning_type::text <> 'full_course' OR request_row.status::text <> 'confirmed' THEN
+    RAISE EXCEPTION 'LINKED_COURSE_NOT_ACTIVE';
+  END IF;
+  SELECT * INTO mentor_row FROM public.mentor_profiles mp WHERE mp.user_id = auth.uid();
+  IF NOT FOUND OR mentor_row.verification_status::text <> 'approved' OR mentor_row.is_active IS DISTINCT FROM true THEN
+    RAISE EXCEPTION 'LINKED_MENTOR_NOT_ACTIVE';
+  END IF;
+  IF (p_mode = 'online'::public.learning_mode AND mentor_row.online_available IS DISTINCT FROM true)
+     OR (p_mode = 'offline'::public.learning_mode AND mentor_row.offline_available IS DISTINCT FROM true) THEN
+    RAISE EXCEPTION 'LINKED_MODE_NOT_AVAILABLE';
+  END IF;
+  IF p_topic IS NULL OR length(btrim(p_topic)) < 1 OR length(btrim(p_topic)) > 180 THEN
+    RAISE EXCEPTION 'LINKED_INVALID_SESSION_TOPIC';
+  END IF;
+  IF p_starts_at IS NULL OR p_starts_at <= now() THEN RAISE EXCEPTION 'LINKED_SCHEDULE_IN_PAST'; END IF;
+  IF p_duration_minutes NOT BETWEEN 30 AND 240 THEN RAISE EXCEPTION 'LINKED_INVALID_DURATION'; END IF;
+  IF p_location_or_link IS NULL OR length(btrim(p_location_or_link)) = 0 OR length(p_location_or_link) > 500 THEN
+    RAISE EXCEPTION 'LINKED_INVALID_LOCATION';
+  END IF;
+  IF p_mode = 'online'::public.learning_mode AND btrim(p_location_or_link) !~* '^https://[^[:space:]]+$' THEN
+    RAISE EXCEPTION 'LINKED_ONLINE_URL_MUST_USE_HTTPS';
+  END IF;
+
+  INSERT INTO public.sessions (
+    learning_request_id, course_id, learner_id, mentor_id, topic,
+    starts_at, duration_minutes, mode, location_or_link, status
+  ) VALUES (
+    NULL, course_row.id, course_row.learner_id, course_row.mentor_id, btrim(p_topic),
+    p_starts_at, p_duration_minutes, p_mode, btrim(p_location_or_link), 'confirmed'::public.request_status
+  ) RETURNING id INTO session_uuid;
+
+  IF to_regprocedure('private.linked_create_notification(uuid,text,text,text,text,uuid)') IS NOT NULL THEN
+    PERFORM private.linked_create_notification(
+      course_row.learner_id, 'course_session_scheduled', 'Jadwal sesi baru',
+      'Mentor menambahkan jadwal sesi pada Full Course yang kamu ikuti.', 'learning', course_row.id
+    );
+  END IF;
+  RETURN session_uuid;
+END;
+$function$;
+REVOKE ALL ON FUNCTION public.linked_schedule_course_session(uuid,text,timestamptz,integer,public.learning_mode,text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.linked_schedule_course_session(uuid,text,timestamptz,integer,public.learning_mode,text) TO authenticated;
+
+-- Mark one course session complete, but do not mark the whole Full Course complete.
+CREATE OR REPLACE FUNCTION public.linked_complete_course_session(p_session_id uuid)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = pg_catalog, public
+AS $function$
+DECLARE
+  session_row public.sessions%ROWTYPE;
+  course_row public.courses%ROWTYPE;
+  request_row public.learning_requests%ROWTYPE;
+BEGIN
+  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'LINKED_AUTH_REQUIRED'; END IF;
+  SELECT * INTO session_row FROM public.sessions s
+  WHERE s.id = p_session_id AND s.mentor_id = auth.uid()
+  FOR UPDATE;
+  IF NOT FOUND OR session_row.course_id IS NULL THEN RAISE EXCEPTION 'LINKED_COURSE_SESSION_NOT_AVAILABLE'; END IF;
+  IF session_row.status::text <> 'confirmed' THEN RAISE EXCEPTION 'LINKED_SESSION_NOT_CONFIRMABLE'; END IF;
+  IF session_row.starts_at > now() THEN RAISE EXCEPTION 'LINKED_SESSION_NOT_YET_STARTED'; END IF;
+  SELECT * INTO course_row FROM public.courses c WHERE c.id = session_row.course_id AND c.mentor_id = auth.uid() AND c.is_active = true;
+  IF NOT FOUND THEN RAISE EXCEPTION 'LINKED_COURSE_NOT_AVAILABLE'; END IF;
+  SELECT * INTO request_row FROM public.learning_requests lr WHERE lr.id = course_row.learning_request_id;
+  IF NOT FOUND OR request_row.learning_type::text <> 'full_course' OR request_row.status::text <> 'confirmed' THEN
+    RAISE EXCEPTION 'LINKED_COURSE_NOT_ACTIVE';
+  END IF;
+
+  UPDATE public.sessions SET status = 'completed'::public.request_status WHERE id = session_row.id;
+  IF to_regprocedure('private.linked_create_notification(uuid,text,text,text,text,uuid)') IS NOT NULL THEN
+    PERFORM private.linked_create_notification(
+      session_row.learner_id, 'course_session_completed', 'Sesi Full Course selesai',
+      'Mentor menandai satu sesi pembelajaran sebagai selesai.', 'learning', course_row.id
+    );
+  END IF;
+END;
+$function$;
+REVOKE ALL ON FUNCTION public.linked_complete_course_session(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.linked_complete_course_session(uuid) TO authenticated;
+
+-- Block direct client-side completion of a Full Course; it must pass the checks below.
+CREATE OR REPLACE FUNCTION public.linked_guard_full_course_completion()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = pg_catalog, public
+AS $function$
+DECLARE
+  course_uuid uuid;
+  allowed_course text;
+BEGIN
+  IF OLD.status::text = 'confirmed' AND NEW.status::text = 'completed'
+     AND NEW.learning_type::text = 'full_course' THEN
+    SELECT c.id INTO course_uuid FROM public.courses c WHERE c.learning_request_id = NEW.id ORDER BY c.created_at ASC LIMIT 1;
+    allowed_course := current_setting('linked.full_course_completion_id', true);
+    IF course_uuid IS NULL OR allowed_course IS DISTINCT FROM course_uuid::text THEN
+      RAISE EXCEPTION USING ERRCODE = '42501', MESSAGE = 'LINKED_USE_FULL_COURSE_COMPLETION_ACTION';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM public.course_modules m WHERE m.course_id = course_uuid) THEN
+      RAISE EXCEPTION USING MESSAGE = 'LINKED_COURSE_HAS_NO_MODULES';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM public.sessions s WHERE s.course_id = course_uuid AND s.status::text IN ('completed','reviewed'))
+       OR EXISTS (SELECT 1 FROM public.sessions s WHERE s.course_id = course_uuid AND s.status::text NOT IN ('completed','reviewed','cancelled')) THEN
+      RAISE EXCEPTION USING MESSAGE = 'LINKED_COURSE_SESSIONS_INCOMPLETE';
+    END IF;
+    IF EXISTS (
+      SELECT 1 FROM public.course_modules m
+      WHERE m.course_id = course_uuid
+        AND NOT EXISTS (
+          SELECT 1 FROM public.module_progress p
+          WHERE p.module_id = m.id AND p.learner_id = NEW.learner_id AND p.status = 'completed'
+        )
+    ) THEN
+      RAISE EXCEPTION USING MESSAGE = 'LINKED_COURSE_MODULES_INCOMPLETE';
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$function$;
+REVOKE ALL ON FUNCTION public.linked_guard_full_course_completion() FROM PUBLIC, anon, authenticated;
+DROP TRIGGER IF EXISTS linked_guard_full_course_completion ON public.learning_requests;
+CREATE TRIGGER linked_guard_full_course_completion
+BEFORE UPDATE OF status ON public.learning_requests
+FOR EACH ROW EXECUTE FUNCTION public.linked_guard_full_course_completion();
+
+-- Complete the entire Full Course only when every active module and every planned
+-- session is done (or cancelled) and at least one session was actually completed.
+CREATE OR REPLACE FUNCTION public.linked_complete_full_course(p_course_id uuid)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = pg_catalog, public
+AS $function$
+DECLARE
+  course_row public.courses%ROWTYPE;
+  request_row public.learning_requests%ROWTYPE;
+BEGIN
+  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'LINKED_AUTH_REQUIRED'; END IF;
+  SELECT * INTO course_row FROM public.courses c
+  WHERE c.id = p_course_id AND c.mentor_id = auth.uid() AND c.is_active = true
+  FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'LINKED_COURSE_NOT_AVAILABLE'; END IF;
+  SELECT * INTO request_row FROM public.learning_requests lr
+  WHERE lr.id = course_row.learning_request_id FOR UPDATE;
+  IF NOT FOUND OR request_row.learning_type::text <> 'full_course' OR request_row.status::text <> 'confirmed' THEN
+    RAISE EXCEPTION 'LINKED_COURSE_NOT_ACTIVE';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.course_modules m WHERE m.course_id = course_row.id) THEN
+    RAISE EXCEPTION 'LINKED_COURSE_HAS_NO_MODULES';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.sessions s WHERE s.course_id = course_row.id AND s.status::text IN ('completed','reviewed'))
+     OR EXISTS (SELECT 1 FROM public.sessions s WHERE s.course_id = course_row.id AND s.status::text NOT IN ('completed','reviewed','cancelled')) THEN
+    RAISE EXCEPTION USING MESSAGE = 'LINKED_COURSE_SESSIONS_INCOMPLETE';
+  END IF;
+  IF EXISTS (
+    SELECT 1 FROM public.course_modules m
+    WHERE m.course_id = course_row.id
+      AND NOT EXISTS (
+        SELECT 1 FROM public.module_progress p
+        WHERE p.module_id = m.id AND p.learner_id = course_row.learner_id AND p.status = 'completed'
+      )
+  ) THEN
+    RAISE EXCEPTION USING MESSAGE = 'LINKED_COURSE_MODULES_INCOMPLETE';
+  END IF;
+
+  PERFORM set_config('linked.full_course_completion_id', course_row.id::text, true);
+  UPDATE public.learning_requests SET status = 'completed'::public.request_status, updated_at = now()
+  WHERE id = request_row.id AND status = 'confirmed'::public.request_status;
+  IF NOT FOUND THEN RAISE EXCEPTION 'LINKED_COURSE_NOT_ACTIVE'; END IF;
+END;
+$function$;
+REVOKE ALL ON FUNCTION public.linked_complete_full_course(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.linked_complete_full_course(uuid) TO authenticated;
+
+COMMENT ON TABLE public.session_change_requests IS 'Participant-approved schedule change/cancellation requests for Single Session and individual Full Course sessions.';
+COMMENT ON FUNCTION public.linked_schedule_course_session(uuid,text,timestamptz,integer,public.learning_mode,text) IS 'Schedules an additional Full Course session after checking ownership, mentor availability, and schedule conflicts.';
+COMMENT ON FUNCTION public.linked_complete_course_session(uuid) IS 'Marks one Full Course session complete without completing the entire course.';
+COMMENT ON FUNCTION public.linked_complete_full_course(uuid) IS 'Completes a Full Course only after all modules and planned sessions are complete.';
+
 COMMIT;
