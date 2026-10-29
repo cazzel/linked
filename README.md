@@ -1,118 +1,187 @@
-# LINKED — Peer Learning Platform
+# LINKED --- Peer Learning Platform
 
-LINKED adalah platform peer learning yang membantu mahasiswa menemukan mentor sesama mahasiswa, mengatur sesi belajar, mengikuti course, memantau progres, dan berbagi kesempatan belajar dalam satu tempat.
+LINKED adalah platform peer learning yang membantu pengguna menemukan
+mentor, mengajukan sesi belajar, mengikuti course, memantau progres, dan
+menemukan kesempatan belajar dalam satu tempat.
 
-> **Status:** MVP siap untuk tahap persiapan pilot. Sebelum digunakan lebih luas, lakukan validasi akhir pada konfigurasi deployment, keamanan, email autentikasi, dan dokumen privasi/ketentuan.
+> **Status:** MVP untuk persiapan pilot. Sebelum digunakan oleh pengguna
+> yang lebih luas, lakukan pemeriksaan akhir pada konfigurasi
+> deployment, keamanan database, autentikasi, serta dokumen privasi dan
+> ketentuan penggunaan.
 
-## Fitur utama
+## Fitur
 
-- **Akun dan profil:** pendaftaran, login, profil pengguna, pengaturan akun, dan alur pemulihan kata sandi.
-- **Direktori mentor:** pencarian dan filter mentor, profil publik, bidang keahlian, topik, mode belajar, dan status verifikasi.
-- **Pendaftaran mentor:** pengajuan profil dan keahlian, peninjauan oleh admin, serta pengajuan perubahan profil.
-- **Learning Requests:** learner dapat mengirim permintaan belajar; mentor dapat menerima atau menolak permintaan yang ditujukan kepadanya.
-- **Sesi belajar:** jadwal terkonfirmasi, catatan sesi, dan status penyelesaian.
-- **Course dan progres:** course Full Course, modul, dan penyimpanan progres pembelajaran.
-- **Reviews dan rating:** learner dapat menilai sesi yang selesai; ulasan ditangani melalui alur moderasi.
-- **Admin dashboard:** peninjauan profil mentor, pengelolaan status, serta moderasi ulasan.
-- **Opportunities:** pengelolaan dan penayangan kesempatan belajar.
-- **Notifikasi dalam aplikasi:** pemberitahuan aktivitas dan status dibaca/belum dibaca.
-- **Bantuan & masukan:** tiket laporan pengguna dan tanggapan admin.
-- **Pengalaman penggunaan:** Light/Dark Mode, layout responsif, navigasi mobile, micro-interactions, serta maskot LINKED.
-- **Informasi pengguna:** halaman Kebijakan Privasi dan Ketentuan Penggunaan.
+-   **Akun dan profil:** pendaftaran, login, profil pengguna, pengaturan
+    akun, dan alur pemulihan kata sandi.
+-   **Direktori mentor:** pencarian dan filter, profil mentor, bidang
+    keahlian, serta status verifikasi.
+-   **Pengajuan mentor:** pengajuan profil dan keahlian, dengan alur
+    peninjauan admin.
+-   **Learning Requests:** learner dapat mengirim permintaan belajar;
+    mentor dapat meninjau dan menerima atau menolak permintaan yang
+    ditujukan kepadanya.
+-   **Pilihan pembelajaran:** alur Single Session dan Full Course
+    ditampilkan sebagai jenis pengalaman belajar yang berbeda.
+-   **Sesi belajar:** informasi jadwal dan status sesi, serta catatan
+    sesi sesuai alur yang tersedia.
+-   **Course dan progres:** course, modul, dan penyimpanan progres
+    pembelajaran.
+-   **Reviews dan rating:** ulasan setelah sesi selesai, dengan dukungan
+    alur moderasi.
+-   **Admin dashboard:** peninjauan pengajuan mentor dan pengelolaan
+    fitur administratif yang tersedia.
+-   **Opportunities:** penayangan dan pengelolaan kesempatan belajar.
+-   **Notifikasi dalam aplikasi:** pemberitahuan aktivitas dan status
+    baca.
+-   **Bantuan & masukan:** kanal laporan atau masukan pengguna.
+-   **UI responsif:** Light/Dark Mode, navigasi mobile, dan maskot
+    LINKED.
+
+Fitur yang tampil di antarmuka tetap perlu diverifikasi pada lingkungan
+deployment dan database yang digunakan. Jangan menganggap fitur sudah
+siap produksi hanya karena komponennya terlihat di UI.
 
 ## Teknologi
 
-- HTML, CSS, dan JavaScript dalam satu file frontend (`index.html`).
-- Supabase Auth untuk autentikasi pengguna.
-- PostgreSQL dengan Row Level Security (RLS) untuk data aplikasi.
-- Netlify untuk hosting frontend (jika repository terhubung ke site Netlify).
-- Fontshare untuk font Cabinet Grotesk dan Satoshi; jika font eksternal tidak tersedia, browser menggunakan font fallback.
+-   HTML, CSS, dan JavaScript dalam frontend `index.html`.
+-   Supabase Auth untuk autentikasi.
+-   PostgreSQL dan Row Level Security (RLS) untuk penyimpanan serta
+    pembatasan akses data.
+-   Netlify untuk hosting frontend jika repository terhubung ke site
+    Netlify.
+-   Font eksternal dari Fontshare dengan font fallback di browser.
 
-Frontend memakai **publishable key** untuk terhubung ke layanan aplikasi. Jangan pernah menaruh `service_role` key, secret key, password, atau kredensial privat di `index.html`, README, atau repository.
+Frontend menggunakan **Supabase publishable key** untuk mengakses
+layanan yang memang dirancang untuk klien. Jangan pernah memasukkan
+`service_role` key, secret key, password, atau kredensial privat ke
+dalam `index.html`, README, atau repository publik.
 
 ## Menjalankan secara lokal
 
-Disarankan membuka aplikasi melalui local web server, bukan dengan klik ganda pada file HTML, agar alur autentikasi dan redirect berjalan dengan baik.
+1.  Pastikan Python tersedia dan buka terminal di folder yang berisi
+    `index.html`.
 
-1. Pastikan Python tersedia, lalu buka terminal/Command Prompt di folder yang berisi `index.html`.
-2. Jalankan:
+2.  Jalankan:
 
-   ```bash
-   py -m http.server 5500
-   ```
+    ``` bash
+    py -m http.server 5500
+    ```
 
-   Jika perintah `py` tidak tersedia, coba `python -m http.server 5500`.
+    Jika `py` tidak tersedia, coba `python -m http.server 5500`.
 
-3. Buka [http://localhost:5500/index.html](http://localhost:5500/index.html).
-4. Untuk menghentikan server, kembali ke terminal dan tekan `Ctrl+C`.
+3.  Buka <http://localhost:5500/index.html>.
 
-Tidak diperlukan instalasi Node.js untuk menjalankan frontend ini.
+4.  Untuk menghentikan server, tekan `Ctrl+C` pada terminal.
 
-## Konfigurasi autentikasi lokal
+Tidak diperlukan Node.js hanya untuk menyajikan frontend statis ini.
 
-Aplikasi menggunakan URL proyek dan publishable key yang dikonfigurasi di bagian JavaScript pada `index.html`. Pastikan nilainya mengarah ke proyek yang benar.
+## Konfigurasi Supabase Auth
 
-Di pengaturan URL autentikasi proyek, tambahkan redirect lokal yang digunakan saat pengembangan, misalnya:
+Frontend membaca URL proyek dan publishable key dari konfigurasi
+JavaScript di `index.html`. Pastikan keduanya menunjuk ke proyek
+Supabase yang benar.
 
-- `http://localhost:5500/**`
-- `http://127.0.0.1:5500/**`
+Pada konfigurasi URL autentikasi Supabase, tambahkan URL lokal yang
+memang digunakan untuk pengembangan, misalnya:
 
-Pastikan Site URL dan redirect untuk domain produksi juga sesuai dengan domain yang benar-benar digunakan. Nama domain di konfigurasi harus disesuaikan apabila hosting berubah.
+-   `http://localhost:5500/**`
+-   `http://127.0.0.1:5500/**`
 
-## Struktur database
+Pastikan Site URL dan redirect URL produksi juga sesuai dengan domain
+yang digunakan. Sesuaikan konfigurasi bila domain atau port berubah.
 
-File `linked-consolidated-setup.sql` berisi referensi setup gabungan untuk **proyek database baru yang kosong**. File ini menggabungkan skema dan setup fitur seperti:
+## Database dan SQL
 
-- `profiles`, `mentor_profiles`, `subjects`, `mentor_expertise`
-- `learning_requests`, `sessions`
-- `courses`, `course_modules`, `module_progress`
-- `reviews`, `opportunities`
-- `linked_admin_users`, `linked_notifications`, `support_tickets`
+Database LINKED menggunakan tabel aplikasi seperti:
 
-### Penting tentang SQL
+-   `profiles`
+-   `mentor_profiles`
+-   `subjects`
+-   `mentor_expertise`
+-   `learning_requests`
+-   `sessions`
+-   `courses`
+-   `course_modules`
+-   `module_progress`
+-   `reviews`
+-   `opportunities`
 
-- **Jangan jalankan `linked-consolidated-setup.sql` pada database LINKED yang sudah berjalan dan berisi data.** File tersebut ditujukan sebagai referensi bootstrap untuk proyek baru, bukan migration pembaruan untuk database yang sedang digunakan.
-- Untuk mengubah database yang ada, siapkan migration baru yang spesifik dan uji terlebih dahulu pada proyek staging/salinan.
-- Script SQL tidak otomatis dijalankan oleh GitHub atau Netlify. Commit `index.html` memperbarui frontend; perubahan database memerlukan proses SQL/migration tersendiri.
-- Sebelum membuat database baru, tinjau placeholder email admin dalam file SQL dan sesuaikan dengan akun admin yang sudah terdaftar di proyek baru.
-- Pastikan RLS aktif dan kebijakan akses sudah diuji. Jangan memberikan hak admin kepada pengguna umum.
+Setup fitur lain dapat menambahkan tabel pendukung, misalnya untuk
+admin, notifikasi, atau tiket bantuan. Cocokkan daftar ini dengan skema
+yang benar-benar diterapkan pada proyek Supabase yang sedang digunakan.
 
-## Deploy ke Netlify melalui GitHub
+### Penting sebelum menjalankan SQL
 
-Jika Netlify sudah terhubung ke repository GitHub dan branch produksi (misalnya `main`):
+-   **Jangan jalankan `linked-consolidated-setup.sql` pada database
+    LINKED aktif yang sudah berisi data.** File tersebut adalah setup
+    gabungan untuk proyek database baru yang kosong, bukan migration
+    pembaruan untuk database aktif.
+-   Untuk database aktif, gunakan migration yang memang dibuat untuk
+    perubahan tersebut, tinjau isi SQL, dan uji terlebih dahulu pada
+    proyek staging atau salinan jika tersedia.
+-   GitHub dan Netlify tidak otomatis menjalankan SQL. Commit frontend
+    tidak menerapkan perubahan database.
+-   Periksa dan sesuaikan placeholder konfigurasi, termasuk akun admin,
+    sebelum menyiapkan proyek database baru.
+-   Pastikan RLS dan kebijakan akses diuji menggunakan akun learner,
+    mentor, dan admin yang berbeda. Jangan memberi hak admin kepada
+    pengguna umum.
 
-1. Perbarui file `index.html` pada root repository dengan versi yang ingin dirilis.
-2. Commit perubahan ke branch produksi.
-3. Periksa tab **Deploys** di Netlify dan tunggu deployment berstatus **Published**.
-4. Buka domain produksi, lakukan hard refresh, lalu periksa halaman login, tampilan mobile, dan fitur yang baru berubah.
+## Deploy melalui GitHub dan Netlify
 
-Jangan membuat site baru jika site yang sekarang sudah dikonfigurasi dengan benar. Perubahan database tidak ikut ter-deploy hanya karena file HTML di-commit.
+Jika Netlify sudah terhubung ke repository GitHub dan branch produksi
+(misalnya `main`):
 
-## Alur penggunaan yang disarankan
+1.  Perbarui `index.html` di root repository dengan versi yang akan
+    dirilis.
+2.  Commit dan push perubahan ke branch yang digunakan Netlify.
+3.  Buka **Deploys** di Netlify dan tunggu status deployment menjadi
+    **Published**.
+4.  Buka domain produksi dan lakukan hard refresh.
+5.  Periksa login, tampilan desktop/mobile, dan alur yang terdampak oleh
+    perubahan.
 
-1. Daftar atau masuk sebagai learner.
-2. Buka **Find a mentor**, cari mentor yang sudah disetujui dan aktif, lalu lihat profilnya.
-3. Kirim **Learning Request** dan cek statusnya pada halaman **Learning requests**.
-4. Masuk dengan akun mentor yang dituju untuk menerima atau menolak request.
-5. Setelah request dikonfirmasi, buka detail sesi dan gunakan catatan sesi sesuai alur yang tersedia.
-6. Tandai sesi selesai; learner kemudian dapat memberikan ulasan sesuai aturan aplikasi.
-7. Buka **My learning** untuk mengikuti course dan memperbarui progres modul.
-8. Gunakan **Opportunities**, notifikasi, dan **Bantuan & masukan** untuk menguji alur terkait.
-9. Masuk dengan akun admin yang sudah diotorisasi untuk meninjau pendaftaran mentor, moderasi ulasan, serta pengelolaan konten yang tersedia.
+Tidak perlu membuat site Netlify baru jika konfigurasi site yang
+sekarang sudah benar. Perubahan SQL/database harus dilakukan secara
+terpisah.
 
-## Sebelum pilot dengan pengguna lain
+## Alur pemeriksaan dasar
 
-- Periksa bahwa konfigurasi Auth menggunakan domain/redirect yang benar untuk lingkungan pilot.
-- Pastikan akun admin yang berwenang sudah disiapkan dan akses admin tidak dapat diberikan sendiri oleh pengguna biasa.
-- Uji RLS dan akses data menggunakan akun learner, mentor, dan admin yang berbeda.
-- Tinjau Kebijakan Privasi dan Ketentuan Penggunaan bersama pihak yang berwenang sebelum peluncuran lebih luas.
-- Tetapkan prosedur dukungan, penghapusan akun/data, backup, dan penanganan laporan keamanan.
-- Lakukan satu pemeriksaan akhir pada desktop dan perangkat mobile setelah deployment.
+1.  Daftar atau masuk sebagai learner.
+2.  Cari mentor yang sudah disetujui dan aktif.
+3.  Kirim Learning Request dan periksa statusnya.
+4.  Masuk menggunakan akun mentor yang dituju untuk meninjau request.
+5.  Periksa detail sesi, jadwal, dan catatan yang tersedia.
+6.  Selesaikan sesi melalui alur aplikasi, lalu periksa apakah learner
+    dapat memberi ulasan sesuai aturan.
+7.  Buka My Learning untuk memeriksa course, modul, dan progres.
+8.  Periksa Opportunities, notifikasi, dan Bantuan & masukan.
+9.  Gunakan akun admin yang memang telah diberi otorisasi untuk
+    memeriksa alur administratif.
 
-## Catatan data demo
+Jangan menganggap pemeriksaan ini menggantikan pengujian keamanan atau
+pengujian seluruh skenario.
 
-Aplikasi dapat memiliki tampilan demo atau contoh data untuk membantu pengguna memahami alur. Bedakan data demonstrasi dari data yang benar-benar dikirim pengguna. Jangan memperlakukan nama, aktivitas, atau ulasan contoh sebagai bukti penggunaan aktual.
+## Batasan dan hal yang perlu diverifikasi sebelum pilot
 
----
+-   **Pembayaran dan service fee:** jangan menganggap pembayaran sudah
+    tersedia kecuali integrasi pembayaran dan pencatatan transaksinya
+    benar-benar sudah dibuat dan diuji.
+-   **Milestone atau reward mentor:** jangan menjanjikan badge,
+    milestone, atau reward jika logika dan penyimpanan fiturnya belum
+    diterapkan.
+-   **Penjadwalan:** validasi aturan bentrok jadwal, perubahan jadwal,
+    pembatalan, durasi, dan mode/lokasi sesi pada implementasi yang
+    aktif.
+-   **Keamanan:** uji RLS, akses lintas akun, hak admin, dan proses
+    penghapusan akun/data.
+-   **Operasional:** tetapkan SOP untuk pembatalan, no-show, keluhan,
+    moderasi ulasan, dan dukungan pengguna.
+-   **Kebijakan:** tinjau Kebijakan Privasi dan Ketentuan Penggunaan
+    sebelum mengundang pengguna eksternal.
+-   **Data demo:** bedakan contoh/demo dari data pengguna sungguhan.
+    Jangan menyajikan data contoh sebagai bukti penggunaan aktual.
 
-**LINKED — Belajar bareng, tumbuh bareng.**
+------------------------------------------------------------------------
+
+**LINKED --- Belajar bareng, tumbuh bareng.**
