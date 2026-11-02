@@ -2146,6 +2146,8 @@
       box-shadow: 0 11px 25px rgba(61, 185, 205, .24);
     }
     .nav { gap: 6px; }
+    #main-nav .nav-btn[hidden] { display: none !important; }
+    .nav-label[hidden] { display: none !important; }
     .nav-btn {
       position: relative;
       min-height: 46px;
@@ -2901,8 +2903,18 @@
       .mobile-menu-head { padding-bottom:13px; }
       .mobile-menu-profile { padding:11px 12px; }
       .mobile-menu-items { padding-bottom:6px; }
-      .sidebar .nav-btn[data-page="mentor-tools"], .sidebar .nav-btn[data-page="admin"], .sidebar .nav-btn[data-page="opportunities"], .sidebar .nav-btn[data-page="settings"], .sidebar .nav-btn[data-page="support"] { display:none !important; }
-      .sidebar .nav-btn[data-page="overview"], .sidebar .nav-btn[data-page="mentors"], .sidebar .nav-btn[data-page="learning"], .sidebar .nav-btn[data-page="requests"] { width:25%; min-width:0; max-width:none; flex:1 1 25%; }
+      .sidebar .nav-btn[data-page="admin"], .sidebar .nav-btn[data-page="settings"], .sidebar .nav-btn[data-page="support"] { display:none !important; }
+      .sidebar .nav-btn[data-page="overview"],
+      .sidebar .nav-btn[data-page="requests"],
+      html[data-role="learner"] .sidebar .nav-btn[data-page="mentors"],
+      html[data-role="learner"] .sidebar .nav-btn[data-page="learning"],
+      html[data-role="mentor"] .sidebar .nav-btn[data-page="mentor-tools"],
+      html[data-role="mentor"] .sidebar .nav-btn[data-page="opportunities"] {
+        display:flex !important;
+        width:25%; min-width:0; max-width:none; flex:1 1 25%;
+      }
+      html[data-role="learner"] .sidebar .nav-btn[data-role="mentor"],
+      html[data-role="mentor"] .sidebar .nav-btn[data-role="learner"] { display:none !important; }
       .sidebar .nav-btn.active { color:#30275f; background:linear-gradient(105deg,#a5f0df,#d1f8e8 58%,#ffe6b7 130%); box-shadow:inset 0 3px #f2c86b; }
       .sidebar .nav { gap:3px; }
       .sidebar { padding-left:5px; padding-right:5px; }
@@ -4000,7 +4012,7 @@
       </div>
       <div class="nav-label">Workspace</div>
       <nav class="nav" id="main-nav" aria-label="Navigasi utama">
-        <button class="nav-btn active" data-page="overview" aria-label="Overview"><svg
+        <button class="nav-btn active" data-page="overview" data-role="shared" aria-label="Overview"><svg
             viewBox="0 0 24 24" fill="none" stroke="currentColor"
             stroke-width="1.8">
             <rect x="3" y="3" width="7" height="8" rx="2" />
@@ -4008,44 +4020,44 @@
             <rect x="14" y="12" width="7" height="9" rx="2" />
             <rect x="3" y="15" width="7" height="6" rx="2" />
           </svg><span class="nav-text">Overview</span></button>
-        <button class="nav-btn" data-page="mentors" aria-label="Find a mentor"><svg viewBox="0 0 24 24"
+        <button class="nav-btn" data-page="mentors" data-role="learner" aria-label="Find a mentor"><svg viewBox="0 0 24 24"
             fill="none" stroke="currentColor" stroke-width="1.8">
             <circle cx="10" cy="8" r="4" />
             <path d="M3 20c.5-4 3-6 7-6s6.5 2 7 6" />
             <circle cx="18" cy="8" r="2.5" />
             <path d="M18 13c2 0 3.3 1.1 3.8 3" />
           </svg><span class="nav-text">Find a mentor</span></button>
-        <button class="nav-btn" data-page="learning" aria-label="My learning"><svg viewBox="0 0 24 24"
+        <button class="nav-btn" data-page="learning" data-role="learner" aria-label="My learning"><svg viewBox="0 0 24 24"
             fill="none" stroke="currentColor" stroke-width="1.8">
             <path
               d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21z" />
             <path d="M4 5.5v13A2.5 2.5 0 0 1 6.5 16H20" />
             <path d="M8 7h7M8 10h8" />
           </svg><span class="nav-text">My learning</span></button>
-        <button class="nav-btn" data-page="requests" aria-label="Learning requests"><svg viewBox="0 0 24 24"
+        <button class="nav-btn" data-page="requests" data-role="shared" aria-label="Learning requests"><svg viewBox="0 0 24 24"
             fill="none" stroke="currentColor" stroke-width="1.8">
             <path
               d="M8 3h8l4 4v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" />
             <path d="M16 3v5h4M8 13h8M8 17h5" />
           </svg><span class="nav-text">Learning requests</span><span
             class="nav-count" id="request-nav-count">2</span></button>
-        <button class="nav-btn" data-page="mentor-tools" aria-label="Mentor workspace"><svg
+        <button class="nav-btn" data-page="mentor-tools" data-role="mentor" aria-label="Mentor workspace"><svg
             viewBox="0 0 24 24" fill="none" stroke="currentColor"
             stroke-width="1.8">
             <path d="M12 3 4 7v5c0 4.8 3.2 7.8 8 9 4.8-1.2 8-4.2 8-9V7z" />
             <path d="m9 12 2 2 4-4" />
           </svg><span class="nav-text">Mentor workspace</span></button>
-        <button class="nav-btn" data-page="admin" aria-label="Admin" id="admin-nav-button" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 4 7v5c0 4.8 3.2 7.8 8 9 4.8-1.2 8-4.2 8-9V7z"/><path d="m9 12 2 2 4-4"/></svg><span class="nav-text">Admin</span></button>
+        <button class="nav-btn" data-page="admin" data-role="admin" aria-label="Admin" id="admin-nav-button" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 4 7v5c0 4.8 3.2 7.8 8 9 4.8-1.2 8-4.2 8-9V7z"/><path d="m9 12 2 2 4-4"/></svg><span class="nav-text">Admin</span></button>
         <div class="nav-label" style="margin-top:13px">Explore</div>
-        <button class="nav-btn" data-page="opportunities" aria-label="Opportunities"><svg
+        <button class="nav-btn" data-page="opportunities" data-role="shared" aria-label="Opportunities"><svg
             viewBox="0 0 24 24" fill="none" stroke="currentColor"
             stroke-width="1.8">
             <path d="M4 19V5M4 19h17" />
             <path d="m7 15 4-4 3 2 6-7" />
             <path d="M16 6h4v4" />
           </svg><span class="nav-text">Opportunities</span></button>
-        <button class="nav-btn" data-page="settings" aria-label="Pengaturan akun" title="Pengaturan akun"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-1.7 2.94-.08-.02a1.7 1.7 0 0 0-1.7.67l-.04.07h-3.4l-.04-.07a1.7 1.7 0 0 0-1.7-.67l-.08.02-1.7-2.94.06-.06A1.7 1.7 0 0 0 9.76 15l-.07-.04v-3.4l.07-.04a1.7 1.7 0 0 0 .67-1.7l-.02-.08 2.94-1.7.06.06a1.7 1.7 0 0 0 1.88.34l.04-.07h3.4l.04.07a1.7 1.7 0 0 0 1.7.67l.08-.02 1.7 2.94-.06.06a1.7 1.7 0 0 0-.34 1.88l.07.04v3.4z" transform="translate(-3 -2) scale(.98)"/></svg><span class="nav-text">Pengaturan akun</span></button>
-        <button class="nav-btn" data-page="support" aria-label="Bantuan dan masukan" title="Bantuan dan masukan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 4.5 1.4c-.8.9-2 1.1-2 2.6M12 17h.01"/></svg><span class="nav-text">Bantuan & masukan</span></button>
+        <button class="nav-btn" data-page="settings" data-role="shared" aria-label="Pengaturan akun" title="Pengaturan akun"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-1.7 2.94-.08-.02a1.7 1.7 0 0 0-1.7.67l-.04.07h-3.4l-.04-.07a1.7 1.7 0 0 0-1.7-.67l-.08.02-1.7-2.94.06-.06A1.7 1.7 0 0 0 9.76 15l-.07-.04v-3.4l.07-.04a1.7 1.7 0 0 0 .67-1.7l-.02-.08 2.94-1.7.06.06a1.7 1.7 0 0 0 1.88.34l.04-.07h3.4l.04.07a1.7 1.7 0 0 0 1.7.67l.08-.02 1.7 2.94-.06.06a1.7 1.7 0 0 0-.34 1.88l.07.04v3.4z" transform="translate(-3 -2) scale(.98)"/></svg><span class="nav-text">Pengaturan akun</span></button>
+        <button class="nav-btn" data-page="support" data-role="shared" aria-label="Bantuan dan masukan" title="Bantuan dan masukan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 4.5 1.4c-.8.9-2 1.1-2 2.6M12 17h.01"/></svg><span class="nav-text">Bantuan & masukan</span></button>
       </nav>
       <div class="sidebar-bottom">
         <div class="pilot-card">
@@ -4937,7 +4949,37 @@
       return `<span class="status ${esc(status)}">${statusLabel(status)}</span>`
     }
 
+    function canOpenPage(destination) {
+      if (destination === 'admin') return Boolean(linkedAdminAccess.isAdmin);
+      if (state.role === 'mentor' && ['mentors', 'learning'].includes(destination)) return false;
+      if (state.role === 'learner' && destination === 'mentor-tools') return false;
+      return ['overview', 'mentors', 'learning', 'requests', 'mentor-tools', 'admin', 'opportunities', 'settings', 'support'].includes(destination);
+    }
+
+    function syncRoleNavigation() {
+      const role = state.role || 'learner';
+      document.documentElement.dataset.role = role;
+      document.querySelectorAll('#main-nav .nav-btn[data-page]').forEach(button => {
+        const requiredRole = button.dataset.role || 'shared';
+        const visible = requiredRole === 'shared' ||
+          requiredRole === role ||
+          (requiredRole === 'admin' && linkedAdminAccess.isAdmin);
+        button.hidden = !visible;
+        button.setAttribute('aria-hidden', visible ? 'false' : 'true');
+        button.tabIndex = visible ? 0 : -1;
+      });
+      const navLabel = document.querySelector('#main-nav .nav-label');
+      const exploreLabel = [...document.querySelectorAll('#main-nav .nav-label')].find(label => label.textContent.trim().toLowerCase() === 'explore');
+      if (navLabel) navLabel.hidden = false;
+      if (exploreLabel) exploreLabel.hidden = false;
+      if (typeof buildMobileMenu === 'function') buildMobileMenu();
+    }
+
     function go(p) {
+      if (!canOpenPage(p)) {
+        showToast(state.role === 'mentor' ? 'Menu ini tersedia dalam Mode Learner.' : 'Menu ini tersedia dalam Mode Mentor.');
+        return;
+      }
       if (p === 'admin' && !linkedAdminAccess.isAdmin) {
         showToast('Halaman ini hanya tersedia untuk pengelola terdaftar.');
         return;
@@ -5137,6 +5179,7 @@
     function updateUserUi() {
       const role = state.role,
         u = displayUser();
+      syncRoleNavigation();
       document.getElementById('mode-switch').textContent = role === 'learner' ?
         'Switch to Mentor ↗' : 'Switch to Learner ↗';
       document.getElementById('sidebar-role').textContent = role === 'learner' ?
@@ -5153,6 +5196,7 @@
     function updateAdminNavigation() {
       const button = document.getElementById('admin-nav-button');
       if (button) button.hidden = !linkedAdminAccess.isAdmin;
+      if (typeof syncRoleNavigation === 'function') syncRoleNavigation();
     }
 
     function resetLinkedAdminAccess() {
