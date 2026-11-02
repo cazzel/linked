@@ -4012,6 +4012,26 @@
     #linked-demo-checkout-form .modal-actions { position:sticky; bottom:0; background:var(--white); padding-top:12px; }
     .linked-payment-amount { font-size:28px; font-weight:900; letter-spacing:-.04em; color:var(--ink); }
     .linked-demo-watermark { border:1px dashed #d79c36; background:#fff7e5; color:#7b4f0a; border-radius:11px; padding:11px 12px; font-size:11px; line-height:1.6; }
+    .demo-payment-instructions { margin-top:14px; padding:16px; border:1px solid var(--line); border-radius:14px; background:var(--bg); }
+    .demo-payment-instructions h4 { margin:0 0 8px; font-size:13px; color:var(--ink); }
+    .demo-payment-ref { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:13px; margin:10px 0; border:1px dashed #8aa0bb; border-radius:11px; background:var(--white); }
+    .demo-payment-ref strong { font-size:19px; letter-spacing:.08em; overflow-wrap:anywhere; color:var(--ink); }
+    .demo-copy-ref { border:1px solid var(--line); background:var(--white); border-radius:8px; padding:8px 10px; font-size:10px; font-weight:800; color:var(--ink); }
+    .demo-payment-steps { margin:9px 0 0; padding-left:19px; color:var(--muted); font-size:11px; line-height:1.8; }
+    .demo-payment-status { margin-top:14px; padding:14px; border-radius:12px; background:#fff7e5; border:1px solid #e9c36a; color:#79520c; }
+    .demo-payment-status.is-paid { background:#e8f8ef; border-color:#9bd9b4; color:#126542; }
+    .demo-payment-status .status-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+    .demo-qr-placeholder { width:154px; min-height:154px; margin:10px auto; padding:12px; display:grid; place-items:center; border-radius:10px; border:1px solid #d8dee8; background:#fff; }
+    .demo-qr-grid { display:grid; grid-template-columns:repeat(21,5px); grid-auto-rows:5px; gap:1px; }
+    .demo-qr-grid span { background:#fff; }
+    .demo-qr-grid span.on { background:#182334; }
+    .demo-expiry { font-size:10px; color:var(--muted); margin-top:8px; }
+    html[data-theme="dark"] .demo-payment-instructions { background:#101f32; border-color:#30435c; }
+    html[data-theme="dark"] .demo-payment-instructions h4, html[data-theme="dark"] .demo-payment-ref strong { color:#f3f7fc; }
+    html[data-theme="dark"] .demo-payment-ref, html[data-theme="dark"] .demo-copy-ref { background:#172a42; border-color:#425a76; color:#e9f1fa; }
+    html[data-theme="dark"] .demo-payment-status { background:#332b1a; border-color:#806b37; color:#f6db9b; }
+    html[data-theme="dark"] .demo-payment-status.is-paid { background:#15372b; border-color:#286c50; color:#a9efc8; }
+    @media(max-width:620px) { .demo-payment-ref { flex-direction:column; align-items:flex-start; } .demo-payment-ref strong { font-size:16px; } }
     html[data-theme="dark"] .linked-payment-stat { background:#14263d; border-color:#30435c; }
     html[data-theme="dark"] .linked-payment-stat span { color:#b5c4d7; }
     html[data-theme="dark"] .linked-payment-stat strong { color:#f3f7fc; }
@@ -5868,31 +5888,37 @@
       if (!activeDemoCheckout) return '<div class="empty"><strong>Checkout tidak tersedia</strong>Pilih atau lanjutkan pembayaran dari Learning Requests.</div>';
       const { requestRow, payment } = activeDemoCheckout;
       const total = Number(payment.amount || requestRow.price_amount || 0);
+      const selectedMethod = payment.payment_method || (activeDemoCheckout.localRecord && activeDemoCheckout.localRecord.paymentMethod) || 'qris';
       const methodOptions = [
         ['qris','QRIS'], ['va_bca','Virtual Account · BCA'], ['va_mandiri','Virtual Account · Mandiri'],
         ['va_bni','Virtual Account · BNI'], ['va_bri','Virtual Account · BRI'], ['va_permata','Virtual Account · Permata'],
         ['gopay','GoPay'], ['ovo','OVO'], ['dana','DANA'], ['shopeepay','ShopeePay'],
         ['alfamart','Gerai · Alfamart'], ['indomaret','Gerai · Indomaret']
       ];
-      const methodOptionsHtml = `<optgroup label="QRIS"><option value="qris">QRIS</option></optgroup><optgroup label="Virtual Account">${methodOptions.slice(1,6).map(([value,label])=>`<option value="${value}">${label}</option>`).join('')}</optgroup><optgroup label="E-wallet">${methodOptions.slice(6,10).map(([value,label])=>`<option value="${value}">${label}</option>`).join('')}</optgroup><optgroup label="Gerai retail">${methodOptions.slice(10).map(([value,label])=>`<option value="${value}">${label}</option>`).join('')}</optgroup>`;
+      const methodOptionsHtml = `<optgroup label="QRIS"><option value="qris" ${selectedMethod==='qris'?'selected':''}>QRIS</option></optgroup><optgroup label="Virtual Account">${methodOptions.slice(1,6).map(([value,label])=>`<option value="${value}" ${selectedMethod===value?'selected':''}>${label}</option>`).join('')}</optgroup><optgroup label="E-wallet">${methodOptions.slice(6,10).map(([value,label])=>`<option value="${value}" ${selectedMethod===value?'selected':''}>${label}</option>`).join('')}</optgroup><optgroup label="Gerai retail">${methodOptions.slice(10).map(([value,label])=>`<option value="${value}" ${selectedMethod===value?'selected':''}>${label}</option>`).join('')}</optgroup>`;
       const date = requestRow.preferred_date || requestRow.date || '';
       const time = String(requestRow.preferred_time || requestRow.time || '').slice(0,5);
-      return `<div class="page-head"><div><div class="eyebrow">CHECKOUT · LANGKAH TERAKHIR</div><h1>Pembayaran</h1><p>Selesaikan simulasi pembayaran untuk meneruskan learning request kepada mentor.</p></div><button type="button" class="btn btn-ghost" id="demo-checkout-back">← Kembali</button></div>
+      const payerRef = payment.payer_reference || (activeDemoCheckout.localRecord && activeDemoCheckout.localRecord.payerReference) || '';
+      const started = Boolean((payment.payment_method || (activeDemoCheckout.localRecord && activeDemoCheckout.localRecord.paymentMethod)) && (payment.provider_reference || (activeDemoCheckout.localRecord && activeDemoCheckout.localRecord.paymentProviderReference)) && payerRef);
+      activeDemoCheckout.started = activeDemoCheckout.started || started;
+      return `<div class="page-head"><div><div class="eyebrow">CHECKOUT · LANGKAH TERAKHIR</div><h1>Pembayaran</h1><p>Pilih kanal pembayaran dan ikuti instruksi seperti checkout pada layanan pembayaran. Seluruh transaksi di halaman ini adalah simulasi.</p></div><button type="button" class="btn btn-ghost" id="demo-checkout-back">← Kembali</button></div>
         <div class="linked-checkout-layout">
           <section class="panel">
-            <div class="section-head"><div><h3>Metode pembayaran</h3><p>Pilih kanal pembayaran yang ingin kamu demonstrasikan.</p></div><span class="chip amber">DEMO</span></div>
-            <div class="linked-demo-watermark"><strong>SIMULASI DEMO BOOTH</strong><br>Nomor pembayaran boleh menggunakan angka dummy. Tidak ada QRIS aktif, OTP, transfer, atau dana yang dipindahkan.</div>
+            <div class="section-head"><div><h3>Metode pembayaran</h3><p>Pilih kanal pembayaran yang ingin kamu demonstrasikan.</p></div><span class="chip amber">DEMO / SANDBOX</span></div>
+            <div class="linked-demo-watermark"><strong>SIMULASI DEMO BOOTH</strong><br>Nomor VA, kode bayar, akun tujuan, dan QR di halaman ini dibuat secara acak untuk demonstrasi. Tidak terhubung ke bank/e-wallet, tidak dapat dipakai untuk transfer, dan tidak ada dana yang dipindahkan.</div>
             <form id="linked-demo-checkout-form" style="margin-top:18px">
               <div class="form-grid">
-                <div class="form-group full"><label for="demo-payment-method">Pilih metode pembayaran</label><select class="select" id="demo-payment-method" name="method" required>${methodOptionsHtml}</select><div class="form-hint">QRIS, Virtual Account bank, e-wallet, dan gerai retail tersedia untuk demonstrasi.</div></div>
-                <div class="form-group full"><label for="demo-payer-reference">Nomor HP / nomor referensi pembayaran</label><input class="input" id="demo-payer-reference" name="payerReference" type="tel" inputmode="numeric" autocomplete="off" minlength="4" maxlength="24" pattern="[0-9+() .-]{4,24}" placeholder="Contoh: 081234567890" required/><div class="form-hint">Masukkan minimal 4 angka bebas. Gunakan nomor dummy, bukan data pribadi.</div></div>
-                <div class="form-group full"><label for="demo-payer-name">Nama pembayar</label><input class="input" id="demo-payer-name" name="payerName" maxlength="80" placeholder="Contoh: Andi Pratama"/></div>
+                <div class="form-group full"><label for="demo-payment-method">Pilih metode pembayaran</label><select class="select" id="demo-payment-method" name="method" required ${started?'disabled':''}>${methodOptionsHtml}</select><div class="form-hint">QRIS, Virtual Account bank, e-wallet, dan gerai retail tersedia.</div></div>
+                <div class="form-group full"><div id="demo-payment-instructions" class="demo-payment-instructions" aria-live="polite"></div></div>
+                <div class="form-group full"><label for="demo-payer-reference" id="demo-payer-reference-label">Nomor HP / referensi pembayar (dummy)</label><input class="input" id="demo-payer-reference" name="payerReference" type="tel" inputmode="numeric" autocomplete="off" minlength="4" maxlength="24" pattern="[0-9+() .-]{4,24}" value="${esc(payerRef)}" placeholder="Contoh: 081234567890" required ${started?'disabled':''}/><div class="form-hint">Gunakan nomor contoh/dummy. Hindari memasukkan data pribadi atau rekening sungguhan.</div></div>
+                <div class="form-group full"><label for="demo-payer-name">Nama pembayar</label><input class="input" id="demo-payer-name" name="payerName" maxlength="80" value="${esc((activeDemoCheckout.localRecord && activeDemoCheckout.localRecord.payerName) || '')}" placeholder="Contoh: Andi Pratama" ${started?'disabled':''}/></div>
               </div>
-              <div class="notice" style="margin-top:16px">Setelah menekan <strong>Pay Now</strong>, LINKED akan menampilkan halaman sukses demo dan meneruskan request ke mentor.</div>
-              <div class="modal-actions" style="margin-top:18px"><button type="button" class="btn btn-ghost" id="demo-checkout-cancel">Nanti</button><button type="submit" class="btn btn-primary" id="confirm-demo-payment">Pay Now · ${formatLinkedCurrency(total, payment.currency || 'IDR')}</button></div>
+              <div class="notice" style="margin-top:16px">Tekan <strong>Pay Now</strong> untuk membuat instruksi dan memulai simulasi pembayaran. Setelah itu, gunakan tombol simulasi penerimaan pembayaran dan <strong>Cek Status Pembayaran</strong>.</div>
+              <div class="modal-actions" style="margin-top:18px"><button type="button" class="btn btn-ghost" id="demo-checkout-cancel">Nanti</button><button type="submit" class="btn btn-primary" id="confirm-demo-payment" ${started?'disabled':''}>Pay Now · ${formatLinkedCurrency(total, payment.currency || 'IDR')}</button></div>
             </form>
+            <div id="demo-payment-status-panel" ${started?'':'hidden'}></div>
           </section>
-          <aside class="panel"><div class="eyebrow">RINGKASAN PESANAN</div><h3 style="margin:8px 0 14px">${esc(requestRow.topic || 'Sesi belajar')}</h3><div class="linked-payment-row"><span class="list-meta">Jenis belajar</span><strong>${requestRow.learning_type === 'full_course' ? 'Full Course' : 'Single Session'}</strong></div><div class="linked-payment-row"><span class="list-meta">Jadwal pilihan</span><strong>${esc(date)} · ${esc(time)}</strong></div><div class="linked-payment-row"><span class="list-meta">Biaya layanan pilot</span><strong>Rp0</strong></div><div style="padding:18px 0 6px"><div class="list-meta">Total pembayaran</div><div class="linked-payment-amount">${formatLinkedCurrency(total, payment.currency || requestRow.currency || 'IDR')}</div></div><div class="divider"></div><div class="list-meta">Pembayaran simulasi ini hanya untuk alur demonstrasi LINKED. Status yang berhasil tidak mewakili transfer atau pencairan uang.</div></aside>
+          <aside class="panel"><div class="eyebrow">RINGKASAN PESANAN</div><h3 style="margin:8px 0 14px">${esc(requestRow.topic || 'Sesi belajar')}</h3><div class="linked-payment-row"><span class="list-meta">Jenis belajar</span><strong>${requestRow.learning_type === 'full_course' ? 'Full Course' : 'Single Session'}</strong></div><div class="linked-payment-row"><span class="list-meta">Jadwal pilihan</span><strong>${esc(date)} · ${esc(time)}</strong></div><div class="linked-payment-row"><span class="list-meta">Biaya layanan pilot</span><strong>Rp0</strong></div><div style="padding:18px 0 6px"><div class="list-meta">Total pembayaran</div><div class="linked-payment-amount">${formatLinkedCurrency(total, payment.currency || requestRow.currency || 'IDR')}</div></div><div class="divider"></div><div class="list-meta">Nominal ini adalah nilai demonstrasi. Status sukses demo bukan bukti pembayaran atau pencairan dana.</div></aside>
         </div>`;
     }
 
@@ -7476,7 +7502,7 @@
               learning_request_id: createdRequest.id, learner_id: userId, mentor_id: mentor.id,
               amount: finalAmount, currency: createdRequest.currency || 'IDR', service_fee_amount: 0,
               provider: 'demo', status: 'pending', is_demo: true
-            }).select('id, amount, currency, status, is_demo').single();
+            }).select('id, amount, currency, status, is_demo, payment_method, payer_reference, provider_reference, created_at').single();
             if (paymentResult.error) throw paymentResult.error;
             createdPayment = paymentResult.data;
           } catch (error) {
@@ -7551,7 +7577,7 @@
         }
         let payment;
         const lookup = await linkedSupabase.from('payment_transactions')
-          .select('id, amount, currency, status, is_demo')
+          .select('id, amount, currency, status, is_demo, payment_method, payer_reference, provider_reference, created_at')
           .eq('learning_request_id', requestId).eq('learner_id', userId).maybeSingle();
         if (lookup.error) throw lookup.error;
         payment = lookup.data;
@@ -7560,7 +7586,7 @@
             learning_request_id: requestId, learner_id: userId, mentor_id: requestRow.mentor_id,
             amount: requestRow.price_amount, currency: requestRow.currency || 'IDR',
             service_fee_amount: 0, provider: 'demo', status: 'pending', is_demo: true
-          }).select('id, amount, currency, status, is_demo').single();
+          }).select('id, amount, currency, status, is_demo, payment_method, payer_reference, provider_reference, created_at').single();
           if (create.error) throw create.error;
           payment = create.data;
         }
@@ -7571,10 +7597,223 @@
       }
     }
 
+    const DEMO_PAYMENT_LABELS = {
+      qris:'QRIS', va_bca:'Virtual Account · BCA', va_mandiri:'Virtual Account · Mandiri',
+      va_bni:'Virtual Account · BNI', va_bri:'Virtual Account · BRI', va_permata:'Virtual Account · Permata',
+      gopay:'GoPay', ovo:'OVO', dana:'DANA', shopeepay:'ShopeePay',
+      alfamart:'Gerai · Alfamart', indomaret:'Gerai · Indomaret'
+    };
+    function demoRandomDigits(length) {
+      const bytes = new Uint8Array(length);
+      if (window.crypto && window.crypto.getRandomValues) window.crypto.getRandomValues(bytes);
+      else for (let i=0;i<length;i++) bytes[i] = Math.floor(Math.random()*256);
+      return Array.from(bytes, value => String(value % 10)).join('');
+    }
+    function createDemoPaymentInstructions(methodKey, payment) {
+      const cached = activeDemoCheckout && activeDemoCheckout.paymentDetailsByMethod && activeDemoCheckout.paymentDetailsByMethod[methodKey];
+      if (cached) return cached;
+      const local = activeDemoCheckout && activeDemoCheckout.localRecord;
+      const savedMethod = payment.payment_method || (local && local.paymentMethod);
+      const savedReference = payment.provider_reference || (local && local.paymentProviderReference);
+      const canReuse = savedMethod === methodKey && savedReference;
+      let details;
+      if (methodKey.startsWith('va_')) {
+        const prefixes = { va_bca:'8808', va_mandiri:'88908', va_bni:'988', va_bri:'26215', va_permata:'8528' };
+        const bankNames = { va_bca:'BCA', va_mandiri:'Bank Mandiri', va_bni:'BNI', va_bri:'BRI', va_permata:'PermataBank' };
+        details = { kind:'va', title:`Virtual Account ${bankNames[methodKey]}`, reference:canReuse?savedReference:(prefixes[methodKey] + demoRandomDigits(16-prefixes[methodKey].length)), bank:bankNames[methodKey] };
+      } else if (methodKey === 'qris') {
+        details = { kind:'qris', title:'QRIS', reference:canReuse?savedReference:`LNKD${demoRandomDigits(12)}` };
+      } else if (['gopay','ovo','dana','shopeepay'].includes(methodKey)) {
+        const walletNames = { gopay:'GoPay', ovo:'OVO', dana:'DANA', shopeepay:'ShopeePay' };
+        details = { kind:'wallet', title:walletNames[methodKey], reference:canReuse?savedReference:`08${demoRandomDigits(10)}`, merchantCode:`LINKED${demoRandomDigits(6)}` };
+      } else {
+        const storeName = methodKey === 'alfamart' ? 'Alfamart' : 'Indomaret';
+        details = { kind:'retail', title:`Gerai ${storeName}`, reference:canReuse?savedReference:`88${demoRandomDigits(14)}`, store:storeName };
+      }
+      if (!activeDemoCheckout.paymentDetailsByMethod) activeDemoCheckout.paymentDetailsByMethod = {};
+      activeDemoCheckout.paymentDetailsByMethod[methodKey] = details;
+      return details;
+    }
+    function demoQrMarkup(seed) {
+      let hash = 2166136261;
+      for (const char of String(seed)) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619) >>> 0;
+      const cells = [];
+      const finder = (x,y,ox,oy) => {
+        const dx=x-ox, dy=y-oy;
+        if (dx<0||dy<0||dx>6||dy>6) return null;
+        return dx===0||dy===0||dx===6||dy===6||(dx>=2&&dx<=4&&dy>=2&&dy<=4);
+      };
+      for (let y=0;y<21;y++) for (let x=0;x<21;x++) {
+        let on = null;
+        for (const [ox,oy] of [[0,0],[14,0],[0,14]]) { const v=finder(x,y,ox,oy); if (v!==null) { on=v; break; } }
+        if (on===null) { hash = (Math.imul(hash, 1664525) + 1013904223) >>> 0; on = ((hash >>> 28) & 1) === 1; }
+        cells.push(`<span class="${on?'on':''}"></span>`);
+      }
+      return `<div class="demo-qr-placeholder"><div class="demo-qr-grid" aria-hidden="true">${cells.join('')}</div></div>`;
+    }
+    function formatDemoExpiry(payment) {
+      const startedAt = payment.created_at || (activeDemoCheckout && activeDemoCheckout.localRecord && activeDemoCheckout.localRecord.paymentInitiatedAt) || (activeDemoCheckout && activeDemoCheckout.localRecord && activeDemoCheckout.localRecord.createdAt) || new Date().toISOString();
+      const expiry = new Date(new Date(startedAt).getTime() + 24*60*60*1000);
+      return expiry.toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short',timeZone:'Asia/Jakarta'});
+    }
+    function renderDemoPaymentInstructions(methodKey) {
+      if (!activeDemoCheckout) return;
+      const target = document.getElementById('demo-payment-instructions');
+      if (!target) return;
+      const payment = activeDemoCheckout.payment;
+      const details = createDemoPaymentInstructions(methodKey, payment);
+      const amount = Number(payment.amount || activeDemoCheckout.requestRow.price_amount || 0);
+      const expiry = formatDemoExpiry(payment);
+      const copyButton = `<button type="button" class="demo-copy-ref" data-copy-demo-payment="${esc(details.reference)}">Salin</button>`;
+      let body = '';
+      if (details.kind === 'va') {
+        body = `<p class="list-meta">Transfer ke Virtual Account berikut. Untuk transaksi nyata, nomor VA akan diterbitkan payment gateway dan diverifikasi otomatis.</p><div class="list-meta">Nomor Virtual Account · ${esc(details.bank)}</div><div class="demo-payment-ref"><strong>${esc(details.reference)}</strong>${copyButton}</div><div class="linked-payment-row"><span class="list-meta">Nama penerima</span><strong>LINKED DEMO</strong></div><div class="linked-payment-row"><span class="list-meta">Nominal transfer</span><strong>${formatLinkedCurrency(amount)}</strong></div><ol class="demo-payment-steps"><li>Buka aplikasi/mobile banking ${esc(details.bank)}.</li><li>Pilih menu Virtual Account atau Pembayaran.</li><li>Masukkan nomor VA demo di atas dan cocokkan nominal.</li><li>Di booth, gunakan tombol simulasi penerimaan pembayaran di bawah.</li></ol>`;
+      } else if (details.kind === 'qris') {
+        body = `<p class="list-meta">Pindai QR menggunakan aplikasi pembayaran pada alur QRIS sungguhan. Gambar berikut adalah pola visual dummy dan tidak dapat dipindai.</p>${demoQrMarkup(details.reference)}<div style="text-align:center;font-size:10px;font-weight:900;letter-spacing:.12em;color:var(--muted)">QRIS DEMO · NON-SCANNABLE</div><div class="linked-payment-row"><span class="list-meta">Kode referensi</span><strong>${esc(details.reference)}</strong></div><div class="linked-payment-row"><span class="list-meta">Merchant</span><strong>LINKED DEMO</strong></div><div class="linked-payment-row"><span class="list-meta">Nominal</span><strong>${formatLinkedCurrency(amount)}</strong></div>`;
+      } else if (details.kind === 'wallet') {
+        body = `<p class="list-meta">Instruksi bergaya pembayaran e-wallet. Akun tujuan di bawah hanya akun demo dan tidak terhubung ke dompet digital asli.</p><div class="linked-payment-row"><span class="list-meta">Penyedia</span><strong>${esc(details.title)}</strong></div><div class="list-meta">Nomor tujuan demo</div><div class="demo-payment-ref"><strong>${esc(details.reference)}</strong>${copyButton}</div><div class="linked-payment-row"><span class="list-meta">Nama merchant</span><strong>LINKED Learning Demo</strong></div><div class="linked-payment-row"><span class="list-meta">Kode merchant</span><strong>${esc(details.merchantCode)}</strong></div><div class="linked-payment-row"><span class="list-meta">Nominal</span><strong>${formatLinkedCurrency(amount)}</strong></div><ol class="demo-payment-steps"><li>Buka aplikasi ${esc(details.title)}.</li><li>Pilih transfer atau pembayaran ke nomor tujuan.</li><li>Periksa nama merchant dan nominal (simulasi).</li><li>Gunakan tombol simulasi penerimaan pembayaran di bawah.</li></ol>`;
+      } else {
+        body = `<p class="list-meta">Tunjukkan kode pembayaran simulasi ini pada kasir ${esc(details.store)}. Kode tidak terhubung ke sistem retail sungguhan.</p><div class="list-meta">Kode pembayaran · ${esc(details.store)}</div><div class="demo-payment-ref"><strong>${esc(details.reference)}</strong>${copyButton}</div><div class="linked-payment-row"><span class="list-meta">Nama merchant</span><strong>LINKED DEMO</strong></div><div class="linked-payment-row"><span class="list-meta">Nominal</span><strong>${formatLinkedCurrency(amount)}</strong></div><ol class="demo-payment-steps"><li>Datang ke gerai ${esc(details.store)} pada skenario demonstrasi.</li><li>Tunjukkan kode pembayaran demo.</li><li>Untuk menyelesaikan demo, tekan simulasi penerimaan pembayaran.</li></ol>`;
+      }
+      target.innerHTML = `<h4>${esc(details.title)} · Instruksi pembayaran</h4>${body}<div class="demo-expiry">Batas waktu simulasi: ${esc(expiry)} · Status awal: menunggu pembayaran</div>`;
+      target.querySelectorAll('[data-copy-demo-payment]').forEach(button => button.addEventListener('click', async () => {
+        const value = button.dataset.copyDemoPayment || '';
+        try {
+          if (navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText(value);
+          else { const helper=document.createElement('textarea'); helper.value=value; helper.style.position='fixed'; helper.style.opacity='0'; document.body.appendChild(helper); helper.select(); document.execCommand('copy'); helper.remove(); }
+          showToast('Nomor/kode demo berhasil disalin.');
+        } catch (_) { showToast(`Kode demo: ${value}`); }
+      }));
+    }
+    function renderDemoPaymentStatus(status, message='') {
+      const panel = document.getElementById('demo-payment-status-panel');
+      if (!panel) return;
+      panel.hidden = false;
+      const paid = status === 'demo_paid';
+      panel.innerHTML = `<div class="demo-payment-status ${paid?'is-paid':''}" role="status"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><strong>${paid?'Pembayaran diterima (simulasi)':'Menunggu pembayaran'}</strong><span class="status ${paid?'confirmed':'pending'}">${paid?'DEMO PAID':'PENDING'}</span></div><p style="font-size:11px;line-height:1.6;margin:7px 0 0">${esc(message || (paid?'Simulasi bank/payment channel sudah mengirim konfirmasi. Tekan cek status untuk mengambil status terakhir.':'Instruksi pembayaran telah dibuat. Status akan tetap menunggu sampai simulasi pembayaran diterima.'))}</p><div class="status-actions">${paid?'':`<button type="button" class="btn btn-soft btn-sm" id="demo-simulate-payment-received">Simulasikan pembayaran masuk</button><button type="button" class="btn btn-ghost btn-sm" id="demo-change-payment-method">Ganti metode pembayaran</button>`}<button type="button" class="btn btn-primary btn-sm" id="demo-check-payment-status">Cek Status Pembayaran</button></div></div>`;
+      const simulate = document.getElementById('demo-simulate-payment-received');
+      if (simulate) simulate.addEventListener('click', simulateDemoPaymentReceived);
+      const changeMethod = document.getElementById('demo-change-payment-method');
+      if (changeMethod) changeMethod.addEventListener('click', () => {
+        if (!activeDemoCheckout) return;
+        activeDemoCheckout.started = false;
+        const method = document.getElementById('demo-payment-method'); if (method) method.disabled = false;
+        const payer = document.getElementById('demo-payer-reference'); if (payer) payer.disabled = false;
+        const name = document.getElementById('demo-payer-name'); if (name) name.disabled = false;
+        const payNow = document.getElementById('confirm-demo-payment');
+        if (payNow) { payNow.disabled = false; payNow.textContent = `Pay Now · ${formatLinkedCurrency(activeDemoCheckout.payment.amount || activeDemoCheckout.requestRow.price_amount || 0, activeDemoCheckout.payment.currency || 'IDR')}`; }
+        panel.hidden = true;
+        showToast('Pilih metode baru, lalu buat ulang instruksi pembayaran.');
+      });
+      const check = document.getElementById('demo-check-payment-status');
+      if (check) check.addEventListener('click', checkDemoPaymentStatus);
+    }
+    async function saveDemoPaymentInitiated(methodKey, payerReference, payerName, details) {
+      const { requestRow, payment, localRecord } = activeDemoCheckout;
+      const now = new Date().toISOString();
+      if (payment.isLocalDemo || requestRow.isLocalDemo || localRecord) {
+        const record = localRecord || findBoothDemoRecord(requestRow.id);
+        if (!record) throw new Error('Request demo lokal tidak ditemukan.');
+        const updated = { ...record, paymentStatus:'demo_pending', paymentMethod:methodKey,
+          payerReference, payerName, paymentProviderReference:details.reference,
+          paymentInitiatedAt:record.paymentInitiatedAt || now, paymentDetailsByMethod:activeDemoCheckout.paymentDetailsByMethod };
+        upsertBoothDemoRecord(updated);
+        activeDemoCheckout.localRecord = updated;
+      } else {
+        const { data, error } = await linkedSupabase.from('payment_transactions')
+          .update({ status:'pending', payment_method:methodKey, payer_reference:payerReference,
+            provider_reference:details.reference })
+          .eq('id', payment.id).eq('learner_id', window.linkedCurrentUserId)
+          .eq('status','pending').eq('is_demo',true)
+          .select('id,status,provider_reference,payment_method,payer_reference').maybeSingle();
+        if (error) throw error;
+        if (!data) throw new Error('Detail instruksi pembayaran belum berhasil disimpan ke transaksi.');
+        Object.assign(activeDemoCheckout.payment, data);
+      }
+      activeDemoCheckout.started = true;
+      activeDemoCheckout.methodKey = methodKey;
+      activeDemoCheckout.payerReference = payerReference;
+      activeDemoCheckout.payerName = payerName;
+      return now;
+    }
+    async function simulateDemoPaymentReceived() {
+      if (!activeDemoCheckout || !activeDemoCheckout.started) return showToast('Tekan Pay Now terlebih dahulu untuk membuat instruksi pembayaran.');
+      const { requestRow, payment, localRecord } = activeDemoCheckout;
+      const now = new Date().toISOString();
+      const isLocal = Boolean(payment.isLocalDemo || requestRow.isLocalDemo || localRecord);
+      const button = document.getElementById('demo-simulate-payment-received');
+      if (button) { button.disabled = true; button.textContent = 'Mengirim konfirmasi demo…'; }
+      try {
+        if (isLocal) {
+          const record = localRecord || findBoothDemoRecord(requestRow.id);
+          if (!record) throw new Error('Request lokal tidak ditemukan.');
+          upsertBoothDemoRecord({ ...record, paymentStatus:'demo_paid', paymentPaidAt:now });
+          activeDemoCheckout.localRecord = { ...record, paymentStatus:'demo_paid', paymentPaidAt:now };
+        } else {
+          const { data, error } = await linkedSupabase.from('payment_transactions')
+            .update({ status:'demo_paid', paid_at:now })
+            .eq('id', payment.id).eq('learner_id', window.linkedCurrentUserId)
+            .eq('status','pending').eq('is_demo',true)
+            .select('id,status,paid_at').maybeSingle();
+          if (error) throw error;
+          if (!data || data.status !== 'demo_paid') throw new Error('Simulator belum dapat mengubah status transaksi.');
+          Object.assign(activeDemoCheckout.payment, data);
+        }
+        renderDemoPaymentStatus('demo_paid','Payment simulator telah mengirim notifikasi pembayaran. Sekarang cek status untuk mengambil hasil verifikasi demo.');
+        showToast('Konfirmasi pembayaran demo diterima.');
+      } catch (error) {
+        console.error('LINKED demo payment simulator error:', error);
+        if (button) { button.disabled = false; button.textContent = 'Coba simulasi pembayaran lagi'; }
+        showToast(`Simulasi belum berhasil: ${error.message || 'coba lagi.'}`);
+      }
+    }
+    async function checkDemoPaymentStatus() {
+      if (!activeDemoCheckout || !activeDemoCheckout.started) return showToast('Instruksi pembayaran belum dibuat. Tekan Pay Now terlebih dahulu.');
+      const { requestRow, payment, localRecord } = activeDemoCheckout;
+      const button = document.getElementById('demo-check-payment-status');
+      if (button) { button.disabled = true; button.textContent = 'Memeriksa…'; }
+      try {
+        let status;
+        const isLocal = Boolean(payment.isLocalDemo || requestRow.isLocalDemo || localRecord);
+        if (isLocal) {
+          const latest = findBoothDemoRecord(requestRow.id) || localRecord;
+          status = latest && latest.paymentStatus === 'demo_paid' ? 'demo_paid' : 'pending';
+          if (latest) activeDemoCheckout.localRecord = latest;
+        } else {
+          const { data, error } = await linkedSupabase.from('payment_transactions')
+            .select('id,status,provider_reference,payment_method,paid_at')
+            .eq('id', payment.id).eq('learner_id', window.linkedCurrentUserId).maybeSingle();
+          if (error) throw error;
+          if (!data) throw new Error('Transaksi tidak ditemukan.');
+          Object.assign(activeDemoCheckout.payment, data);
+          status = data.status;
+        }
+        if (status === 'demo_paid') {
+          const method = activeDemoCheckout.methodKey || payment.payment_method || 'qris';
+          const label = DEMO_PAYMENT_LABELS[method] || 'Pembayaran demo';
+          const reference = activeDemoCheckout.payerReference || payment.payer_reference || (localRecord && localRecord.payerReference) || 'Nomor dummy';
+          const successPayment = { ...payment, status:'demo_paid', is_demo:true,
+            local_demo:isLocal, provider_reference:payment.provider_reference || (localRecord && localRecord.paymentProviderReference) };
+          activeDemoCheckout = null;
+          openDemoPaymentSuccess(requestRow, successPayment, label, reference);
+        } else if (['failed','expired','refunded'].includes(status)) {
+          renderDemoPaymentStatus(status, `Status transaksi: ${status}. Buat request atau instruksi pembayaran baru bila diperlukan.`);
+        } else {
+          renderDemoPaymentStatus('pending','Belum ada konfirmasi pembayaran dari simulator. Untuk booth, tekan “Simulasikan pembayaran masuk” lalu cek status kembali.');
+        }
+      } catch (error) {
+        console.error('LINKED demo payment status check error:', error);
+        showToast(`Status belum dapat diperiksa: ${error.message || 'coba lagi.'}`);
+      } finally {
+        const refreshed = document.getElementById('demo-check-payment-status');
+        if (refreshed) { refreshed.disabled = false; refreshed.textContent = 'Cek Status Pembayaran'; }
+      }
+    }
     function openDemoPaymentSuccess(requestRow, payment, methodLabel, payerReference) {
       const requestId = requestRow.id || requestRow.learning_request_id || 'DEMO';
       const amount = payment.amount || requestRow.price_amount || 0;
-      openModal(`<div class="modal-header"><div><div class="eyebrow">PAYMENT SUCCESS</div><h2>Pembayaran berhasil!</h2><p>Terima kasih. Simulasi checkout LINKED sudah selesai.</p></div><button class="modal-close" data-close-modal aria-label="Tutup">×</button></div><div class="modal-body"><div style="text-align:center;padding:12px 0 18px"><div style="width:76px;height:76px;border-radius:50%;background:#dcfce9;color:#087b4e;display:grid;place-items:center;margin:0 auto 14px;font-size:38px;font-weight:900">✓</div><div class="linked-payment-amount">${formatLinkedCurrency(amount, payment.currency || 'IDR')}</div><div class="list-meta">Simulasi pembayaran sukses · tidak ada dana yang ditransfer</div></div><div class="panel" style="padding:14px;margin:0"><div class="linked-payment-row"><span class="list-meta">Nomor transaksi</span><strong>${esc(String(payment.id || requestId).slice(0,22))}</strong></div><div class="linked-payment-row"><span class="list-meta">Metode pembayaran</span><strong>${esc(methodLabel)}</strong></div><div class="linked-payment-row"><span class="list-meta">Nomor yang dimasukkan</span><strong>${esc(payerReference)}</strong></div><div class="linked-payment-row"><span class="list-meta">Status</span><span class="status confirmed">Berhasil (demo)</span></div></div><div class="notice" style="margin-top:14px">Learning Request kamu sekarang diteruskan ke mentor. Mentor dapat melihat dan menanggapi permintaan ini dari menu <strong>Learning Requests</strong>.${payment.local_demo ? '<br><br><strong>Catatan demo lokal:</strong> gunakan browser dan perangkat yang sama saat beralih ke akun mentor; transaksi lokal tidak tersinkron ke perangkat lain.' : ''}</div><div class="modal-actions"><button type="button" class="btn btn-primary" id="demo-payment-success-done">Lihat learning request</button></div></div>`, true);
+      const providerReference = payment.provider_reference || '—';
+      openModal(`<div class="modal-header"><div><div class="eyebrow">PAYMENT SUCCESS · DEMO</div><h2>Pembayaran berhasil!</h2><p>Konfirmasi diterima oleh simulator pembayaran LINKED.</p></div><button class="modal-close" data-close-modal aria-label="Tutup">×</button></div><div class="modal-body"><div style="text-align:center;padding:12px 0 18px"><div style="width:76px;height:76px;border-radius:50%;background:#dcfce9;color:#087b4e;display:grid;place-items:center;margin:0 auto 14px;font-size:38px;font-weight:900">✓</div><div class="linked-payment-amount">${formatLinkedCurrency(amount, payment.currency || 'IDR')}</div><div class="list-meta">Simulasi pembayaran berhasil · tidak ada dana yang ditransfer</div></div><div class="panel" style="padding:14px;margin:0"><div class="linked-payment-row"><span class="list-meta">Nomor transaksi</span><strong>${esc(String(payment.id || requestId).slice(0,22))}</strong></div><div class="linked-payment-row"><span class="list-meta">Metode pembayaran</span><strong>${esc(methodLabel)}</strong></div><div class="linked-payment-row"><span class="list-meta">Nomor/kode pembayaran</span><strong>${esc(providerReference)}</strong></div><div class="linked-payment-row"><span class="list-meta">Nomor pembayar</span><strong>${esc(payerReference)}</strong></div><div class="linked-payment-row"><span class="list-meta">Status</span><span class="status confirmed">Berhasil (demo)</span></div></div><div class="notice" style="margin-top:14px">Learning Request kamu sekarang diteruskan ke mentor. Mentor dapat melihat dan menanggapi permintaan ini dari menu <strong>Learning Requests</strong>.${payment.local_demo ? '<br><br><strong>Catatan demo lokal:</strong> gunakan browser dan perangkat yang sama saat beralih ke akun mentor; transaksi lokal tidak tersinkron ke perangkat lain.' : ''}</div><div class="modal-actions"><button type="button" class="btn btn-primary" id="demo-payment-success-done">Lihat learning request</button></div></div>`, true);
       document.getElementById('demo-payment-success-done').addEventListener('click', async () => {
         closeModal();
         databaseRequestsLoaded = false;
@@ -7583,10 +7822,13 @@
         showToast('Pembayaran simulasi sukses. Request siap ditinjau mentor.');
       });
     }
-
     function openDemoPaymentCheckout(requestRow, payment, localRecord = null) {
       if (state.role !== 'learner') return showToast('Checkout hanya bisa diakses dalam Mode Learner.');
-      activeDemoCheckout = { requestRow, payment, localRecord };
+      activeDemoCheckout = { requestRow, payment, localRecord,
+        paymentDetailsByMethod: (localRecord && localRecord.paymentDetailsByMethod) || {},
+        started: Boolean((payment.payment_method || (localRecord && localRecord.paymentMethod)) && (payment.provider_reference || (localRecord && localRecord.paymentProviderReference)) && (payment.payer_reference || (localRecord && localRecord.payerReference))),
+        methodKey: payment.payment_method || (localRecord && localRecord.paymentMethod) || 'qris',
+        payerReference: payment.payer_reference || (localRecord && localRecord.payerReference) || '' };
       go('payment-checkout');
       const form = document.getElementById('linked-demo-checkout-form');
       const backButton = document.getElementById('demo-checkout-back');
@@ -7594,81 +7836,40 @@
       if (backButton) backButton.addEventListener('click', () => go('requests'));
       if (laterButton) laterButton.addEventListener('click', () => go('requests'));
       if (!form) return;
+      const methodSelect = document.getElementById('demo-payment-method');
+      const initialMethod = activeDemoCheckout.methodKey || 'qris';
+      if (methodSelect) {
+        methodSelect.value = initialMethod;
+        methodSelect.addEventListener('change', () => renderDemoPaymentInstructions(methodSelect.value));
+      }
+      renderDemoPaymentInstructions(initialMethod);
+      if (activeDemoCheckout.started) renderDemoPaymentStatus('pending','Instruksi pembayaran sebelumnya sudah dibuat. Jika pembayaran demo diterima, tekan cek status untuk memperbarui transaksi.');
       form.addEventListener('submit', async event => {
         event.preventDefault();
         const button = document.getElementById('confirm-demo-payment');
         if (button.disabled) return;
         const fd = new FormData(form);
         const methodKey = String(fd.get('method') || 'qris');
-        const methodLabels = {
-          qris:'QRIS', va_bca:'Virtual Account · BCA', va_mandiri:'Virtual Account · Mandiri',
-          va_bni:'Virtual Account · BNI', va_bri:'Virtual Account · BRI', va_permata:'Virtual Account · Permata',
-          gopay:'GoPay', ovo:'OVO', dana:'DANA', shopeepay:'ShopeePay',
-          alfamart:'Gerai · Alfamart', indomaret:'Gerai · Indomaret'
-        };
-        const methodLabel = methodLabels[methodKey] || 'QRIS';
         const payerReference = String(fd.get('payerReference') || '').trim();
         const payerName = String(fd.get('payerName') || '').trim();
         const normalizedNumber = payerReference.replace(/[^0-9]/g, '');
-        if (normalizedNumber.length < 4) {
-          showToast('Masukkan nomor dummy minimal 4 angka untuk demonstrasi.');
-          return;
-        }
+        if (normalizedNumber.length < 4) { showToast('Masukkan nomor pembayar dummy minimal 4 angka.'); return; }
+        const details = createDemoPaymentInstructions(methodKey, payment);
         button.disabled = true;
-        button.textContent = 'Memproses pembayaran…';
+        button.textContent = 'Membuat instruksi pembayaran…';
         try {
-          let localPaymentRecord = localRecord || findBoothDemoRecord(requestRow.id);
-          if (payment.isLocalDemo || requestRow.isLocalDemo || localPaymentRecord) {
-            if (!localPaymentRecord) throw new Error('Data simulasi lokal tidak ditemukan.');
-            upsertBoothDemoRecord({ ...localPaymentRecord, paymentStatus:'demo_paid', paymentMethod:methodKey,
-              payerReference, payerName, paymentPaidAt:new Date().toISOString() });
-          } else {
-            const { data, error } = await linkedSupabase.from('payment_transactions')
-              .update({ status:'demo_paid', payment_method:methodKey, payer_reference:payerReference,
-                paid_at:new Date().toISOString() })
-              .eq('id', payment.id).eq('learner_id', window.linkedCurrentUserId)
-              .eq('status','pending').eq('is_demo',true)
-              .select('id,status').maybeSingle();
-            if (error) throw error;
-            if (!data || data.status !== 'demo_paid') throw new Error('Status transaksi tidak berubah.');
-          }
-          activeDemoCheckout = null;
-          openDemoPaymentSuccess(requestRow, { ...payment, status:'demo_paid', payment_method:methodKey,
-            payer_reference:payerReference, paid_at:new Date().toISOString(), is_demo:true,
-            local_demo:Boolean(payment.isLocalDemo || requestRow.isLocalDemo || localPaymentRecord) }, methodLabel, payerReference);
+          await saveDemoPaymentInitiated(methodKey, payerReference, payerName, details);
+          if (methodSelect) methodSelect.disabled = true;
+          const payerInput = document.getElementById('demo-payer-reference'); if (payerInput) payerInput.disabled = true;
+          const nameInput = document.getElementById('demo-payer-name'); if (nameInput) nameInput.disabled = true;
+          button.textContent = 'Instruksi pembayaran dibuat';
+          renderDemoPaymentStatus('pending','Instruksi berhasil dibuat. Selesaikan pembayaran pada kanal yang dipilih (simulasi), lalu cek status transaksi.');
+          showToast('Instruksi pembayaran demo berhasil dibuat.');
         } catch (error) {
-          console.error('LINKED: shared demo payment update failed; saving same-browser demo instead:', error);
-          try {
-            const fallback = localPaymentRecord || (state.requests || []).find(item => item.id === requestRow.id);
-            if (!fallback && !localRecord) throw error;
-            const model = localRecord || (fallback && fallback.id ? {
-              id:`booth-${fallback.id}`, databaseRequestId:fallback.id, learnerId:fallback.learnerId, learnerName:fallback.learner,
-              mentorId:fallback.mentorId, mentorName:fallback.mentorName, subjectId:fallback.subjectId,
-              subjectName:fallback.subject, topic:fallback.topic, objective:fallback.objective,
-              learningType:fallback.type === 'Full Course' ? 'full_course' : 'single_session',
-              date:fallback.date, time:fallback.time, durationMinutes:fallback.durationMinutes || 90,
-              mode:String(fallback.mode || 'Online').toLowerCase(), location:fallback.location, notes:fallback.notes,
-              priceAmount:fallback.priceAmount || Number(payment.amount || requestRow.price_amount || 0),
-              currency:fallback.currency || 'IDR', createdAt:fallback.createdAt || new Date().toISOString(),
-              status:fallback.status || 'pending', paymentId:`local-payment-${requestRow.id}`
-            } : {
-              id:`booth-${requestRow.id}`, databaseRequestId:requestRow.id, learnerId:requestRow.learner_id, learnerName:(state.user && state.user.name) || 'Learner demo',
-              mentorId:requestRow.mentor_id, mentorName:'Mentor', subjectName:'Mata kuliah', topic:requestRow.topic,
-              objective:'Tujuan belajar disimpan dari request', learningType:requestRow.learning_type,
-              date:requestRow.preferred_date, time:requestRow.preferred_time, durationMinutes:90,
-              mode:'online', location:'Akan disepakati setelah request diterima', priceAmount:Number(payment.amount || requestRow.price_amount || 0),
-              currency:'IDR', createdAt:new Date().toISOString(), status:'pending', paymentId:`local-payment-${requestRow.id}`
-            });
-            upsertBoothDemoRecord({ ...model, paymentStatus:'demo_paid', paymentMethod:methodKey,
-              payerReference, payerName, paymentPaidAt:new Date().toISOString(), isDemo:true });
-            activeDemoCheckout = null;
-            openDemoPaymentSuccess(requestRow, { ...payment, status:'demo_paid', is_demo:true, local_demo:true }, methodLabel, payerReference);
-          } catch (fallbackError) {
-            console.error('LINKED: local booth payment fallback failed:', fallbackError);
-            showToast(error && error.message ? `Pembayaran belum berhasil: ${error.message}` : 'Pembayaran simulasi belum berhasil.');
-            button.disabled = false;
-            button.textContent = `Pay Now · ${formatLinkedCurrency(payment.amount || requestRow.price_amount || 0, payment.currency || 'IDR')}`;
-          }
+          console.error('LINKED: cannot initiate demo payment:', error);
+          button.disabled = false;
+          button.textContent = `Pay Now · ${formatLinkedCurrency(payment.amount || requestRow.price_amount || 0, payment.currency || 'IDR')}`;
+          showToast(`Instruksi pembayaran belum tersimpan: ${error.message || 'coba lagi.'}`);
         }
       });
     }
