@@ -3952,6 +3952,39 @@
     @media(prefers-reduced-motion:reduce) { html:focus-within { scroll-behavior:auto; } }
   </style>
 
+
+  <style id="linked-milestone-dark-mode-contrast">
+    /* Improve mentor achievement cards in dark mode without changing light mode or layout. */
+    html[data-theme="dark"] .milestone-card {
+      background: #1C3048 !important;
+      border-color: #3A5069 !important;
+      color: #F4F6F0 !important;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, .16);
+    }
+    html[data-theme="dark"] .milestone-title {
+      color: #F4F6F0 !important;
+    }
+    html[data-theme="dark"] .milestone-desc {
+      color: #C0CDDC !important;
+    }
+    html[data-theme="dark"] .milestone-status {
+      background: #493918 !important;
+      color: #FFD477 !important;
+    }
+    html[data-theme="dark"] .milestone-card.achieved .milestone-status {
+      background: #16483F !important;
+      color: #8DE8C9 !important;
+    }
+    html[data-theme="dark"] .milestone-card .milestone-mark {
+      background: #493918 !important;
+      color: #FFD477 !important;
+    }
+    html[data-theme="dark"] .milestone-card.achieved .milestone-mark {
+      background: #16483F !important;
+      color: #8DE8C9 !important;
+    }
+  </style>
+
 </head>
 
 <body>
