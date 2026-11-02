@@ -3995,6 +3995,31 @@
       background: #16483F !important;
       color: #8DE8C9 !important;
     }
+
+    /* LINKED demo checkout and mentor payment summary */
+    .linked-payment-summary { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin:12px 0; }
+    .linked-payment-stat { border:1px solid var(--line); border-radius:13px; padding:13px; background:var(--white); }
+    .linked-payment-stat span { display:block; color:var(--muted); font-size:10px; font-weight:700; }
+    .linked-payment-stat strong { display:block; color:var(--ink); font-size:18px; margin-top:7px; }
+    .linked-payment-row { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; padding:12px 0; border-bottom:1px solid var(--line); }
+    .linked-payment-row:last-child { border-bottom:0; }
+    .linked-payment-method { display:flex; align-items:center; gap:9px; border:1px solid var(--line); border-radius:12px; padding:12px; background:var(--white); }
+    .linked-payment-method input { accent-color:var(--green); }
+    .linked-checkout-layout { display:grid; grid-template-columns:minmax(0,1.2fr) minmax(280px,.8fr); gap:16px; align-items:start; }
+    #linked-demo-checkout-form .form-group { min-width:0; }
+    #linked-demo-checkout-form .select, #linked-demo-checkout-form .input { min-height:44px; }
+    @media(max-width:760px) { .linked-checkout-layout { grid-template-columns:1fr; } }
+    #linked-demo-checkout-form .modal-actions { position:sticky; bottom:0; background:var(--white); padding-top:12px; }
+    .linked-payment-amount { font-size:28px; font-weight:900; letter-spacing:-.04em; color:var(--ink); }
+    .linked-demo-watermark { border:1px dashed #d79c36; background:#fff7e5; color:#7b4f0a; border-radius:11px; padding:11px 12px; font-size:11px; line-height:1.6; }
+    html[data-theme="dark"] .linked-payment-stat { background:#14263d; border-color:#30435c; }
+    html[data-theme="dark"] .linked-payment-stat span { color:#b5c4d7; }
+    html[data-theme="dark"] .linked-payment-stat strong { color:#f3f7fc; }
+    html[data-theme="dark"] .linked-payment-row { border-color:#30435c; }
+    html[data-theme="dark"] .linked-payment-method { background:#14263d; border-color:#30435c; color:#e8eff8; }
+    html[data-theme="dark"] .linked-payment-amount { color:#f3f7fc; }
+    html[data-theme="dark"] .linked-demo-watermark { background:#2d281c; border-color:#7b6330; color:#f6d992; }
+    @media(max-width:620px) { .linked-payment-summary { grid-template-columns:1fr; } .linked-payment-row { flex-direction:column; } }
   </style>
 
 </head>
@@ -4210,6 +4235,9 @@
     let databaseRequestsError = '';
     let databaseRequestsLoadPromise = null;
     let databaseRequestsUserId = null;
+    let databaseRequestsRole = null;
+    let activeDemoCheckout = null;
+    let mentorIncomeData = { userId: null, loaded: false, loading: false, error: '', items: [] };
     const databaseRequestActionInFlight = new Set();
     let databaseCoursesLoaded = false;
     let databaseCoursesLoading = false;
@@ -4574,6 +4602,8 @@
         verified: row.verification_status === 'approved',
         mode,
         availability: row.availability_notes || 'Belum dicantumkan',
+        singleSessionRatePerHour: Number(row.single_session_rate_per_hour || 50000),
+        fullCoursePrice: Number(row.full_course_price || 250000),
         bio: row.teaching_bio || 'Mentor ini belum menambahkan deskripsi.',
         history: '',
         hours: '',
@@ -4601,6 +4631,8 @@
               teaching_bio,
               teaching_experience,
               availability_notes,
+              single_session_rate_per_hour,
+              full_course_price,
               online_available,
               offline_available,
               profile:profiles!mentor_profiles_user_id_fkey (
@@ -4638,6 +4670,12 @@
       return databaseMentorLoadPromise;
     }
 
+    function formatLinkedCurrency(amount, currency = 'IDR') {
+      const numeric = Number(amount || 0);
+      try { return new Intl.NumberFormat('id-ID', { style: 'currency', currency, maximumFractionDigits: 0 }).format(numeric); }
+      catch (_) { return 'Rp' + Math.round(numeric).toLocaleString('id-ID'); }
+    }
+
     function mapDatabaseRequest(row) {
       const learnerProfile = row.learner || {};
       const mentorProfile = row.mentor_profile || {};
@@ -4671,22 +4709,104 @@
         location: row.location_or_link || '',
         notes: row.additional_notes || '',
         status: row.status,
+        paymentStatus: row.payment_status || 'not_required',
+        priceAmount: Number(row.price_amount || 0),
+        currency: row.currency || 'IDR',
         mentorResponseNote: row.mentor_response_note || '',
         createdAt: row.created_at,
         demo: false
       };
     }
 
+    const LINKED_BOOTH_DEMO_STORAGE_KEY = 'linked-booth-demo-requests-v2';
+    function readBoothDemoRecords() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(LINKED_BOOTH_DEMO_STORAGE_KEY) || '[]');
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (error) {
+        console.warn('LINKED: could not read local booth demo records:', error);
+        return [];
+      }
+    }
+    function writeBoothDemoRecords(records) {
+      try {
+        localStorage.setItem(LINKED_BOOTH_DEMO_STORAGE_KEY, JSON.stringify(records));
+        return true;
+      } catch (error) {
+        console.error('LINKED: could not save local booth demo records:', error);
+        return false;
+      }
+    }
+    function upsertBoothDemoRecord(record) {
+      const records = readBoothDemoRecords();
+      const index = records.findIndex(item => item.id === record.id);
+      if (index >= 0) records[index] = { ...records[index], ...record };
+      else records.unshift(record);
+      if (!writeBoothDemoRecords(records)) throw new Error('Penyimpanan demo browser tidak tersedia. Coba gunakan browser biasa, bukan mode privat.');
+      return record;
+    }
+    function patchBoothDemoRecord(id, patch) {
+      const records = readBoothDemoRecords();
+      const index = records.findIndex(item => item.id === id);
+      if (index < 0) return null;
+      records[index] = { ...records[index], ...patch, updatedAt: new Date().toISOString() };
+      if (!writeBoothDemoRecords(records)) throw new Error('Perubahan data demo tidak dapat disimpan di browser ini.');
+      return records[index];
+    }
+    function findBoothDemoRecord(id) {
+      return readBoothDemoRecords().find(item => item.id === id) || null;
+    }
+    function mapBoothDemoRecord(row) {
+      const duration = Number(row.durationMinutes || row.duration_minutes || 90);
+      return {
+        id: row.id, source: 'booth-demo', learnerId: row.learnerId, learner: row.learnerName || 'Learner demo',
+        learnerInitials: initials(row.learnerName || 'Learner demo'), mentorId: row.mentorId,
+        mentorName: row.mentorName || 'Mentor', mentorInitials: initials(row.mentorName || 'Mentor'),
+        subjectId: row.subjectId || '', subject: row.subjectName || 'Mata kuliah', topic: row.topic || '',
+        objective: row.objective || '', currentUnderstanding: '', type: row.learningType === 'full_course' ? 'Full Course' : 'Single Session',
+        week: row.learningType === 'full_course' ? 'Learning plan to be agreed' : '', date: row.date || row.preferredDate,
+        time: String(row.time || row.preferredTime || '').slice(0,5), duration: `${duration} menit`, durationMinutes: duration,
+        mode: row.mode === 'offline' ? 'Offline' : 'Online', location: row.location || row.locationOrLink || '', notes: row.notes || '',
+        status: row.status || 'pending', paymentStatus: row.paymentStatus || 'demo_pending',
+        priceAmount: Number(row.priceAmount || 0), currency: row.currency || 'IDR',
+        mentorResponseNote: row.mentorResponseNote || '', createdAt: row.createdAt || new Date().toISOString(),
+        demo: true, paymentMethod: row.paymentMethod || '', payerReference: row.payerReference || ''
+      };
+    }
+    function getBoothDemoModelsForUser(userId, role) {
+      if (!userId) return [];
+      return readBoothDemoRecords()
+        .filter(row => role === 'mentor' ? row.mentorId === userId : row.learnerId === userId)
+        .map(mapBoothDemoRecord);
+    }
+    function mergeBoothDemoRequests(databaseRows, userId, role) {
+      const localRecords = readBoothDemoRecords().filter(row => role === 'mentor' ? row.mentorId === userId : row.learnerId === userId);
+      const supersededDatabaseIds = new Set(localRecords.map(row => row.databaseRequestId).filter(Boolean));
+      const merged = (databaseRows || []).filter(row => !supersededDatabaseIds.has(row.id));
+      const seen = new Set(merged.map(row => row.id));
+      localRecords.map(mapBoothDemoRecord).forEach(row => { if (!seen.has(row.id)) merged.push(row); });
+      return merged;
+    }
+    function buildLocalBoothDemoRecord(data) {
+      return {
+        ...data, paymentStatus: 'demo_pending', paymentMethod: '', payerReference: '',
+        paymentId: `demo-payment-${data.id}`, paymentStatus: 'demo_pending',
+        paymentPaidAt: null, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+        status: 'pending', isDemo: true
+      };
+    }
+
     function loadDatabaseRequests(force = false) {
       const userId = window.linkedCurrentUserId;
       if (!userId) return Promise.resolve([]);
-      if (!force && databaseRequestsLoaded && databaseRequestsUserId === userId) {
-        return Promise.resolve(state.requests.filter(request => request.source === 'database'));
+      if (!force && databaseRequestsLoaded && databaseRequestsUserId === userId && databaseRequestsRole === state.role) {
+        return Promise.resolve(state.requests.filter(request => request.source === 'database' || request.source === 'booth-demo'));
       }
-      if (databaseRequestsLoadPromise && databaseRequestsUserId === userId) return databaseRequestsLoadPromise;
+      if (databaseRequestsLoadPromise && databaseRequestsUserId === userId && databaseRequestsRole === state.role) return databaseRequestsLoadPromise;
       databaseRequestsLoading = true;
       databaseRequestsError = '';
       databaseRequestsUserId = userId;
+      databaseRequestsRole = state.role;
       databaseRequestsLoadPromise = (async () => {
         try {
           const { data, error } = await linkedSupabase
@@ -4695,7 +4815,7 @@
               id, learner_id, mentor_id, subject_id, topic, learning_objective,
               current_understanding, learning_type, requested_week, preferred_date,
               preferred_time, duration_minutes, mode, location_or_link,
-              additional_notes, status, mentor_response_note, created_at, updated_at,
+              additional_notes, status, payment_status, price_amount, currency, mentor_response_note, created_at, updated_at,
               learner:profiles!learning_requests_learner_id_fkey (id, full_name),
               subject:subjects!learning_requests_subject_id_fkey (id, name),
               mentor_profile:mentor_profiles!learning_requests_mentor_id_fkey (
@@ -4705,10 +4825,14 @@
             `)
             .order('created_at', { ascending: false });
           if (error) throw error;
-          const participantRows = (data || []).filter(row =>
-            state.role === 'mentor' ? row.mentor_id === userId : row.learner_id === userId
-          );
-          state.requests = participantRows.map(mapDatabaseRequest);
+          const participantRows = (data || []).filter(row => {
+            if (state.role === 'mentor') {
+              const paymentReady = !['demo_pending', 'pending'].includes(row.payment_status || 'not_required');
+              return row.mentor_id === userId && paymentReady;
+            }
+            return row.learner_id === userId;
+          });
+          state.requests = mergeBoothDemoRequests(participantRows.map(mapDatabaseRequest), userId, state.role);
           const persistedRequests = state.requests.filter(request => request.source === 'database' && ['confirmed', 'completed', 'reviewed', 'cancelled'].includes(request.status));
           const requestIds = persistedRequests.map(request => request.id);
           if (requestIds.length) {
@@ -4764,8 +4888,12 @@
           return state.requests;
         } catch (error) {
           databaseRequestsError = error && error.message ? error.message : 'Permintaan belajar belum berhasil dimuat.';
-          state.requests = [];
-          console.error('LINKED: failed to load learning requests:', error);
+          state.requests = getBoothDemoModelsForUser(userId, state.role);
+          console.error('LINKED: failed to load learning requests; showing browser-local booth demo records:', error);
+          if (state.requests.length) {
+            databaseRequestsLoaded = true;
+            return state.requests;
+          }
           throw error;
         } finally {
           databaseRequestsLoading = false;
@@ -4950,6 +5078,7 @@
     }
 
     function canOpenPage(destination) {
+      if (destination === 'payment-checkout') return state.role === 'learner' && Boolean(activeDemoCheckout);
       if (destination === 'admin') return Boolean(linkedAdminAccess.isAdmin);
       if (state.role === 'mentor' && ['mentors', 'learning'].includes(destination)) return false;
       if (state.role === 'learner' && destination === 'mentor-tools') return false;
@@ -5154,6 +5283,7 @@
       if (window.linkedCurrentUserId) {
         state.requests = [];
         databaseRequestsLoaded = false;
+        databaseRequestsRole = null;
         databaseRequestsLoadPromise = null;
       }
       saveState();
@@ -5712,7 +5842,8 @@
         admin: 'Admin',
         opportunities: 'Opportunities',
         settings: 'Pengaturan akun',
-        support: 'Bantuan & masukan'
+        support: 'Bantuan & masukan',
+        'payment-checkout': 'Checkout pembayaran'
       };
       document.getElementById('breadcrumb').textContent = names[page] ||
         'Overview';
@@ -5726,16 +5857,49 @@
         admin: renderAdminDashboard,
         opportunities: renderOpportunities,
         settings: renderAccountSettings,
-        support: renderSupportCenter
+        support: renderSupportCenter,
+        'payment-checkout': renderDemoCheckoutPage
       };
       el.innerHTML = (renderers[page] || renderOverview)();
       wirePage();
     }
 
+    function renderDemoCheckoutPage() {
+      if (!activeDemoCheckout) return '<div class="empty"><strong>Checkout tidak tersedia</strong>Pilih atau lanjutkan pembayaran dari Learning Requests.</div>';
+      const { requestRow, payment } = activeDemoCheckout;
+      const total = Number(payment.amount || requestRow.price_amount || 0);
+      const methodOptions = [
+        ['qris','QRIS'], ['va_bca','Virtual Account · BCA'], ['va_mandiri','Virtual Account · Mandiri'],
+        ['va_bni','Virtual Account · BNI'], ['va_bri','Virtual Account · BRI'], ['va_permata','Virtual Account · Permata'],
+        ['gopay','GoPay'], ['ovo','OVO'], ['dana','DANA'], ['shopeepay','ShopeePay'],
+        ['alfamart','Gerai · Alfamart'], ['indomaret','Gerai · Indomaret']
+      ];
+      const methodOptionsHtml = `<optgroup label="QRIS"><option value="qris">QRIS</option></optgroup><optgroup label="Virtual Account">${methodOptions.slice(1,6).map(([value,label])=>`<option value="${value}">${label}</option>`).join('')}</optgroup><optgroup label="E-wallet">${methodOptions.slice(6,10).map(([value,label])=>`<option value="${value}">${label}</option>`).join('')}</optgroup><optgroup label="Gerai retail">${methodOptions.slice(10).map(([value,label])=>`<option value="${value}">${label}</option>`).join('')}</optgroup>`;
+      const date = requestRow.preferred_date || requestRow.date || '';
+      const time = String(requestRow.preferred_time || requestRow.time || '').slice(0,5);
+      return `<div class="page-head"><div><div class="eyebrow">CHECKOUT · LANGKAH TERAKHIR</div><h1>Pembayaran</h1><p>Selesaikan simulasi pembayaran untuk meneruskan learning request kepada mentor.</p></div><button type="button" class="btn btn-ghost" id="demo-checkout-back">← Kembali</button></div>
+        <div class="linked-checkout-layout">
+          <section class="panel">
+            <div class="section-head"><div><h3>Metode pembayaran</h3><p>Pilih kanal pembayaran yang ingin kamu demonstrasikan.</p></div><span class="chip amber">DEMO</span></div>
+            <div class="linked-demo-watermark"><strong>SIMULASI DEMO BOOTH</strong><br>Nomor pembayaran boleh menggunakan angka dummy. Tidak ada QRIS aktif, OTP, transfer, atau dana yang dipindahkan.</div>
+            <form id="linked-demo-checkout-form" style="margin-top:18px">
+              <div class="form-grid">
+                <div class="form-group full"><label for="demo-payment-method">Pilih metode pembayaran</label><select class="select" id="demo-payment-method" name="method" required>${methodOptionsHtml}</select><div class="form-hint">QRIS, Virtual Account bank, e-wallet, dan gerai retail tersedia untuk demonstrasi.</div></div>
+                <div class="form-group full"><label for="demo-payer-reference">Nomor HP / nomor referensi pembayaran</label><input class="input" id="demo-payer-reference" name="payerReference" type="tel" inputmode="numeric" autocomplete="off" minlength="4" maxlength="24" pattern="[0-9+() .-]{4,24}" placeholder="Contoh: 081234567890" required/><div class="form-hint">Masukkan minimal 4 angka bebas. Gunakan nomor dummy, bukan data pribadi.</div></div>
+                <div class="form-group full"><label for="demo-payer-name">Nama pembayar</label><input class="input" id="demo-payer-name" name="payerName" maxlength="80" placeholder="Contoh: Andi Pratama"/></div>
+              </div>
+              <div class="notice" style="margin-top:16px">Setelah menekan <strong>Pay Now</strong>, LINKED akan menampilkan halaman sukses demo dan meneruskan request ke mentor.</div>
+              <div class="modal-actions" style="margin-top:18px"><button type="button" class="btn btn-ghost" id="demo-checkout-cancel">Nanti</button><button type="submit" class="btn btn-primary" id="confirm-demo-payment">Pay Now · ${formatLinkedCurrency(total, payment.currency || 'IDR')}</button></div>
+            </form>
+          </section>
+          <aside class="panel"><div class="eyebrow">RINGKASAN PESANAN</div><h3 style="margin:8px 0 14px">${esc(requestRow.topic || 'Sesi belajar')}</h3><div class="linked-payment-row"><span class="list-meta">Jenis belajar</span><strong>${requestRow.learning_type === 'full_course' ? 'Full Course' : 'Single Session'}</strong></div><div class="linked-payment-row"><span class="list-meta">Jadwal pilihan</span><strong>${esc(date)} · ${esc(time)}</strong></div><div class="linked-payment-row"><span class="list-meta">Biaya layanan pilot</span><strong>Rp0</strong></div><div style="padding:18px 0 6px"><div class="list-meta">Total pembayaran</div><div class="linked-payment-amount">${formatLinkedCurrency(total, payment.currency || requestRow.currency || 'IDR')}</div></div><div class="divider"></div><div class="list-meta">Pembayaran simulasi ini hanya untuk alur demonstrasi LINKED. Status yang berhasil tidak mewakili transfer atau pencairan uang.</div></aside>
+        </div>`;
+    }
+
     function renderOverview() {
       const isMentor = state.role === 'mentor';
       const liveAccount = Boolean(window.linkedCurrentUserId);
-      const visibleRequests = liveAccount ? (state.requests || []).filter(r => r.source === 'database') : (state.requests || []);
+      const visibleRequests = liveAccount ? (state.requests || []).filter(r => r.source === 'database' || r.source === 'booth-demo') : (state.requests || []);
       const visibleCourses = liveAccount ? (state.courses || []).filter(c => c.source === 'database') : (state.courses || []);
       const activeUser = displayUser();
       const course = visibleCourses[0],
@@ -6005,18 +6169,19 @@
     function renderRequests() {
       const isMentor = state.role === 'mentor';
       const activeTab = isMentor ? 'incoming' : 'sent';
+      const hasBoothDemoRequests = (state.requests || []).some(request => request.source === 'booth-demo');
       const requestContent = window.linkedCurrentUserId && databaseRequestsLoading && !databaseRequestsLoaded
         ? '<div class="empty"><strong>Memuat learning request…</strong>Menyiapkan permintaan belajar untuk akun ini.</div>'
-        : databaseRequestsError
-          ? `<div class="empty"><strong>Learning request belum berhasil dimuat</strong>Terjadi kendala saat memuat permintaan. Silakan coba lagi.<div style="margin-top:12px"><button class="btn btn-primary btn-sm" data-action="reload-database-requests">Coba lagi</button></div></div>`
-          : renderRequestTab(activeTab);
+        : databaseRequestsError && !hasBoothDemoRequests
+          ? `<div class="empty"><strong>Learning request belum berhasil dimuat</strong>Database tidak merespons. Kamu tetap bisa memakai simulasi booth lokal bila request dibuat dari browser ini.<div style="margin-top:12px"><button class="btn btn-primary btn-sm" data-action="reload-database-requests">Coba lagi</button></div></div>`
+          : `${databaseRequestsError && hasBoothDemoRequests ? '<div class="linked-demo-watermark" style="margin-bottom:12px">Sebagian data request ini tersimpan sebagai simulasi lokal pada browser booth, bukan di database bersama.</div>' : ''}${renderRequestTab(activeTab)}`;
       return `<div class="page-head"><div><div class="eyebrow">LEARNING REQUESTS</div><h1>${isMentor?'Kelola permintaan belajar':'Request dan jadwalmu'}</h1><p>${isMentor?'Tinjau kebutuhan learner dan konfirmasi jadwal yang bisa kamu penuhi':'Ikuti status permintaan dan konfirmasi jadwal belajar'}</p></div>${!isMentor?`<button class="btn btn-primary" data-page-jump="mentors">+ Request mentor</button>`:''}</div><div class="page-tabs"><button class="tab-btn active" data-request-tab="${activeTab}">${isMentor?'Masuk':'Request saya'}</button><button class="tab-btn" data-request-tab="confirmed">Dikonfirmasi</button><button class="tab-btn" data-request-tab="completed">Selesai</button><button class="tab-btn" data-request-tab="all">Semua</button></div><div id="request-list">${requestContent}</div><div class="footer-note">Permintaan belajar hanya terlihat oleh learner yang mengajukan dan mentor yang dipilih. Catatan sesi, ulasan, dan jadwal ditampilkan sesuai data akun.</div>`
     }
 
     function renderRequestTab(tab) {
       let arr = state.requests;
       if (tab === 'incoming') arr = arr.filter(r => r.status === 'pending');
-      else if (tab === 'sent') arr = arr.filter(r => r.source === 'database' ? r.learnerId === window.linkedCurrentUserId : (r.learner === state.user.name || r.demo));
+      else if (tab === 'sent') arr = arr.filter(r => r.source === 'database' || r.source === 'booth-demo' ? r.learnerId === window.linkedCurrentUserId : r.learner === state.user.name);
       else if (tab === 'confirmed') arr = arr.filter(r => r.status === 'confirmed');
       else if (tab === 'completed') arr = arr.filter(r => ['completed', 'reviewed'].includes(r.status));
       return arr.length ? arr.map(r => requestRow(r, { mentorView: state.role === 'mentor' })).join('') :
@@ -6041,7 +6206,9 @@
         } else if (opts.mentorView && r.status === 'pending') {
           actions = `<button class="btn btn-primary btn-sm" data-action="accept-request" data-id="${esc(r.id)}">Terima request</button><button class="btn btn-danger btn-sm" data-action="reject-request" data-id="${esc(r.id)}">Tolak</button>`;
         } else if (!opts.mentorView && r.status === 'pending') {
-          actions = `<button class="btn btn-ghost btn-sm" data-action="cancel-request" data-id="${esc(r.id)}">Batalkan</button>`;
+          actions = r.paymentStatus === 'demo_pending'
+            ? `<button class="btn btn-primary btn-sm" data-action="resume-demo-payment" data-id="${esc(r.id)}">Lanjutkan pembayaran</button><button class="btn btn-ghost btn-sm" data-action="cancel-request" data-id="${esc(r.id)}">Batalkan</button>`
+            : `<button class="btn btn-ghost btn-sm" data-action="cancel-request" data-id="${esc(r.id)}">Batalkan</button>`;
         } else if (r.type === 'Full Course' && ['confirmed','completed','reviewed'].includes(r.status)) {
           actions = `<button class="btn btn-soft btn-sm" data-action="open-request-course" data-id="${esc(r.id)}">${opts.mentorView ? 'Kelola learning plan & sesi' : 'Lihat learning plan & sesi'}</button><span class="list-meta">Jadwal dan catatan setiap sesi dikelola terpisah dari progres modul.</span>`;
         } else if (r.status === 'confirmed') {
@@ -6059,10 +6226,12 @@
       else if (opts.mentorView && r.status === 'confirmed' && r.type === 'Full Course') actions = `<button class="btn btn-soft btn-sm" data-action="open-request-course" data-id="${esc(r.id)}">Kelola learning plan</button>`;
       else if (opts.mentorView && r.status === 'confirmed') actions = `<button class="btn btn-soft btn-sm" data-action="complete-request" data-id="${esc(r.id)}">Tandai sesi selesai</button>`;
       else if (r.status === 'completed' && !state.reviews.some(v => v.requestId === r.id)) actions = `<button class="btn btn-soft btn-sm" data-action="leave-review" data-id="${esc(r.id)}">Beri ulasan</button>`;
-      else if (r.status === 'pending' && !opts.mentorView) actions = `<button class="btn btn-ghost btn-sm" data-action="cancel-request" data-id="${esc(r.id)}">Batalkan</button>`;
+      else if (r.status === 'pending' && !opts.mentorView) actions = r.paymentStatus === 'demo_pending'
+        ? `<button class="btn btn-primary btn-sm" data-action="resume-demo-payment" data-id="${esc(r.id)}">Lanjutkan pembayaran</button><button class="btn btn-ghost btn-sm" data-action="cancel-request" data-id="${esc(r.id)}">Batalkan</button>`
+        : `<button class="btn btn-ghost btn-sm" data-action="cancel-request" data-id="${esc(r.id)}">Batalkan</button>`;
       const avatarText = opts.mentorView ? (r.learnerInitials || initials(r.learner)) : mentorInitials;
       const metaName = opts.mentorView ? `Learner: ${esc(r.learner)}` : `Mentor: ${esc(mentorName)}`;
-      return `<div class="list-card"><div class="mentor-avatar ${mentorColor}">${esc(avatarText)}</div><div class="list-card-body"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap"><h3 class="list-title">${esc(r.topic)} <span style="font-weight:500;color:#8290a3">· ${esc(r.subject)}</span></h3>${statusHtml(r.status)}</div><div class="list-meta">${metaName}<br>${esc(r.type)} · ${formatDate(r.date)} pukul ${esc(r.time)} · ${esc(r.duration)}<br>${esc(r.mode)}${r.location?' · '+esc(r.location):''}<br><span style="color:#536681">Tujuan:</span> ${esc(r.objective)}${r.sessionSummary ? '<br><span style="color:#536681">Catatan sesi:</span> ' + esc(r.sessionSummary.slice(0,180)) : ''}</div><div class="list-actions">${actions}</div></div></div>`;
+      return `<div class="list-card"><div class="mentor-avatar ${mentorColor}">${esc(avatarText)}</div><div class="list-card-body"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap"><h3 class="list-title">${esc(r.topic)} <span style="font-weight:500;color:#8290a3">· ${esc(r.subject)}</span></h3><span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${r.source === 'booth-demo' ? '<span class="chip amber">DEMO BROWSER</span>' : ''}${statusHtml(r.status)}</span></div><div class="list-meta">${metaName}<br>${esc(r.type)} · ${formatDate(r.date)} pukul ${esc(r.time)} · ${esc(r.duration)}<br>${esc(r.mode)}${r.location?' · '+esc(r.location):''}${r.priceAmount ? `<br><strong>Harga:</strong> ${formatLinkedCurrency(r.priceAmount, r.currency)} · ${r.paymentStatus === 'demo_paid' ? 'Pembayaran simulasi selesai' : r.paymentStatus === 'paid' ? 'Pembayaran terverifikasi' : r.paymentStatus === 'demo_pending' ? 'Menunggu pembayaran' : r.paymentStatus === 'refunded' ? 'Pembayaran simulasi dikembalikan' : 'Pembayaran belum diwajibkan'}` : ''}<br><span style="color:#536681">Tujuan:</span> ${esc(r.objective)}${r.sessionSummary ? '<br><span style="color:#536681">Catatan sesi:</span> ' + esc(r.sessionSummary.slice(0,180)) : ''}</div><div class="list-actions">${actions}</div></div></div>`;
     }
 
     function scheduleStartMillis(dateValue, timeValue) {
@@ -6236,7 +6405,7 @@
 
           const [profileResult, subjectsResult] = await Promise.all([
             linkedSupabase.from('mentor_profiles')
-              .select('user_id, verification_status, teaching_bio, teaching_experience, availability_notes, online_available, offline_available, is_active, created_at, updated_at')
+              .select('user_id, verification_status, teaching_bio, teaching_experience, availability_notes, single_session_rate_per_hour, full_course_price, online_available, offline_available, is_active, created_at, updated_at')
               .eq('user_id', userId).maybeSingle(),
             linkedSupabase.from('subjects').select('id, name, category').order('name')
           ]);
@@ -6244,6 +6413,20 @@
           if (subjectsResult.error) throw subjectsResult.error;
           mentorWorkspaceProfile = profileResult.data || null;
           mentorWorkspaceSubjects = subjectsResult.data || [];
+
+          mentorIncomeData = { userId, loaded: false, loading: true, error: '', items: [] };
+          try {
+            const { data: paymentRows, error: paymentError } = await linkedSupabase
+              .from('payment_transactions')
+              .select('id, learning_request_id, amount, currency, service_fee_amount, mentor_amount, status, is_demo, paid_at, created_at, learner:profiles!payment_transactions_learner_id_fkey(full_name)')
+              .eq('mentor_id', userId)
+              .order('created_at', { ascending: false });
+            if (paymentError) throw paymentError;
+            mentorIncomeData = { userId, loaded: true, loading: false, error: '', items: paymentRows || [] };
+          } catch (paymentLoadError) {
+            mentorIncomeData = { userId, loaded: false, loading: false, error: paymentLoadError.message || 'Riwayat pembayaran belum tersedia.', items: [] };
+            console.info('LINKED: payment history unavailable; apply payment migration to enable it.', paymentLoadError);
+          }
 
           if (mentorWorkspaceProfile) {
             const { data: expertiseData, error: expertiseError } = await linkedSupabase
@@ -6337,6 +6520,18 @@
         { title: 'Rating berkualitas', detail: 'Rating minimal 4,5 dari setidaknya 3 ulasan publik', achieved: mentorRatingValue !== null && mentorRatingValue >= 4.5 && mentorPublishedReviewCount >= 3, progress: mentorRatingUnavailable ? 'Memuat rating…' : `${mentorPublishedReviewCount}/3 ulasan · ${mentorRatingValue === null ? '—' : mentorRatingValue.toFixed(1) + '/5'}` }
       ];
       const mentorMilestonesMarkup = `<section class="panel mentor-milestones" aria-labelledby="mentor-milestones-title"><div class="section-head"><div><h3 id="mentor-milestones-title">Pencapaian mentor</h3><p>Apresiasi berdasarkan aktivitas nyata di akunmu. Tidak ada hadiah uang yang diproses di dalam pilot.</p></div></div><div class="milestone-grid">${milestoneSpecs.map((item, index) => `<article class="milestone-card ${item.achieved ? 'achieved' : ''}"><div class="milestone-mark" aria-hidden="true">${item.achieved ? '✓' : ['①','②','③','★'][index]}</div><div class="milestone-title">${esc(item.title)}</div><div class="milestone-desc">${esc(item.detail)}</div><div class="milestone-desc">${esc(item.progress)}</div><span class="milestone-status">${item.achieved ? 'Tercapai' : 'Dalam perjalanan'}</span></article>`).join('')}</div></section>`;
+      const sharedDemoIncomeRows = (mentorIncomeData.items || []).filter(item => item.is_demo === true && item.status === 'demo_paid');
+      const localDemoIncomeRows = readBoothDemoRecords().filter(item => item.mentorId === userId && item.paymentStatus === 'demo_paid').map(item => ({
+        id:item.paymentId || item.id, learning_request_id:item.id, amount:Number(item.priceAmount || 0), currency:item.currency || 'IDR',
+        service_fee_amount:0, mentor_amount:Number(item.priceAmount || 0), status:'demo_paid', is_demo:true,
+        paid_at:item.paymentPaidAt || item.updatedAt || item.createdAt, created_at:item.createdAt,
+        learner:{full_name:item.learnerName || 'Learner demo'}, local_demo:true
+      }));
+      const incomeIds = new Set(sharedDemoIncomeRows.map(item => item.learning_request_id || item.id));
+      const demoIncomeRows = [...sharedDemoIncomeRows, ...localDemoIncomeRows.filter(item => !incomeIds.has(item.learning_request_id))];
+      const demoIncomeTotal = demoIncomeRows.reduce((sum, item) => sum + Number(item.mentor_amount ?? (Number(item.amount || 0) - Number(item.service_fee_amount || 0))), 0);
+      const mentorIncomeMarkup = `<section class="panel" style="margin-bottom:18px"><div class="section-head"><div><h3>Pembayaran & pemasukan</h3><p>Riwayat transaksi yang terkait dengan sesi mentoring kamu.</p></div><span class="chip amber">MODE DEMO</span></div><div class="linked-demo-watermark">Selama demonstrasi booth, pembayaran di sini hanya simulasi. Tidak ada uang yang ditransfer atau dicairkan. Transaksi sungguhan membutuhkan payment gateway dan webhook terverifikasi.</div>${mentorIncomeData.error && !demoIncomeRows.length ? `<div class="empty" style="margin-top:12px"><strong>Riwayat pembayaran database belum tersedia</strong>Simulasi dari browser booth tetap akan tampil di bawah. Jalankan migration bila ingin transaksi tersimpan lintas perangkat.</div>` : mentorIncomeData.loading ? `<div class="empty" style="margin-top:12px">Memuat transaksi…</div>` : `<div class="linked-payment-summary"><div class="linked-payment-stat"><span>Total simulasi pemasukan</span><strong>${formatLinkedCurrency(demoIncomeTotal)}</strong></div><div class="linked-payment-stat"><span>Transaksi berhasil (demo)</span><strong>${demoIncomeRows.length}</strong></div><div class="linked-payment-stat"><span>Biaya layanan pilot</span><strong>0%</strong></div></div>${demoIncomeRows.length ? demoIncomeRows.slice(0,8).map(item => `<div class="linked-payment-row"><div><strong>${esc(item.learner && item.learner.full_name || 'Learner')}</strong><div class="list-meta">${item.is_demo ? 'Pembayaran demo' : 'Pembayaran terverifikasi'} · ${new Date(item.paid_at || item.created_at).toLocaleDateString('id-ID')}</div></div><div style="text-align:right"><strong>${formatLinkedCurrency(item.mentor_amount ?? item.amount, item.currency || 'IDR')}</strong><div class="list-meta">${item.status === 'demo_paid' ? 'Simulasi berhasil' : 'Terverifikasi'}</div></div></div>`).join('') : `<div class="empty"><strong>Belum ada pembayaran</strong>Transaksi yang selesai akan tercatat di bagian ini.</div>`}`}</section>`;
+
       const profileSummary = mentorWorkspaceProfile
         ? `<div class="profile-head"><div class="mentor-avatar">${esc(initials(userName))}</div><div><div class="profile-name">${esc(userName)}</div><div class="profile-role">${esc(currentProgram)}</div><div class="chips" style="margin-top:8px"><span class="${statusClass}">${esc(statusText)}</span></div></div></div><div class="notice" style="margin-top:16px">${mentorWorkspaceEditApproved ? 'Kamu sedang mengubah profil yang telah disetujui. Setelah disimpan, profil akan menunggu peninjauan ulang dan sementara tidak tampil di direktori.' : isApproved ? 'Profil kamu sudah disetujui dan dapat muncul di direktori selama tetap aktif.' : 'Profil belum muncul di Find a mentor sampai diverifikasi dan disetujui oleh pengelola.'}</div>`
         : `<div class="notice" style="margin-bottom:16px"><strong>Belum ada profil mentor.</strong> Isi formulir berikut untuk mengajukan profil. Profil tidak akan tampil di direktori sebelum disetujui.</div>`;
@@ -6347,7 +6542,7 @@
           const topicText = Array.isArray(x.topics) ? x.topics.join(', ') : '';
           return `<div class="list-card"><div class="list-card-body"><div class="list-title">${esc(sub ? sub.name : 'Mata kuliah')}</div><div class="list-meta">${esc(topicText || 'Topik belum dicantumkan')}</div></div></div>`;
         }).join('');
-        return `<div class="page-head"><div><div class="eyebrow">MENTOR WORKSPACE</div><h1>Profil mentor</h1><p>Profil yang tersimpan di akun kamu.</p></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="${statusClass}">${esc(statusText)}</span><button class="btn btn-primary btn-sm" data-action="edit-approved-mentor-profile">Ajukan perubahan profil</button></div></div>${mentorStatsMarkup}${mentorMilestonesMarkup}<div class="dash-grid"><section class="panel">${profileSummary}<div class="divider"></div><div class="form-group"><label>Tentang saya</label><p>${esc(p.teaching_bio || 'Belum dicantumkan')}</p></div><div class="form-group"><label>Pengalaman mengajar</label><p>${esc(p.teaching_experience || 'Belum dicantumkan')}</p></div><div class="form-group"><label>Ketersediaan</label><p>${esc(p.availability_notes || 'Belum dicantumkan')}</p></div><div class="form-group"><label>Mode belajar</label><div class="chips">${p.online_available?'<span class="chip blue">Online</span>':''}${p.offline_available?'<span class="chip blue">Offline</span>':''}</div></div><div class="form-group"><label>Mata kuliah dan topik</label>${nameList || '<div class="empty">Belum ada mata kuliah yang ditambahkan.</div>'}</div><div class="notice" style="margin-top:16px">Jika kamu mengajukan perubahan, profil akan ditinjau ulang dan sementara tidak tampil di direktori sampai disetujui kembali.</div></section><aside class="panel"><h3>Verifikasi mentor</h3><p class="list-meta" style="line-height:1.8">Status persetujuan ditentukan oleh pengelola. Profil hanya ditampilkan kepada learner setelah disetujui dan diaktifkan.</p></aside></div>`;
+        return `<div class="page-head"><div><div class="eyebrow">MENTOR WORKSPACE</div><h1>Profil mentor</h1><p>Profil yang tersimpan di akun kamu.</p></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="${statusClass}">${esc(statusText)}</span><button class="btn btn-primary btn-sm" data-action="edit-approved-mentor-profile">Ajukan perubahan profil</button></div></div>${mentorStatsMarkup}${mentorMilestonesMarkup}${mentorIncomeMarkup}<div class="dash-grid"><section class="panel">${profileSummary}<div class="divider"></div><div class="form-group"><label>Tentang saya</label><p>${esc(p.teaching_bio || 'Belum dicantumkan')}</p></div><div class="form-group"><label>Pengalaman mengajar</label><p>${esc(p.teaching_experience || 'Belum dicantumkan')}</p></div><div class="form-group"><label>Ketersediaan</label><p>${esc(p.availability_notes || 'Belum dicantumkan')}</p></div><div class="form-group"><label>Mode belajar</label><div class="chips">${p.online_available?'<span class="chip blue">Online</span>':''}${p.offline_available?'<span class="chip blue">Offline</span>':''}</div></div><div class="form-group"><label>Tarif belajar</label><p>Single Session: ${formatLinkedCurrency(p.single_session_rate_per_hour || 50000)} / 60 menit<br>Full Course: ${formatLinkedCurrency(p.full_course_price || 250000)} / paket</p></div><div class="form-group"><label>Mata kuliah dan topik</label>${nameList || '<div class="empty">Belum ada mata kuliah yang ditambahkan.</div>'}</div><div class="notice" style="margin-top:16px">Jika kamu mengajukan perubahan, profil akan ditinjau ulang dan sementara tidak tampil di direktori sampai disetujui kembali.</div></section><aside class="panel"><h3>Verifikasi mentor</h3><p class="list-meta" style="line-height:1.8">Status persetujuan ditentukan oleh pengelola. Profil hanya ditampilkan kepada learner setelah disetujui dan diaktifkan.</p></aside></div>`;
       }
 
       const subjectsHtml = mentorWorkspaceSubjects.length
@@ -6357,7 +6552,7 @@
             return `<div style="border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px"><label style="display:flex;align-items:center;gap:9px;font-weight:700;margin-bottom:9px"><input type="checkbox" name="subjectIds" value="${esc(subject.id)}" ${prior?'checked':''}/> ${esc(subject.name)}${subject.category ? `<span class="chip">${esc(subject.category)}</span>` : ''}</label><div class="form-group"><label for="topics-${esc(subject.id)}">Topik yang bisa diajarkan</label><input class="input" id="topics-${esc(subject.id)}" name="topics_${esc(subject.id)}" value="${esc(topics)}" placeholder="Pisahkan dengan koma, contoh: turunan, integral, limit" /></div></div>`;
           }).join('')
         : `<div class="notice"><strong>Daftar mata kuliah masih kosong.</strong> Jalankan SQL seed subjects yang diberikan untuk menambahkan daftar awal, lalu klik muat ulang.</div>`;
-      return `<div class="page-head"><div><div class="eyebrow">MENTOR WORKSPACE</div><h1>${mentorWorkspaceEditApproved ? 'Ajukan perubahan profil mentor' : mentorWorkspaceProfile ? 'Edit pendaftaran mentor' : 'Daftar sebagai mentor'}</h1><p>${mentorWorkspaceEditApproved ? 'Perubahan akan ditinjau ulang. Profil sementara tidak tampil di direktori sampai disetujui kembali.' : 'Lengkapi kompetensi dan ketersediaanmu. Hanya profil yang disetujui admin yang tampil di direktori.'}</p></div><span class="${statusClass}">${esc(statusText)}</span></div><div class="dash-grid"><section class="panel">${profileSummary}<form id="mentor-profile-form"><div class="form-group"><label for="mentor-bio">Tentang saya</label><textarea class="textarea" id="mentor-bio" name="teachingBio" rows="4" maxlength="1200" required placeholder="Ceritakan gaya mengajar, topik yang kamu kuasai, dan siapa yang bisa kamu bantu.">${esc(p.teaching_bio || '')}</textarea></div><div class="form-grid" style="margin-top:14px"><div class="form-group"><label for="mentor-experience">Pengalaman / bukti kompetensi</label><input class="input" id="mentor-experience" name="teachingExperience" value="${esc(p.teaching_experience || '')}" maxlength="500" placeholder="Contoh: pernah menjadi tutor teman sekelas" /></div><div class="form-group"><label for="mentor-availability">Ketersediaan</label><input class="input" id="mentor-availability" name="availabilityNotes" value="${esc(p.availability_notes || '')}" maxlength="300" placeholder="Contoh: Senin dan Rabu, 16.00–19.00" /></div></div><div class="form-group" style="margin-top:14px"><label>Mode pembelajaran yang tersedia</label><div class="chips"><label class="chip"><input type="checkbox" name="onlineAvailable" ${p.online_available !== false ? 'checked' : ''}/> Online</label><label class="chip"><input type="checkbox" name="offlineAvailable" ${p.offline_available ? 'checked' : ''}/> Offline</label></div></div><div class="divider"></div><div class="form-group"><label>Mata kuliah dan topik</label><p class="list-meta">Pilih setidaknya satu mata kuliah dan isi topik yang spesifik untuk setiap pilihan.</p>${subjectsHtml}</div><div class="modal-actions" style="justify-content:flex-start"><button class="btn btn-primary" type="submit" ${!mentorWorkspaceSubjects.length?'disabled':''}>${mentorWorkspaceProfile ? 'Simpan dan ajukan ulang' : 'Ajukan profil mentor'} ${icon('arrow',14)}</button></div><p class="list-meta" style="margin-top:12px">Pendaftaran akan berstatus menunggu verifikasi. Status persetujuan tidak dapat diubah oleh pemilik akun.</p></form></section><aside><section class="panel"><h3>Alur verifikasi</h3><div class="timeline"><div class="timeline-item"><div class="timeline-dot">1</div><div><div class="timeline-title">Lengkapi profil</div><div class="timeline-text">Tuliskan kompetensi yang benar-benar kamu kuasai dan topik yang bisa diajarkan.</div></div></div><div class="timeline-item"><div class="timeline-dot">2</div><div><div class="timeline-title">Admin meninjau</div><div class="timeline-text">Profil tetap tidak terlihat oleh learner selama menunggu persetujuan.</div></div></div><div class="timeline-item"><div class="timeline-dot">3</div><div><div class="timeline-title">Tampil di direktori</div><div class="timeline-text">Setelah disetujui dan diaktifkan, profil muncul di Find a mentor dan overview.</div></div></div></div></section><section class="panel" style="margin-top:15px"><h3>Catatan</h3><p class="list-meta" style="line-height:1.8">Jangan menuliskan data sensitif. Untuk saat ini, pengelola masih perlu meninjau dan menyetujui profil secara manual.</p></section></aside></div>`;
+      return `<div class="page-head"><div><div class="eyebrow">MENTOR WORKSPACE</div><h1>${mentorWorkspaceEditApproved ? 'Ajukan perubahan profil mentor' : mentorWorkspaceProfile ? 'Edit pendaftaran mentor' : 'Daftar sebagai mentor'}</h1><p>${mentorWorkspaceEditApproved ? 'Perubahan akan ditinjau ulang. Profil sementara tidak tampil di direktori sampai disetujui kembali.' : 'Lengkapi kompetensi dan ketersediaanmu. Hanya profil yang disetujui admin yang tampil di direktori.'}</p></div><span class="${statusClass}">${esc(statusText)}</span></div><div class="dash-grid"><section class="panel">${profileSummary}<form id="mentor-profile-form"><div class="form-group"><label for="mentor-bio">Tentang saya</label><textarea class="textarea" id="mentor-bio" name="teachingBio" rows="4" maxlength="1200" required placeholder="Ceritakan gaya mengajar, topik yang kamu kuasai, dan siapa yang bisa kamu bantu.">${esc(p.teaching_bio || '')}</textarea></div><div class="form-grid" style="margin-top:14px"><div class="form-group"><label for="mentor-experience">Pengalaman / bukti kompetensi</label><input class="input" id="mentor-experience" name="teachingExperience" value="${esc(p.teaching_experience || '')}" maxlength="500" placeholder="Contoh: pernah menjadi tutor teman sekelas" /></div><div class="form-group"><label for="mentor-availability">Ketersediaan</label><input class="input" id="mentor-availability" name="availabilityNotes" value="${esc(p.availability_notes || '')}" maxlength="300" placeholder="Contoh: Senin dan Rabu, 16.00–19.00" /></div><div class="form-group"><label for="mentor-single-rate">Tarif Single Session / 60 menit (Rp)</label><input class="input" id="mentor-single-rate" name="singleSessionRatePerHour" type="number" min="10000" max="10000000" step="5000" value="${Number(p.single_session_rate_per_hour || 50000)}" required /><div class="form-hint">Harga akan disesuaikan secara proporsional dengan durasi sesi.</div></div><div class="form-group"><label for="mentor-course-price">Harga paket Full Course (Rp)</label><input class="input" id="mentor-course-price" name="fullCoursePrice" type="number" min="10000" max="50000000" step="5000" value="${Number(p.full_course_price || 250000)}" required /><div class="form-hint">Harga paket untuk program Full Course.</div></div></div><div class="form-group" style="margin-top:14px"><label>Mode pembelajaran yang tersedia</label><div class="chips"><label class="chip"><input type="checkbox" name="onlineAvailable" ${p.online_available !== false ? 'checked' : ''}/> Online</label><label class="chip"><input type="checkbox" name="offlineAvailable" ${p.offline_available ? 'checked' : ''}/> Offline</label></div></div><div class="divider"></div><div class="form-group"><label>Mata kuliah dan topik</label><p class="list-meta">Pilih setidaknya satu mata kuliah dan isi topik yang spesifik untuk setiap pilihan.</p>${subjectsHtml}</div><div class="modal-actions" style="justify-content:flex-start"><button class="btn btn-primary" type="submit" ${!mentorWorkspaceSubjects.length?'disabled':''}>${mentorWorkspaceProfile ? 'Simpan dan ajukan ulang' : 'Ajukan profil mentor'} ${icon('arrow',14)}</button></div><p class="list-meta" style="margin-top:12px">Pendaftaran akan berstatus menunggu verifikasi. Status persetujuan tidak dapat diubah oleh pemilik akun.</p></form></section><aside><section class="panel"><h3>Alur verifikasi</h3><div class="timeline"><div class="timeline-item"><div class="timeline-dot">1</div><div><div class="timeline-title">Lengkapi profil</div><div class="timeline-text">Tuliskan kompetensi yang benar-benar kamu kuasai dan topik yang bisa diajarkan.</div></div></div><div class="timeline-item"><div class="timeline-dot">2</div><div><div class="timeline-title">Admin meninjau</div><div class="timeline-text">Profil tetap tidak terlihat oleh learner selama menunggu persetujuan.</div></div></div><div class="timeline-item"><div class="timeline-dot">3</div><div><div class="timeline-title">Tampil di direktori</div><div class="timeline-text">Setelah disetujui dan diaktifkan, profil muncul di Find a mentor dan overview.</div></div></div></div></section><section class="panel" style="margin-top:15px"><h3>Catatan</h3><p class="list-meta" style="line-height:1.8">Jangan menuliskan data sensitif. Untuk saat ini, pengelola masih perlu meninjau dan menyetujui profil secara manual.</p></section></aside></div>`;
     }
 
     async function saveMentorProfile(event) {
@@ -6368,6 +6563,10 @@
       const selectedIds = Array.from(form.querySelectorAll('input[name="subjectIds"]:checked')).map(input => input.value);
       const onlineAvailable = formData.has('onlineAvailable');
       const offlineAvailable = formData.has('offlineAvailable');
+      const singleSessionRatePerHour = Number(formData.get('singleSessionRatePerHour') || 50000);
+      const fullCoursePrice = Number(formData.get('fullCoursePrice') || 250000);
+      if (!Number.isInteger(singleSessionRatePerHour) || singleSessionRatePerHour < 10000 || singleSessionRatePerHour > 10000000) return showToast('Tarif Single Session harus Rp10.000–Rp10.000.000.');
+      if (!Number.isInteger(fullCoursePrice) || fullCoursePrice < 10000 || fullCoursePrice > 50000000) return showToast('Harga Full Course harus Rp10.000–Rp50.000.000.');
       if (!selectedIds.length) return showToast('Pilih minimal satu mata kuliah.');
       if (!onlineAvailable && !offlineAvailable) return showToast('Pilih minimal satu mode pembelajaran.');
 
@@ -6395,7 +6594,9 @@
           teaching_experience: String(formData.get('teachingExperience') || '').trim() || null,
           availability_notes: String(formData.get('availabilityNotes') || '').trim() || null,
           online_available: onlineAvailable,
-          offline_available: offlineAvailable
+          offline_available: offlineAvailable,
+          single_session_rate_per_hour: singleSessionRatePerHour,
+          full_course_price: fullCoursePrice
         };
         if (!payload.teaching_bio) throw new Error('Isi bagian Tentang saya sebelum mengajukan profil.');
 
@@ -6409,6 +6610,11 @@
             p_expertise: expertiseRows
           });
           if (error) throw error;
+          const { error: pricingError } = await linkedSupabase.from('mentor_profiles').update({
+            single_session_rate_per_hour: payload.single_session_rate_per_hour,
+            full_course_price: payload.full_course_price
+          }).eq('user_id', userId);
+          if (pricingError) throw pricingError;
         } else {
           if (mentorWorkspaceProfile) {
             const { error } = await linkedSupabase.from('mentor_profiles').update({
@@ -6417,6 +6623,8 @@
               availability_notes: payload.availability_notes,
               online_available: payload.online_available,
               offline_available: payload.offline_available,
+              single_session_rate_per_hour: payload.single_session_rate_per_hour,
+              full_course_price: payload.full_course_price,
               verification_status: 'pending'
             }).eq('user_id', userId);
             if (error) throw error;
@@ -6867,6 +7075,10 @@
       }
       const isMentor = request.mentorId === userId;
       const isLearner = request.learnerId === userId;
+      if (nextStatus === 'confirmed' && isMentor && ['demo_pending', 'pending'].includes(request.paymentStatus)) {
+        showToast('Learner perlu menyelesaikan pembayaran terlebih dahulu sebelum request dapat diterima.');
+        return;
+      }
       if (nextStatus === 'completed' && request.type === 'Full Course') {
         showToast('Untuk Full Course, selesaikan setiap sesi dari dalam learning plan.');
         return;
@@ -6942,6 +7154,7 @@
         return;
       }
       if (action === 'request-general') return openRequestForm(null);
+      if (action === 'resume-demo-payment') return openPendingDemoPayment(id);
       if (action === 'open-course') return openCourse(id);
       if (action === 'open-request-course') {
         const c = state.courses.find(c => c.requestId === id);
@@ -6974,6 +7187,7 @@
         if (r && r.source === 'database') { updateDatabaseRequestStatus(id, 'confirmed'); return; }
         if (r) {
           r.status = 'confirmed';
+          if (r.source === 'booth-demo') patchBoothDemoRecord(r.id, { status: 'confirmed' });
           if (r.type === 'Full Course' && !state.courses.some(c => c
               .requestId === r.id)) {
             const modules = modulesFor(r.subject, r.topic);
@@ -7002,6 +7216,7 @@
         if (r && r.source === 'database') { updateDatabaseRequestStatus(id, 'rejected'); return; }
         if (r) {
           r.status = 'rejected';
+          if (r.source === 'booth-demo') patchBoothDemoRecord(r.id, { status: 'rejected', paymentStatus: r.paymentStatus === 'demo_paid' ? 'refunded' : r.paymentStatus });
           saveState();
           render();
           showToast('Request ditolak')
@@ -7013,6 +7228,7 @@
         if (r && r.source === 'database') { updateDatabaseRequestStatus(id, 'cancelled'); return; }
         if (r) {
           r.status = 'cancelled';
+          if (r.source === 'booth-demo') patchBoothDemoRecord(r.id, { status: 'cancelled', paymentStatus: r.paymentStatus === 'demo_paid' ? 'refunded' : r.paymentStatus });
           saveState();
           render();
           showToast('Request dibatalkan')
@@ -7024,6 +7240,7 @@
         if (r && r.source === 'database') { updateDatabaseRequestStatus(id, 'completed'); return; }
         if (r) {
           r.status = 'completed';
+          if (r.source === 'booth-demo') patchBoothDemoRecord(r.id, { status: 'completed' });
           if (!r.summary) r.summary =
             'Sesi selesai. Tambahkan poin yang telah dipahami dan latihan lanjutan.';
           saveState();
@@ -7129,18 +7346,31 @@
         ? mentor.mode.map(mode => `<option value="${mode.toLowerCase()}">${esc(mode)}</option>`).join('')
         : '<option value="">Pilih mentor terlebih dahulu</option>';
       openModal(
-        `<div class="modal-header"><div><div class="eyebrow">LEARNING REQUEST</div><h2>Jelaskan kebutuhan belajarmu</h2><p>Permintaan belajar akan dikirim kepada mentor yang kamu pilih.</p></div><button class="modal-close" data-close-modal>×</button></div><div class="modal-body"><form id="request-form"><div class="form-grid"><div class="form-group full"><label>Mentor pilihan</label><select class="select" name="mentorId" required><option value="">Pilih mentor</option>${mentorOptionHtml}</select><div class="form-hint">Kamu memilih mentor sendiri. Akun tidak dapat mengirim request kepada dirinya sendiri.</div></div><div class="form-group"><label>Subject</label><select class="select" name="subjectId" required>${subjectsFor(selectedMentor)}</select></div><div class="form-group"><label>Topik spesifik</label><input class="input" name="topic" maxlength="180" required placeholder="Contoh: Hypothesis Testing"/></div><div class="form-group full"><label>Jenis pembelajaran</label><div class="radio-row"><label class="radio-option"><input type="radio" name="type" value="single_session" checked/><span>Single Session<br><small style="font-size:9px;font-weight:500">Satu kebutuhan spesifik</small></span></label><label class="radio-option"><input type="radio" name="type" value="full_course"/><span>Full Course<br><small style="font-size:9px;font-weight:500">Beberapa sesi terstruktur</small></span></label></div></div><div class="form-group full"><label>Tujuan belajar</label><textarea class="textarea" name="objective" maxlength="2000" required placeholder="Apa yang ingin kamu pahami setelah sesi?" rows="3"></textarea></div><div class="form-group"><label>Tanggal sesi pertama</label><input class="input" name="date" type="date" min="${localIsoDate(0)}" value="${localIsoDate(3)}" required/></div><div class="form-group"><label>Waktu sesi pertama</label><input class="input" name="time" type="time" value="16:00" required/></div><div class="form-group"><label>Durasi</label><select class="select" name="duration"><option value="60">60 menit</option><option value="90" selected>90 menit</option><option value="120">120 menit</option></select></div><div class="form-group"><label>Mode</label><select class="select" name="mode" required>${modesFor(selectedMentor)}</select></div><div class="form-group full"><label id="request-location-label">Lokasi / tautan pertemuan</label><input class="input" name="location" maxlength="500" required placeholder="Tautan HTTPS untuk online atau lokasi kampus untuk offline" value=""/><div class="form-hint" id="request-location-hint">Cantumkan tautan meeting atau lokasi yang cukup jelas agar jadwal dapat disepakati.</div></div><div class="form-group full"><label>Catatan tambahan</label><textarea class="textarea" name="notes" maxlength="2000" rows="2" placeholder="Tingkat pemahaman saat ini, materi yang sudah dicoba, atau kebutuhan khusus."></textarea></div><div class="form-group full" id="course-week-group" style="display:none"><label>Perkiraan struktur Full Course</label><div class="notice">Rencana sesi dan modul dapat disepakati bersama mentor setelah request diterima.</div></div></div><div class="modal-actions"><button type="button" class="btn btn-ghost" data-close-modal>Batal</button><button class="btn btn-primary" type="submit">Kirim learning request ${icon('arrow',14)}</button></div></form></div>`,
+        `<div class="modal-header"><div><div class="eyebrow">LEARNING REQUEST</div><h2>Jelaskan kebutuhan belajarmu</h2><p>Permintaan belajar akan dikirim kepada mentor yang kamu pilih.</p></div><button class="modal-close" data-close-modal>×</button></div><div class="modal-body"><form id="request-form"><div class="form-grid"><div class="form-group full"><label>Mentor pilihan</label><select class="select" name="mentorId" required><option value="">Pilih mentor</option>${mentorOptionHtml}</select><div class="form-hint">Kamu memilih mentor sendiri. Akun tidak dapat mengirim request kepada dirinya sendiri.</div></div><div class="form-group"><label>Subject</label><select class="select" name="subjectId" required>${subjectsFor(selectedMentor)}</select></div><div class="form-group"><label>Topik spesifik</label><input class="input" name="topic" maxlength="180" required placeholder="Contoh: Hypothesis Testing"/></div><div class="form-group full"><label>Jenis pembelajaran</label><div class="radio-row"><label class="radio-option"><input type="radio" name="type" value="single_session" checked/><span>Single Session<br><small style="font-size:9px;font-weight:500">Satu kebutuhan spesifik</small></span></label><label class="radio-option"><input type="radio" name="type" value="full_course"/><span>Full Course<br><small style="font-size:9px;font-weight:500">Beberapa sesi terstruktur</small></span></label></div></div><div class="form-group full"><label>Tujuan belajar</label><textarea class="textarea" name="objective" maxlength="2000" required placeholder="Apa yang ingin kamu pahami setelah sesi?" rows="3"></textarea></div><div class="form-group"><label>Tanggal sesi pertama</label><input class="input" name="date" type="date" min="${localIsoDate(0)}" value="${localIsoDate(3)}" required/></div><div class="form-group"><label>Waktu sesi pertama</label><input class="input" name="time" type="time" value="16:00" required/></div><div class="form-group"><label>Durasi</label><select class="select" name="duration"><option value="60">60 menit</option><option value="90" selected>90 menit</option><option value="120">120 menit</option></select></div><div class="form-group"><label>Mode</label><select class="select" name="mode" required>${modesFor(selectedMentor)}</select></div><div class="form-group full"><label id="request-location-label">Lokasi / tautan pertemuan</label><input class="input" name="location" maxlength="500" placeholder="Opsional — dapat disepakati setelah mentor menerima request" value=""/><div class="form-hint" id="request-location-hint">Cantumkan tautan meeting atau lokasi yang cukup jelas agar jadwal dapat disepakati.</div></div><div class="form-group full"><label>Catatan tambahan</label><textarea class="textarea" name="notes" maxlength="2000" rows="2" placeholder="Tingkat pemahaman saat ini, materi yang sudah dicoba, atau kebutuhan khusus."></textarea></div><div class="form-group full" id="course-week-group" style="display:none"><label>Perkiraan struktur Full Course</label><div class="notice">Rencana sesi dan modul dapat disepakati bersama mentor setelah request diterima.</div></div><div class="form-group full"><div class="notice" id="request-price-preview">Pilih mentor untuk melihat estimasi biaya.</div><div class="form-hint">Harga mengikuti tarif yang ditetapkan mentor. Checkout berikutnya adalah simulasi untuk demonstrasi booth.</div></div></div><div class="modal-actions"><button type="button" class="btn btn-ghost" data-close-modal>Batal</button><button class="btn btn-primary" type="submit">Kirim learning request ${icon('arrow',14)}</button></div></form></div>`,
         true);
       const form = document.getElementById('request-form');
       const mentorSelect = form.elements.mentorId;
       const subjectSelect = form.elements.subjectId;
       const modeSelect = form.elements.mode;
+      const updateRequestPricePreview = () => {
+        const mentor = availableMentors.find(item => item.id === mentorSelect.value) || null;
+        const learningType = String(form.querySelector('input[name="type"]:checked')?.value || 'single_session');
+        const duration = Number(form.elements.duration.value || 60);
+        const amount = !mentor ? 0 : learningType === 'full_course'
+          ? Number(mentor.fullCoursePrice || 250000)
+          : Math.round(Number(mentor.singleSessionRatePerHour || 50000) * duration / 60);
+        const label = learningType === 'full_course' ? 'Harga paket Full Course' : `Tarif Single Session (${duration} menit)`;
+        document.getElementById('request-price-preview').innerHTML = mentor
+          ? `<strong>${label}</strong><br><span style="font-size:19px;font-weight:900">${formatLinkedCurrency(amount)}</span><br><span class="list-meta">${esc(mentor.name)} · biaya layanan pilot 0%</span>`
+          : 'Pilih mentor untuk melihat estimasi biaya.';
+      };
       const refreshMentorOptions = () => {
         const mentor = availableMentors.find(item => item.id === mentorSelect.value) || null;
         subjectSelect.innerHTML = subjectsFor(mentor);
         modeSelect.innerHTML = modesFor(mentor);
         subjectSelect.disabled = !mentor;
         modeSelect.disabled = !mentor;
+        updateRequestPricePreview();
       };
       refreshMentorOptions();
       mentorSelect.addEventListener('change', refreshMentorOptions);
@@ -7159,78 +7389,286 @@
         const fullCourse = form.querySelector('input[name="type"]:checked').value === 'full_course';
         document.getElementById('course-week-group').style.display = fullCourse ? 'block' : 'none';
         document.getElementById('course-week-group').innerHTML = fullCourse ? '<label>Rencana Full Course</label><div class="notice">Tanggal dan waktu di atas adalah pilihan sesi awal. Setelah diterima, mentor menyusun learning plan berisi beberapa modul; jadwal sesi berikutnya disepakati bersama.</div>' : '';
+        updateRequestPricePreview();
       }));
+      form.elements.duration.addEventListener('change', updateRequestPricePreview);
       form.addEventListener('submit', async event => {
         event.preventDefault();
         const submitButton = form.querySelector('button[type="submit"]');
         if (submitButton.disabled) return;
         submitButton.disabled = true;
-        submitButton.textContent = 'Mengirim request…';
+        submitButton.textContent = 'Menyiapkan checkout…';
+        const fd = new FormData(form);
+        let userId = window.linkedCurrentUserId;
+        let user = null;
+        let localRecord = null;
         try {
-          const { data: authData, error: authError } = await linkedSupabase.auth.getSession();
-          if (authError) throw authError;
-          const user = authData && authData.session && authData.session.user;
-          const userId = user && user.id;
-          if (!userId) throw new Error('Sesi login tidak ditemukan. Masuk kembali sebelum mengirim request.');
-          const formData = new FormData(form);
-          const mentor = availableMentors.find(item => item.id === String(formData.get('mentorId') || ''));
+          const authResult = await linkedSupabase.auth.getSession();
+          if (authResult.error) throw authResult.error;
+          user = authResult.data?.session?.user || null;
+          userId = user?.id || userId;
+          if (!userId) throw new Error('Sesi login tidak ditemukan. Masuk kembali sebelum membuat request.');
+          const mentor = availableMentors.find(item => item.id === String(fd.get('mentorId') || ''));
           if (!mentor) throw new Error('Pilih mentor yang tersedia di direktori.');
           if (mentor.id === userId) throw new Error('Kamu tidak dapat mengirim request kepada akunmu sendiri.');
-          const subjectId = String(formData.get('subjectId') || '');
+          const subjectId = String(fd.get('subjectId') || '');
           const subject = mentor.subjectOptions.find(item => item.id === subjectId);
           if (!subject) throw new Error('Pilih mata kuliah yang memang ditawarkan mentor ini.');
-          const selectedMode = String(formData.get('mode') || '').toLowerCase();
+          const learningType = String(fd.get('type') || 'single_session');
+          const selectedMode = String(fd.get('mode') || '').toLowerCase();
           if (!['online', 'offline'].includes(selectedMode) || !mentor.mode.map(value => value.toLowerCase()).includes(selectedMode)) {
             throw new Error('Pilih mode belajar yang tersedia pada profil mentor.');
           }
-          const selectedDate = String(formData.get('date') || '');
-          const selectedTime = String(formData.get('time') || '');
+          const selectedDate = String(fd.get('date') || '');
+          const selectedTime = String(fd.get('time') || '');
           if (!validateFutureSchedule(selectedDate, selectedTime)) throw new Error('Pilih tanggal dan waktu yang masih berada di masa depan.');
-          const selectedLocation = String(formData.get('location') || '').trim();
-          if (!selectedLocation) throw new Error('Isi lokasi atau tautan pertemuan agar jadwal jelas bagi kedua pihak.');
-          if (selectedMode === 'online') {
-            let meetingUrl; try { meetingUrl = new URL(selectedLocation); } catch (_) { throw new Error('Untuk sesi online, masukkan tautan HTTPS yang valid.'); }
-            if (meetingUrl.protocol !== 'https:') throw new Error('Tautan pertemuan online harus menggunakan HTTPS.');
+          const selectedLocation = String(fd.get('location') || '').trim();
+          if (selectedLocation && selectedMode === 'online') {
+            let meetingUrl; try { meetingUrl = new URL(selectedLocation); } catch (_) { throw new Error('Untuk sesi online, masukkan tautan HTTPS yang valid atau kosongkan dulu.'); }
+            if (meetingUrl.protocol !== 'https:') throw new Error('Tautan pertemuan online harus menggunakan HTTPS atau kosongkan dulu.');
           }
-          await ensureDatabaseProfile(user);
-          const learningType = String(formData.get('type') || 'single_session');
+          const duration = Number(fd.get('duration') || 90);
+          const amount = learningType === 'full_course'
+            ? Number(mentor.fullCoursePrice || 250000)
+            : Math.round(Number(mentor.singleSessionRatePerHour || 50000) * duration / 60);
+          if (!Number.isFinite(amount) || amount <= 0) throw new Error('Tarif mentor belum tersedia. Minta mentor mengatur harga terlebih dahulu.');
+          const requestId = (window.crypto && typeof window.crypto.randomUUID === 'function')
+            ? window.crypto.randomUUID() : `request-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+          const localDemoId = `booth-${requestId}`;
+          const learnerName = (state.user && state.user.name) || user?.user_metadata?.full_name || 'Learner demo';
+          localRecord = buildLocalBoothDemoRecord({
+            id: localDemoId, databaseRequestId: requestId, learnerId: userId, learnerName, mentorId: mentor.id, mentorName: mentor.name,
+            subjectId, subjectName: subject.name, topic: String(fd.get('topic') || '').trim(),
+            objective: String(fd.get('objective') || '').trim(), learningType,
+            date: selectedDate, time: selectedTime, durationMinutes: duration, mode: selectedMode,
+            location: selectedLocation || (selectedMode === 'online' ? 'Tautan akan disepakati setelah request diterima' : 'Lokasi akan disepakati setelah request diterima'),
+            notes: String(fd.get('notes') || '').trim(), priceAmount: amount, currency: 'IDR'
+          });
+          if (!localRecord.topic || !localRecord.objective) throw new Error('Isi topik dan tujuan belajar.');
+          if (localRecord.learnerId === localRecord.mentorId) throw new Error('Kamu tidak dapat mengirim request kepada akunmu sendiri.');
+
           const payload = {
-            learner_id: userId,
-            mentor_id: mentor.id,
-            subject_id: subjectId,
-            topic: String(formData.get('topic') || '').trim(),
-            learning_objective: String(formData.get('objective') || '').trim(),
+            id: requestId, learner_id: userId, mentor_id: mentor.id, subject_id: subjectId,
+            topic: localRecord.topic, learning_objective: localRecord.objective,
             learning_type: learningType,
             requested_week: learningType === 'full_course' ? 'Learning plan to be agreed' : null,
-            preferred_date: selectedDate,
-            preferred_time: selectedTime,
-            duration_minutes: Number(formData.get('duration') || 90),
-            mode: selectedMode,
-            location_or_link: selectedLocation,
-            additional_notes: String(formData.get('notes') || '').trim() || null
+            preferred_date: selectedDate, preferred_time: selectedTime, duration_minutes: duration,
+            mode: selectedMode, location_or_link: localRecord.location,
+            additional_notes: localRecord.notes || null
           };
-          if (!payload.topic || !payload.learning_objective) throw new Error('Isi topik dan tujuan belajar.');
-          if (payload.learner_id === payload.mentor_id) throw new Error('Kamu tidak dapat mengirim request kepada akunmu sendiri.');
-          const { error } = await linkedSupabase.from('learning_requests').insert(payload);
-          if (error) throw error;
-          closeModal();
-          databaseRequestsLoaded = false;
-          go('requests');
+
+          // Try the shared Supabase workflow first. If schema/RLS is not ready, keep
+          // the booth flow usable with a browser-local record for this same device.
+          let createdRequest = null;
+          let createdPayment = null;
+          let databaseWriteError = null;
           try {
-            await loadDatabaseRequests(true);
+            await ensureDatabaseProfile(user || { id: userId });
+            const requestResult = await linkedSupabase.from('learning_requests').insert(payload)
+              .select('id, price_amount, currency, payment_status, topic, learning_type, mentor_id, preferred_date, preferred_time')
+              .single();
+            if (requestResult.error) throw requestResult.error;
+            createdRequest = requestResult.data;
+            if (!createdRequest || !createdRequest.id) throw new Error('Learning Request tidak mengembalikan ID.');
+            const finalAmount = Number(createdRequest.price_amount || amount);
+            if (finalAmount <= 0) throw new Error('Harga request belum berhasil dihitung di database.');
+            const paymentResult = await linkedSupabase.from('payment_transactions').insert({
+              learning_request_id: createdRequest.id, learner_id: userId, mentor_id: mentor.id,
+              amount: finalAmount, currency: createdRequest.currency || 'IDR', service_fee_amount: 0,
+              provider: 'demo', status: 'pending', is_demo: true
+            }).select('id, amount, currency, status, is_demo').single();
+            if (paymentResult.error) throw paymentResult.error;
+            createdPayment = paymentResult.data;
+          } catch (error) {
+            databaseWriteError = error;
+            console.warn('LINKED: shared request/payment write unavailable; switching to browser-local booth simulation:', error);
+          }
+
+          closeModal();
+          if (createdRequest && createdPayment) {
+            databaseRequestsLoaded = false;
+            databaseRequestsError = '';
+            try { await loadDatabaseRequests(true); } catch (refreshError) { console.warn('LINKED: request saved; list refresh will retry.', refreshError); }
             go('requests');
-            showToast('Learning request berhasil dikirim.');
-          } catch (refreshError) {
+            openDemoPaymentCheckout({
+              id: createdRequest.id, learner_id: userId, mentor_id: mentor.id, topic: localRecord.topic,
+              learning_type: learningType, price_amount: Number(createdRequest.price_amount || amount),
+              currency: createdRequest.currency || 'IDR', payment_status: 'demo_pending', status: 'pending',
+              preferred_date: selectedDate, preferred_time: selectedTime
+            }, createdPayment, null);
+          } else {
+            upsertBoothDemoRecord(localRecord);
+            const localModel = mapBoothDemoRecord(localRecord);
+            state.requests = [localModel, ...(state.requests || []).filter(item => item.id !== localModel.id)];
+            databaseRequestsLoaded = true;
+            databaseRequestsError = databaseWriteError?.message || 'Supabase belum siap untuk alur request bersama.';
             go('requests');
-            showToast('Request sudah tersimpan, tetapi daftar belum bisa dimuat. Buka Learning requests lalu tekan Coba lagi.');
+            openDemoPaymentCheckout({
+              ...localRecord, id: localRecord.id, learner_id: userId, mentor_id: mentor.id,
+              learning_type: learningType, price_amount: amount, currency: 'IDR',
+              payment_status: 'demo_pending', status: 'pending', preferred_date: selectedDate,
+              preferred_time: selectedTime, isLocalDemo: true
+            }, { id: localRecord.paymentId, amount, currency: 'IDR', status: 'pending', is_demo: true, isLocalDemo: true }, localRecord);
+            showToast('Request dibuat dalam mode demo lokal pada browser ini.');
           }
         } catch (error) {
           console.error('LINKED: could not create learning request:', error);
           const message = String(error && error.message || '');
-          const validationPrefixes = ['Pilih ', 'Isi ', 'Kamu ', 'Untuk sesi ', 'Tautan ', 'Sesi login '];
-          showToast(validationPrefixes.some(prefix => message.startsWith(prefix)) ? message : 'Permintaan belum berhasil dikirim. Silakan coba lagi.');
+          const validationPrefixes = ['Pilih ', 'Isi ', 'Kamu ', 'Untuk sesi ', 'Tautan ', 'Sesi login ', 'Pilih tanggal ', 'Tarif mentor '];
+          showToast(validationPrefixes.some(prefix => message.startsWith(prefix)) ? message : (message || 'Permintaan belum berhasil dibuat.'));
           submitButton.disabled = false;
           submitButton.textContent = 'Kirim learning request';
+        }
+      });
+    }
+
+    async function openPendingDemoPayment(requestId) {
+      const userId = window.linkedCurrentUserId;
+      if (!userId || state.role !== 'learner') return showToast('Masuk sebagai learner untuk melanjutkan pembayaran.');
+      const local = findBoothDemoRecord(requestId);
+      if (local && local.learnerId === userId) {
+        if (local.status !== 'pending' || local.paymentStatus !== 'demo_pending') {
+          showToast('Pembayaran request ini sudah diproses atau tidak lagi menunggu pembayaran.');
+          return;
+        }
+        openDemoPaymentCheckout({
+          ...local, id: local.id, learner_id: local.learnerId, mentor_id: local.mentorId,
+          topic: local.topic, learning_type: local.learningType, price_amount: local.priceAmount,
+          currency: local.currency || 'IDR', payment_status: local.paymentStatus,
+          status: local.status, preferred_date: local.date, preferred_time: local.time, isLocalDemo: true
+        }, { id: local.paymentId, amount: local.priceAmount, currency: local.currency || 'IDR', status: 'pending', is_demo: true, isLocalDemo: true }, local);
+        return;
+      }
+      try {
+        const { data: requestRow, error: requestError } = await linkedSupabase.from('learning_requests')
+          .select('id, learner_id, mentor_id, topic, learning_type, price_amount, currency, payment_status, status, preferred_date, preferred_time')
+          .eq('id', requestId).eq('learner_id', userId).maybeSingle();
+        if (requestError) throw requestError;
+        if (!requestRow) throw new Error('Learning request tidak ditemukan.');
+        if (requestRow.status !== 'pending' || requestRow.payment_status !== 'demo_pending') {
+          showToast('Pembayaran request ini sudah diproses atau tidak lagi menunggu pembayaran.');
+          return;
+        }
+        let payment;
+        const lookup = await linkedSupabase.from('payment_transactions')
+          .select('id, amount, currency, status, is_demo')
+          .eq('learning_request_id', requestId).eq('learner_id', userId).maybeSingle();
+        if (lookup.error) throw lookup.error;
+        payment = lookup.data;
+        if (!payment) {
+          const create = await linkedSupabase.from('payment_transactions').insert({
+            learning_request_id: requestId, learner_id: userId, mentor_id: requestRow.mentor_id,
+            amount: requestRow.price_amount, currency: requestRow.currency || 'IDR',
+            service_fee_amount: 0, provider: 'demo', status: 'pending', is_demo: true
+          }).select('id, amount, currency, status, is_demo').single();
+          if (create.error) throw create.error;
+          payment = create.data;
+        }
+        openDemoPaymentCheckout(requestRow, payment, null);
+      } catch (error) {
+        console.error('LINKED: cannot prepare shared payment checkout; local record may be available:', error);
+        showToast('Checkout bersama belum tersedia. Buat request baru untuk melanjutkan simulasi booth pada browser ini.');
+      }
+    }
+
+    function openDemoPaymentSuccess(requestRow, payment, methodLabel, payerReference) {
+      const requestId = requestRow.id || requestRow.learning_request_id || 'DEMO';
+      const amount = payment.amount || requestRow.price_amount || 0;
+      openModal(`<div class="modal-header"><div><div class="eyebrow">PAYMENT SUCCESS</div><h2>Pembayaran berhasil!</h2><p>Terima kasih. Simulasi checkout LINKED sudah selesai.</p></div><button class="modal-close" data-close-modal aria-label="Tutup">×</button></div><div class="modal-body"><div style="text-align:center;padding:12px 0 18px"><div style="width:76px;height:76px;border-radius:50%;background:#dcfce9;color:#087b4e;display:grid;place-items:center;margin:0 auto 14px;font-size:38px;font-weight:900">✓</div><div class="linked-payment-amount">${formatLinkedCurrency(amount, payment.currency || 'IDR')}</div><div class="list-meta">Simulasi pembayaran sukses · tidak ada dana yang ditransfer</div></div><div class="panel" style="padding:14px;margin:0"><div class="linked-payment-row"><span class="list-meta">Nomor transaksi</span><strong>${esc(String(payment.id || requestId).slice(0,22))}</strong></div><div class="linked-payment-row"><span class="list-meta">Metode pembayaran</span><strong>${esc(methodLabel)}</strong></div><div class="linked-payment-row"><span class="list-meta">Nomor yang dimasukkan</span><strong>${esc(payerReference)}</strong></div><div class="linked-payment-row"><span class="list-meta">Status</span><span class="status confirmed">Berhasil (demo)</span></div></div><div class="notice" style="margin-top:14px">Learning Request kamu sekarang diteruskan ke mentor. Mentor dapat melihat dan menanggapi permintaan ini dari menu <strong>Learning Requests</strong>.${payment.local_demo ? '<br><br><strong>Catatan demo lokal:</strong> gunakan browser dan perangkat yang sama saat beralih ke akun mentor; transaksi lokal tidak tersinkron ke perangkat lain.' : ''}</div><div class="modal-actions"><button type="button" class="btn btn-primary" id="demo-payment-success-done">Lihat learning request</button></div></div>`, true);
+      document.getElementById('demo-payment-success-done').addEventListener('click', async () => {
+        closeModal();
+        databaseRequestsLoaded = false;
+        try { await loadDatabaseRequests(true); } catch (error) { console.info('LINKED: showing local booth request after payment:', error); }
+        go('requests');
+        showToast('Pembayaran simulasi sukses. Request siap ditinjau mentor.');
+      });
+    }
+
+    function openDemoPaymentCheckout(requestRow, payment, localRecord = null) {
+      if (state.role !== 'learner') return showToast('Checkout hanya bisa diakses dalam Mode Learner.');
+      activeDemoCheckout = { requestRow, payment, localRecord };
+      go('payment-checkout');
+      const form = document.getElementById('linked-demo-checkout-form');
+      const backButton = document.getElementById('demo-checkout-back');
+      const laterButton = document.getElementById('demo-checkout-cancel');
+      if (backButton) backButton.addEventListener('click', () => go('requests'));
+      if (laterButton) laterButton.addEventListener('click', () => go('requests'));
+      if (!form) return;
+      form.addEventListener('submit', async event => {
+        event.preventDefault();
+        const button = document.getElementById('confirm-demo-payment');
+        if (button.disabled) return;
+        const fd = new FormData(form);
+        const methodKey = String(fd.get('method') || 'qris');
+        const methodLabels = {
+          qris:'QRIS', va_bca:'Virtual Account · BCA', va_mandiri:'Virtual Account · Mandiri',
+          va_bni:'Virtual Account · BNI', va_bri:'Virtual Account · BRI', va_permata:'Virtual Account · Permata',
+          gopay:'GoPay', ovo:'OVO', dana:'DANA', shopeepay:'ShopeePay',
+          alfamart:'Gerai · Alfamart', indomaret:'Gerai · Indomaret'
+        };
+        const methodLabel = methodLabels[methodKey] || 'QRIS';
+        const payerReference = String(fd.get('payerReference') || '').trim();
+        const payerName = String(fd.get('payerName') || '').trim();
+        const normalizedNumber = payerReference.replace(/[^0-9]/g, '');
+        if (normalizedNumber.length < 4) {
+          showToast('Masukkan nomor dummy minimal 4 angka untuk demonstrasi.');
+          return;
+        }
+        button.disabled = true;
+        button.textContent = 'Memproses pembayaran…';
+        try {
+          let localPaymentRecord = localRecord || findBoothDemoRecord(requestRow.id);
+          if (payment.isLocalDemo || requestRow.isLocalDemo || localPaymentRecord) {
+            if (!localPaymentRecord) throw new Error('Data simulasi lokal tidak ditemukan.');
+            upsertBoothDemoRecord({ ...localPaymentRecord, paymentStatus:'demo_paid', paymentMethod:methodKey,
+              payerReference, payerName, paymentPaidAt:new Date().toISOString() });
+          } else {
+            const { data, error } = await linkedSupabase.from('payment_transactions')
+              .update({ status:'demo_paid', payment_method:methodKey, payer_reference:payerReference,
+                paid_at:new Date().toISOString() })
+              .eq('id', payment.id).eq('learner_id', window.linkedCurrentUserId)
+              .eq('status','pending').eq('is_demo',true)
+              .select('id,status').maybeSingle();
+            if (error) throw error;
+            if (!data || data.status !== 'demo_paid') throw new Error('Status transaksi tidak berubah.');
+          }
+          activeDemoCheckout = null;
+          openDemoPaymentSuccess(requestRow, { ...payment, status:'demo_paid', payment_method:methodKey,
+            payer_reference:payerReference, paid_at:new Date().toISOString(), is_demo:true,
+            local_demo:Boolean(payment.isLocalDemo || requestRow.isLocalDemo || localPaymentRecord) }, methodLabel, payerReference);
+        } catch (error) {
+          console.error('LINKED: shared demo payment update failed; saving same-browser demo instead:', error);
+          try {
+            const fallback = localPaymentRecord || (state.requests || []).find(item => item.id === requestRow.id);
+            if (!fallback && !localRecord) throw error;
+            const model = localRecord || (fallback && fallback.id ? {
+              id:`booth-${fallback.id}`, databaseRequestId:fallback.id, learnerId:fallback.learnerId, learnerName:fallback.learner,
+              mentorId:fallback.mentorId, mentorName:fallback.mentorName, subjectId:fallback.subjectId,
+              subjectName:fallback.subject, topic:fallback.topic, objective:fallback.objective,
+              learningType:fallback.type === 'Full Course' ? 'full_course' : 'single_session',
+              date:fallback.date, time:fallback.time, durationMinutes:fallback.durationMinutes || 90,
+              mode:String(fallback.mode || 'Online').toLowerCase(), location:fallback.location, notes:fallback.notes,
+              priceAmount:fallback.priceAmount || Number(payment.amount || requestRow.price_amount || 0),
+              currency:fallback.currency || 'IDR', createdAt:fallback.createdAt || new Date().toISOString(),
+              status:fallback.status || 'pending', paymentId:`local-payment-${requestRow.id}`
+            } : {
+              id:`booth-${requestRow.id}`, databaseRequestId:requestRow.id, learnerId:requestRow.learner_id, learnerName:(state.user && state.user.name) || 'Learner demo',
+              mentorId:requestRow.mentor_id, mentorName:'Mentor', subjectName:'Mata kuliah', topic:requestRow.topic,
+              objective:'Tujuan belajar disimpan dari request', learningType:requestRow.learning_type,
+              date:requestRow.preferred_date, time:requestRow.preferred_time, durationMinutes:90,
+              mode:'online', location:'Akan disepakati setelah request diterima', priceAmount:Number(payment.amount || requestRow.price_amount || 0),
+              currency:'IDR', createdAt:new Date().toISOString(), status:'pending', paymentId:`local-payment-${requestRow.id}`
+            });
+            upsertBoothDemoRecord({ ...model, paymentStatus:'demo_paid', paymentMethod:methodKey,
+              payerReference, payerName, paymentPaidAt:new Date().toISOString(), isDemo:true });
+            activeDemoCheckout = null;
+            openDemoPaymentSuccess(requestRow, { ...payment, status:'demo_paid', is_demo:true, local_demo:true }, methodLabel, payerReference);
+          } catch (fallbackError) {
+            console.error('LINKED: local booth payment fallback failed:', fallbackError);
+            showToast(error && error.message ? `Pembayaran belum berhasil: ${error.message}` : 'Pembayaran simulasi belum berhasil.');
+            button.disabled = false;
+            button.textContent = `Pay Now · ${formatLinkedCurrency(payment.amount || requestRow.price_amount || 0, payment.currency || 'IDR')}`;
+          }
         }
       });
     }
@@ -8205,6 +8643,28 @@
       window.linkedNotificationRefreshTimer = window.setInterval(() => {
         if (window.linkedCurrentUserId && !document.hidden) loadNotifications(true).catch(() => {});
       }, 60000);
+    }
+    // Keep mentor incoming requests and payment history fresh during a live booth walkthrough.
+    if (!window.linkedMentorRequestRefreshTimer) {
+      window.linkedMentorRequestRefreshTimer = window.setInterval(async () => {
+        const userId = window.linkedCurrentUserId;
+        if (!userId || document.hidden || state.role !== 'mentor' || !['requests','mentor-tools','overview'].includes(page) || databaseRequestsLoading) return;
+        loadDatabaseRequests(true).catch(() => {});
+        if (page === 'mentor-tools' && !mentorIncomeData.loading) {
+          mentorIncomeData.loading = true;
+          try {
+            const { data: paymentRows, error: paymentError } = await linkedSupabase
+              .from('payment_transactions')
+              .select('id, learning_request_id, amount, currency, service_fee_amount, mentor_amount, status, is_demo, paid_at, created_at, learner:profiles!payment_transactions_learner_id_fkey(full_name)')
+              .eq('mentor_id', userId).order('created_at', { ascending: false });
+            if (paymentError) throw paymentError;
+            mentorIncomeData = { userId, loaded: true, loading: false, error: '', items: paymentRows || [] };
+            if (page === 'mentor-tools') render();
+          } catch (paymentError) {
+            mentorIncomeData = { userId, loaded: false, loading: false, error: paymentError.message || 'Riwayat pembayaran belum tersedia.', items: [] };
+          }
+        }
+      }, 12000);
     }
     // Account, mentor, request, session, review, course, module progress, opportunities, and in-app notifications are connected.
     render();
