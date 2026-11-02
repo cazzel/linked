@@ -90,6 +90,14 @@ memang digunakan untuk pengembangan, misalnya:
 Pastikan Site URL dan redirect URL produksi juga sesuai dengan domain
 yang digunakan. Sesuaikan konfigurasi bila domain atau port berubah.
 
+## Pembayaran selama demonstrasi
+
+Alur checkout saat ini adalah **simulasi untuk demonstrasi booth**, bukan payment gateway. Pilihan QRIS dan transfer hanya menggambarkan metode pembayaran; aplikasi tidak membuat QRIS aktif, tidak menghubungi bank, dan tidak memindahkan dana. Status transaksi disimpan sebagai `demo_paid`, bukan `paid`, agar tidak tercampur dengan transaksi sungguhan.
+
+Tarif awal yang dipakai sebagai default adalah Rp50.000 per 60 menit untuk Single Session dan Rp250.000 per paket Full Course. Mentor dapat mengubah tarif melalui pengaturan profil mentor. Harga request dihitung ulang oleh trigger database dari tarif mentor yang tersimpan. Biaya layanan pilot saat ini 0%.
+
+Untuk pembayaran sungguhan, LINKED masih memerlukan payment gateway, backend/Edge Function untuk membuat transaksi, webhook dengan verifikasi signature, serta prosedur refund dan rekonsiliasi. Jangan mengubah transaksi demo menjadi transaksi nyata secara manual.
+
 ## Database dan SQL
 
 Database LINKED menggunakan tabel aplikasi seperti:
@@ -109,6 +117,11 @@ Database LINKED menggunakan tabel aplikasi seperti:
 Setup fitur lain dapat menambahkan tabel pendukung, misalnya untuk
 admin, notifikasi, atau tiket bantuan. Cocokkan daftar ini dengan skema
 yang benar-benar diterapkan pada proyek Supabase yang sedang digunakan.
+
+### File pembayaran
+
+- `linked-payment-demo-migration.sql` adalah migration tambahan untuk proyek Supabase LINKED yang sudah berjalan. Jalankan satu kali pada proyek aktif sebelum deploy frontend yang menggunakan checkout.
+- `linked-consolidated-setup.sql` dan `linked-consolidated-setup-v2.sql` telah mencakup skema pembayaran untuk **proyek baru yang kosong**.
 
 ### Penting sebelum menjalankan SQL
 
