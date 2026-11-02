@@ -2596,4 +2596,254 @@ COMMENT ON FUNCTION public.linked_schedule_course_session(uuid,text,timestamptz,
 COMMENT ON FUNCTION public.linked_complete_course_session(uuid) IS 'Marks one Full Course session complete without completing the entire course.';
 COMMENT ON FUNCTION public.linked_complete_full_course(uuid) IS 'Completes a Full Course only after all modules and planned sessions are complete.';
 
+
+-- 99 — Payment flow (demo-first; real provider webhook required for real payments)
+-- A mentor sets an hourly Single Session rate and a fixed Full Course package price.
+alter table public.mentor_profiles
+  add column if not exists single_session_rate_per_hour integer not null default 50000,
+  add column if not exists full_course_price integer not null default 250000;
+
+alter table public.mentor_profiles
+  drop constraint if exists mentor_profiles_single_session_rate_range,
+  add constraint mentor_profiles_single_session_rate_range
+    check (single_session_rate_per_hour between 10000 and 10000000),
+  drop constraint if exists mentor_profiles_full_course_price_range,
+  add constraint mentor_profiles_full_course_price_range
+    check (full_course_price between 10000 and 50000000);
+
+-- Keep payment details separate from the learning-request workflow.
+alter table public.learning_requests
+  add column if not exists price_amount integer not null default 0,
+  add column if not exists currency text not null default 'IDR',
+  add column if not exists payment_status text not null default 'not_required';
+
+alter table public.learning_requests
+  drop constraint if exists learning_requests_price_amount_nonnegative,
+  add constraint learning_requests_price_amount_nonnegative check (price_amount >= 0),
+  drop constraint if exists learning_requests_currency_idr,
+  add constraint learning_requests_currency_idr check (currency = 'IDR'),
+  drop constraint if exists learning_requests_payment_status_check,
+  add constraint learning_requests_payment_status_check
+    check (payment_status in ('not_required','demo_pending','demo_paid','pending','paid','failed','expired','refunded','cancelled'));
+
+-- Price is calculated in the database from the mentor's saved rates, not trusted
+-- from the browser. Existing requests keep payment_status='not_required'.
+create or replace function public.linked_set_request_price()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_single_rate integer;
+  v_course_price integer;
+begin
+  select mp.single_session_rate_per_hour, mp.full_course_price
+    into v_single_rate, v_course_price
+  from public.mentor_profiles mp
+  where mp.user_id = new.mentor_id
+    and mp.is_active = true
+    and mp.verification_status = 'approved';
+
+  if not found then
+    raise exception 'LINKED_MENTOR_NOT_AVAILABLE';
+  end if;
+
+  if new.learning_type = 'full_course' then
+    new.price_amount := v_course_price;
+  else
+    new.price_amount := greatest(1, round(v_single_rate::numeric * new.duration_minutes / 60)::integer);
+  end if;
+  new.currency := 'IDR';
+  new.payment_status := 'demo_pending';
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_linked_set_request_price on public.learning_requests;
+create trigger trg_linked_set_request_price
+before insert on public.learning_requests
+for each row execute function public.linked_set_request_price();
+
+create table if not exists public.payment_transactions (
+  id uuid primary key default gen_random_uuid(),
+  learning_request_id uuid not null unique references public.learning_requests(id) on delete cascade,
+  learner_id uuid not null references public.profiles(id) on delete cascade,
+  mentor_id uuid not null references public.mentor_profiles(user_id) on delete restrict,
+  amount integer not null check (amount > 0),
+  currency text not null default 'IDR' check (currency = 'IDR'),
+  service_fee_amount integer not null default 0 check (service_fee_amount >= 0 and service_fee_amount <= amount),
+  mentor_amount integer generated always as (amount - service_fee_amount) stored,
+  provider text not null default 'demo',
+  provider_reference text,
+  payment_method text,
+  payer_reference text,
+  status text not null default 'pending'
+    check (status in ('pending','demo_paid','paid','failed','expired','refunded')),
+  is_demo boolean not null default true,
+  paid_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint payment_transactions_demo_or_live_check check (
+    (is_demo = true and provider = 'demo' and status in ('pending','demo_paid','failed','expired','refunded'))
+    or
+    (is_demo = false and provider <> 'demo' and status in ('pending','paid','failed','expired','refunded'))
+  )
+);
+
+-- Payer reference is dummy input in the booth simulation; it is not a bank credential.
+alter table public.payment_transactions
+  add column if not exists payer_reference text;
+
+create index if not exists payment_transactions_mentor_date_idx
+  on public.payment_transactions (mentor_id, created_at desc);
+create index if not exists payment_transactions_learner_date_idx
+  on public.payment_transactions (learner_id, created_at desc);
+
+alter table public.payment_transactions enable row level security;
+
+drop policy if exists linked_payment_participant_read on public.payment_transactions;
+create policy linked_payment_participant_read
+on public.payment_transactions for select to authenticated
+using (learner_id = auth.uid() or mentor_id = auth.uid());
+
+drop policy if exists linked_learner_create_demo_payment on public.payment_transactions;
+create policy linked_learner_create_demo_payment
+on public.payment_transactions for insert to authenticated
+with check (
+  learner_id = auth.uid()
+  and is_demo = true
+  and provider = 'demo'
+  and status = 'pending'
+  and service_fee_amount = 0
+  and exists (
+    select 1 from public.learning_requests lr
+    where lr.id = learning_request_id
+      and lr.learner_id = auth.uid()
+      and lr.mentor_id = public.payment_transactions.mentor_id
+      and lr.price_amount = amount
+      and lr.payment_status = 'demo_pending'
+  )
+);
+
+drop policy if exists linked_learner_confirm_demo_payment on public.payment_transactions;
+create policy linked_learner_confirm_demo_payment
+on public.payment_transactions for update to authenticated
+using (learner_id = auth.uid() and is_demo = true and provider = 'demo' and status = 'pending')
+with check (
+  learner_id = auth.uid()
+  and is_demo = true
+  and provider = 'demo'
+  and status in ('pending','demo_paid')
+  and service_fee_amount = 0
+  and exists (
+    select 1 from public.learning_requests lr
+    where lr.id = learning_request_id
+      and lr.learner_id = auth.uid()
+      and lr.mentor_id = public.payment_transactions.mentor_id
+      and lr.price_amount = amount
+      and lr.payment_status = 'demo_pending'
+  )
+);
+
+-- A successful demo checkout synchronizes the request status. The only real
+-- 'paid' transition in production must be made by trusted server code/webhook.
+create or replace function public.linked_sync_payment_to_request()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update public.learning_requests
+  set payment_status = case
+        when new.status = 'demo_paid' and new.is_demo then 'demo_paid'
+        when new.status = 'paid' and not new.is_demo then 'paid'
+        when new.status in ('failed','expired','refunded') then new.status
+        else payment_status
+      end,
+      updated_at = now()
+  where id = new.learning_request_id
+    and learner_id = new.learner_id
+    and mentor_id = new.mentor_id;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_linked_sync_payment_to_request on public.payment_transactions;
+create trigger trg_linked_sync_payment_to_request
+after insert or update of status on public.payment_transactions
+for each row execute function public.linked_sync_payment_to_request();
+
+-- Prevent a learner from setting learning_requests.payment_status directly.
+-- Only a matching payment row can move a request to demo_paid/paid/etc.
+create or replace function public.linked_guard_request_payment_status()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if new.payment_status is distinct from old.payment_status then
+    if new.payment_status = 'demo_paid' and exists (
+      select 1 from public.payment_transactions pt
+      where pt.learning_request_id = new.id and pt.learner_id = new.learner_id
+        and pt.mentor_id = new.mentor_id and pt.is_demo = true and pt.status = 'demo_paid'
+    ) then
+      return new;
+    elsif new.payment_status = 'paid' and exists (
+      select 1 from public.payment_transactions pt
+      where pt.learning_request_id = new.id and pt.learner_id = new.learner_id
+        and pt.mentor_id = new.mentor_id and pt.is_demo = false and pt.status = 'paid'
+    ) then
+      return new;
+    elsif new.payment_status in ('failed','expired','refunded') and exists (
+      select 1 from public.payment_transactions pt
+      where pt.learning_request_id = new.id and pt.learner_id = new.learner_id
+        and pt.mentor_id = new.mentor_id and pt.status = new.payment_status
+    ) then
+      return new;
+    else
+      raise exception 'LINKED_PAYMENT_STATUS_MUST_MATCH_TRANSACTION';
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_linked_guard_request_payment_status on public.learning_requests;
+create trigger trg_linked_guard_request_payment_status
+before update of payment_status on public.learning_requests
+for each row execute function public.linked_guard_request_payment_status();
+
+-- Pending demo checkouts are expired when the learner cancels or the mentor rejects.
+create or replace function public.linked_expire_unpaid_demo_payment()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if new.status in ('cancelled','rejected') and old.status is distinct from new.status then
+    update public.payment_transactions
+    set status = case when status = 'demo_paid' then 'refunded' else 'expired' end,
+        updated_at = now()
+    where learning_request_id = new.id and is_demo = true and status in ('pending','demo_paid');
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_linked_expire_unpaid_demo_payment on public.learning_requests;
+create trigger trg_linked_expire_unpaid_demo_payment
+after update of status on public.learning_requests
+for each row execute function public.linked_expire_unpaid_demo_payment();
+
+-- Browser permissions intentionally support demo checkout only. Live payment
+-- rows should be created/updated by a trusted backend/webhook, not the browser.
+grant select, insert, update on public.payment_transactions to authenticated;
+grant select on public.mentor_profiles to authenticated;
+grant select, insert on public.learning_requests to authenticated;
+
+
 COMMIT;
